@@ -13,8 +13,10 @@ translations (5 parallel pairs) and 3 indigenous Turkish novels** by three pione
 > complete NLP annotations (BookNLP + VNLP/KeNet sentence alignment) enable full parallel and comparative
 > stylometric exploration.
 
-* 📓 `Corpus_Analysis.ipynb` — 14 chapters, ground-up and academic (objectives → toy example →
+* 📓 `Corpus_Analysis.ipynb` — 14 chapters in English, ground-up and academic (objectives → toy example →
   cheat-sheet → code → pitfalls → exercises → theoretical notes).
+* 🇹🇷 `Corpus_Analysis_tr.ipynb` — 14 bölümlük Türkçe ders not defteri (pedagojik başlıklar, terim sözlüğü,
+  adım adım oyuncak örnekler, kodlar, sık yapılan hatalar, çözümlü alıştırmalar ve kuramsal çeviribilim notları).
 * 🧰 `corpus_toolkit/` — the tested Python package behind it (lazy loading, parquet cache,
   search, KWIC, collocations, diversity, TF-IDF, dependency trees, reporter, widgets, CLI).
 * ✅ `tests/` — known-answer unit tests (every metric and number hand-computed and benchmarked).

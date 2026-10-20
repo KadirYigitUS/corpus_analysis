@@ -288,17 +288,18 @@ def test_tracked_notebook_is_clean():
     import json
     from pathlib import Path
 
-    nb_path = Path(__file__).resolve().parents[1] / "Corpus_Analysis.ipynb"
-    if not nb_path.exists():
-        pytest.skip("Corpus_Analysis.ipynb not yet generated")
-    data = json.loads(nb_path.read_text(encoding="utf-8"))
-    for i, cell in enumerate(data.get("cells", [])):
-        if cell.get("cell_type") == "code":
-            assert not cell.get("outputs", []), (
-                f"Cell {i} has outputs! Tracked notebook must be stripped to prevent committing "
-                f"copyrighted text to git."
-            )
-            assert cell.get("execution_count") is None, f"Cell {i} has execution_count set!"
+    for nb_name in ("Corpus_Analysis.ipynb", "Corpus_Analysis_tr.ipynb"):
+        nb_path = Path(__file__).resolve().parents[1] / nb_name
+        if not nb_path.exists():
+            pytest.skip(f"{nb_name} not yet generated")
+        data = json.loads(nb_path.read_text(encoding="utf-8"))
+        for i, cell in enumerate(data.get("cells", [])):
+            if cell.get("cell_type") == "code":
+                assert not cell.get("outputs", []), (
+                    f"Cell {i} in {nb_name} has outputs! Tracked notebook must be stripped to prevent committing "
+                    f"copyrighted text to git."
+                )
+                assert cell.get("execution_count") is None, f"Cell {i} in {nb_name} has execution_count set!"
 
 
 # -------------------------------------------------------- specialized punct tests
