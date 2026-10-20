@@ -16,8 +16,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 #: Bump when the on-disk cache layout or derived-column semantics change.
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 TOOLKIT_VERSION = "0.1.0"
+
 
 #: Focal author-translators of this sub-corpus (codes as stored in the metadata TSVs).
 DEFAULT_AUTHOR_CODES: tuple[str, ...] = ("SM", "ZB", "OK")

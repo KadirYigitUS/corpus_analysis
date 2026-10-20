@@ -30,8 +30,10 @@ from .cache import CorpusCacheManager, file_signature
 from .errors import CorpusDataError
 from .filters import classify_arrays
 from .registry import TextRecord
+from .textutil import LANG_TR, clean_lemma
 
 _LIST_COLS = ("tokens", "lemma", "pos", "morph", "dep")
+
 
 
 def rss_mb() -> float:
@@ -83,12 +85,15 @@ def build_tables(raw: pd.DataFrame, language: str) -> tuple[pd.DataFrame, pd.Dat
             raise CorpusDataError(
                 f"Sentence {i} (ch,p,s)=({row.ch_no},{row.p_no},{row.s_no}) has misaligned "
                 f"columns: {n},{len(lm)},{len(p)},{len(m)},{len(d)}")
+        if language == LANG_TR:
+            lm = [clean_lemma(x, LANG_TR) if isinstance(x, str) else x for x in lm]
         ntoks.append(n)
         sid.extend([i] * n)
         ti.extend(range(n))
         tok.extend(t)
         lem.extend(lm)
         pos.extend(p)
+
         morph.extend(m)
         head.extend(h for h, _ in d)
         rel.extend(r for _, r in d)

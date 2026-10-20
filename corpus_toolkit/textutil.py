@@ -89,3 +89,57 @@ def split_in_token_punct(token: str) -> list[str]:
         []
     """
     return [part for part in _ALNUM_CHUNK_RE.findall(token) if part.isalnum()]
+
+
+_APOSTROPHE_SPLIT_RE = re.compile(r"['’‘`´ʼʻ]", re.UNICODE)
+
+
+def clean_lemma(lemma: str, language: str = LANG_TR) -> str:
+    """Normalize a lemmatized token by removing sections after an apostrophe (VNLP kesme işareti remediation).
+
+    In Turkish NLP (VNLP), proper nouns, hyphenated compounds, and suffixed terms often retain
+    the apostrophe and trailing inflectional suffix in the lemma field (e.g. raw VNLP lemma
+    for token ``Türkiye'nin`` is left as ``Türkiye'nin``, ``bilim-kurgu'nun`` as ``bilim-kurgu'nun``,
+    ``Fred'`` as ``Fred'``, ``ay'da`` as ``ay'da``, ``1882'de`` as ``1882'de``).
+
+
+    This function strips the apostrophe and all trailing characters from the lemma, returning
+    the true base stem (e.g. ``Türkiye``, ``bilim-kurgu``, ``Fred``, ``ay``, ``1882``).
+    Tokens consisting entirely of punctuation or beginning with an apostrophe (e.g. ``'``)
+    are preserved intact.
+
+    Examples:
+        >>> clean_lemma("Türkiye'nin")
+        'Türkiye'
+        >>> clean_lemma("türkiye'nin")
+        'türkiye'
+        >>> clean_lemma("bilim-kurgu'nun")
+        'bilim-kurgu'
+        >>> clean_lemma("Fred'")
+        'Fred'
+        >>> clean_lemma("ay'da")
+        'ay'
+        >>> clean_lemma("1882'de")
+        '1882'
+        >>> clean_lemma("1882'")
+        '1882'
+        >>> clean_lemma("'")
+        "'"
+    """
+    if not lemma:
+        return lemma
+    if language == LANG_TR:
+        m = _APOSTROPHE_SPLIT_RE.search(lemma)
+        if m:
+            cut = lemma[: m.start()]
+            if cut:
+                return cut
+    return lemma
+
+
+def clean_lemmas(lemmas: list[str], language: str = LANG_TR) -> list[str]:
+    """Apply :func:`clean_lemma` across a list of lemmatized strings."""
+    if language != LANG_TR:
+        return list(lemmas)
+    return [clean_lemma(lm, language) for lm in lemmas]
+

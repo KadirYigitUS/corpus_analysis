@@ -29,10 +29,11 @@ import numpy as np
 import pandas as pd
 
 from .lazy import LazyCorpusText
-from .textutil import fold, split_in_token_punct, strip_in_token_punct
+from .textutil import LANG_TR, clean_lemma, fold, split_in_token_punct, strip_in_token_punct
 from .tokenview import Field, Mode, PunctMode, TokenView
 
 Match = Literal["exact", "glob", "regex"]
+
 
 
 @dataclass
@@ -76,24 +77,30 @@ class SearchQuery:
 
 
 def _pattern_mask(forms_unique: np.ndarray, terms: list[str], match: Match, language: str,
-                  case_sensitive: bool, punct: str = "drop") -> np.ndarray:
+                  case_sensitive: bool, punct: str = "drop", field: str = "tok") -> np.ndarray:
     """Boolean mask over *unique* forms matching any term (cheap: |types| ≪ |tokens|)."""
+    if field == "lem" and language == LANG_TR and match != "regex":
+        norm_terms = [clean_lemma(t, language) for t in terms]
+    else:
+        norm_terms = terms
+
     if match == "exact":
         if punct == "strip":
-            wanted = {strip_in_token_punct(t if case_sensitive else fold(t, language)) for t in terms}
+            wanted = {strip_in_token_punct(t if case_sensitive else fold(t, language)) for t in norm_terms}
             wanted.discard("")
         elif punct == "split":
             wanted = set()
-            for t in terms:
+            for t in norm_terms:
                 target = t if case_sensitive else fold(t, language)
                 for part in split_in_token_punct(target):
                     wanted.add(part)
         else:
-            wanted = {t if case_sensitive else fold(t, language) for t in terms}
+            wanted = {t if case_sensitive else fold(t, language) for t in norm_terms}
         return np.isin(forms_unique, list(wanted))
+
     flags = 0 if case_sensitive else re.IGNORECASE
     pats = []
-    for t in terms:
+    for t in norm_terms:
         if match == "glob":
             pats.append(re.compile(fnmatch.translate(t if case_sensitive else fold(t, language)),
                                    flags))
@@ -107,11 +114,12 @@ def find_nodes(view: TokenView, query: SearchQuery) -> np.ndarray:
     lang = view.text.record.language
     uniq, inv = np.unique(view.forms.astype(str), return_inverse=True)
     good = _pattern_mask(uniq, query.terms, query.match, lang, query.case_sensitive,
-                         punct=str(query.punct))
+                         punct=str(query.punct), field=str(query.field))
     mask = good[inv] & view.eligible
     if query.pos:
         tags = view.text.tokens["pos"].to_numpy()[view.rows].astype(str)
         mask &= np.isin(tags, list(query.pos))
+
     pos = np.flatnonzero(mask)
     if query.collocate and len(pos):
         col = view.occurrences(query.collocate)

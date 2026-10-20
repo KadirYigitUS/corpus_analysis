@@ -13,14 +13,24 @@ Turkish `I/İ` aware), `V_m` number of types with frequency `m`, `V₁` hapax le
 | `punct` | 4 punctuation regimes (`drop`, `keep`, `strip`, `split`); see below |
 
 ### Punctuation Handling Regimes (Passim-Aligned Methodology)
-Turkish texts processed with VNLP retain punctuation within words (e.g. `Türkiye'nin`, `Fred'`, `robot-bilim`, `1882'de`), and this retention is also present in lemmatized datasets (e.g. `fred'`, `ay'da`, `1882'`, `adı-her-neyse`). The toolkit provides 4 explicit options for `TokenView`, search, KWIC, collocations, and diversity:
+Turkish texts processed with VNLP retain punctuation within words (e.g. `Türkiye'nin`, `Fred'`, `robot-bilim`, `1882'de`). The toolkit provides 4 explicit options for `TokenView`, search, KWIC, collocations, and diversity:
 
 | `punct` mode | Standalone Punctuation | In-Token Punctuation | Example Form (`field='tok'`) | Example Form (`field='lem'`) | Use Case |
 |---|---|---|---|---|---|
-| `drop` (default) | Excluded (`fcl != PUNCT`) | Preserved as-is | `türkiye'nin`, `robot-bilim` | `türkiye'nin`, `robot-bilim` | Standard corpus analysis without punctuation inflation |
-| `keep` | Included (`fcl == PUNCT` kept) | Preserved as-is | `türkiye'nin`, `?`, `.` | `türkiye'nin`, `?`, `.` | Studying punctuation syntax, dialogue marks, rhetorical questions |
-| `strip` | Excluded | Collapsed / stripped (Passim `remove_punctuations`) | `türkiyenin`, `robotbilim`, `fred` | `türkiyenin`, `robotbilim`, `fred` | Search and vocabulary counts matching unpunctuated variants without word splitting |
-| `split` | Excluded | Retokenized / decomposed (Passim `retokenizer`) | `['türkiye', 'nin']`, `['robot', 'bilim']` | `['türkiye', 'nin']`, `['robot', 'bilim']` | Stem matching, sub-component keyword retrieval (`robot`, `bilim`), decompounded lexical density |
+| `drop` (default) | Excluded (`fcl != PUNCT`) | Preserved as-is | `türkiye'nin`, `robot-bilim` | `türkiye`, `robot-bilim` | Standard corpus analysis without punctuation inflation |
+| `keep` | Included (`fcl == PUNCT` kept) | Preserved as-is | `türkiye'nin`, `?`, `.` | `türkiye`, `?`, `.` | Studying punctuation syntax, dialogue marks, rhetorical questions |
+| `strip` | Excluded | Collapsed / stripped (Passim `remove_punctuations`) | `türkiyenin`, `robotbilim`, `fred` | `türkiye`, `robotbilim`, `fred` | Search and vocabulary counts matching unpunctuated variants without word splitting |
+| `split` | Excluded | Retokenized / decomposed (Passim `retokenizer`) | `['türkiye', 'nin']`, `['robot', 'bilim']` | `['türkiye']`, `['robot', 'bilim']` | Stem matching, sub-component keyword retrieval (`robot`, `bilim`), decompounded lexical density |
+
+### Turkish Lemma Apostrophe Remediation (VNLP Kesme İşareti Fix)
+Turkish VNLP morphological analysis frequently leaves the orthographic apostrophe (*kesme işareti*) and subsequent case/inflectional suffixes attached to proper nouns and compound stems in the lemma column (e.g. `türkiye'nin`, `bilim-kurgu'nun`, `fred'`, `ay'da`, `1882'de`, `1882'`).
+
+The toolkit enforces automatic apostrophe remediation for all Turkish lemmatized views (`field='lem'`):
+* **Stem Extraction**: All characters after the first apostrophe (`'`, `’`, `‘`, `` ` ``, `´`, `ʼ`, `ʻ`) are stripped (e.g. `Türkiye'nin` → `Türkiye`, `ay'da` → `ay`, `1882'de` → `1882`, `Fred'` → `Fred`).
+* **Compound Structure Preservation**: Hyphenated compound stems (e.g. `bilim-kurgu'nun` → `bilim-kurgu`) retain their hyphenated morphological structure while dropping only the suffixed particle `'nun`.
+* **Punctuation Token Invariance**: Standalone punctuation tokens whose lemma is an apostrophe (e.g. `'`, `‘`) are preserved without degradation into empty strings.
+* **Bi-directional Search Equivalence**: Searching with `field='lem'` matches target stems regardless of whether the query term is entered as the base stem (`türkiye`) or with the inflected suffix (`Türkiye'nin`).
+
 
 The function-word share is **measured**, not assumed (see Chapter 4: ≈ 45–53 % English, ≈ 18–24 % Turkish).
 

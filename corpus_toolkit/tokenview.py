@@ -22,9 +22,10 @@ import pandas as pd
 
 from .filters import CONTENT, PUNCT
 from .lazy import LazyCorpusText
-from .textutil import fold, split_in_token_punct, strip_in_token_punct
+from .textutil import LANG_TR, clean_lemma, fold, split_in_token_punct, strip_in_token_punct
 
 Field = Literal["tok", "lem"]
+
 Mode = Literal["drop", "mask"]
 PunctMode = Literal["keep", "drop", "strip", "split"]
 
@@ -74,7 +75,11 @@ class TokenView:
         col = tab[self.field]
         cats = col.cat.categories
         lang = self.text.record.language
-        folded = np.asarray([fold(str(c), lang) if self.case_fold else str(c) for c in cats],
+        if self.field == "lem" and lang == LANG_TR:
+            cats_clean = [clean_lemma(str(c), LANG_TR) for c in cats]
+        else:
+            cats_clean = [str(c) for c in cats]
+        folded = np.asarray([fold(c, lang) if self.case_fold else c for c in cats_clean],
                             dtype=object)
         base_forms = folded[col.cat.codes.to_numpy()[self.rows]]
         base_sid = tab["sid"].to_numpy()[self.rows]
@@ -82,6 +87,7 @@ class TokenView:
         if self.punct in ("keep", "drop"):
             self.forms = base_forms
             self.sid = base_sid
+
         elif self.punct == "strip":
             new_forms: list[str] = []
             valid_idx: list[int] = []
@@ -160,9 +166,12 @@ class TokenView:
         lang = self.text.record.language
         wanted: set[str] = set()
         for n in nodes:
-            w = fold(n, lang) if self.case_fold else n
+            n_str = str(n)
+            target = clean_lemma(n_str, LANG_TR) if (self.field == "lem" and lang == LANG_TR) else n_str
+            w = fold(target, lang) if self.case_fold else target
             if self.punct == "strip":
                 s = strip_in_token_punct(w)
+
                 if s:
                     wanted.add(s)
             elif self.punct == "split":

@@ -35,7 +35,8 @@ Every user-facing message prints **full author names and book titles**; short co
 | area | what you get |
 |---|---|
 | **Loading** | 8 lazy loaders (English / Turkish / pairs / indigenous / all / author-related / author-Turkish / single text); compact token tables; `evict()` |
-| **Views** | tokens **or** lemmas · raw **or** content (function words hidden, rules from `passim_analysis`) · `drop` **or** `mask` spans · 4 punctuation modes (`drop`, `keep`, `strip`, `split`) |
+| **Views** | tokens **or** lemmas (with Turkish VNLP apostrophe suffix remediation: `Türkiye'nin` → `türkiye`) · raw **or** content (function words hidden, rules from `passim_analysis`) · `drop` **or** `mask` spans · 4 punctuation modes (`drop`, `keep`, `strip`, `split`) |
+
 | **Search** | token, lemma, glob, regex, UPOS filter, context-word (collocate) constraint, with/without punctuation, in-token strip & split |
 | **KWIC** | spans `phrase/collocation/extended/discourse/sentence/N/L5R2`, 3 notebook views + console, sorting by L1…R3, bilingual sentence cards |
 | **Statistics** | per10k, Juilland D, Pearson/Spearman/cosine, BH-FDR, MI/MI²/MI³/T/G²/Log-Dice, TF-IDF, 14+ lexical-diversity metrics |
@@ -131,7 +132,10 @@ search.SearchQuery(["robot"], "lem", filter_function_words=True, mode="drop")   
 search.SearchQuery(["?"], "tok", punct="keep")                             # search punctuation directly
 search.SearchQuery(["Türkiye'nin"], "tok", punct="strip")                  # in-token strip (matches Türkiyenin)
 search.SearchQuery(["bilim"], "lem", punct="split")                        # in-token split (matches inside robot-bilim)
+search.SearchQuery(["türkiye"], "lem")                                     # matches all inflected forms via lemma remediation
+search.SearchQuery(["Türkiye'nin"], "lem")                                 # inflected query term automatically resolves to base stem
 ```
+
 
 ### 4 · KWIC concordance
 ```python

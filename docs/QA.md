@@ -55,14 +55,22 @@ Every statistical metric implemented in `corpus_toolkit` has been audited agains
   - **`keep` Mode (With Punctuation):** Retains standalone punctuation tokens in the view, enabling direct queries on question marks (`?`), exclamation marks, and dialogue marks.
 - **Verification:** Unit tests `test_punctuation_helpers`, `test_turkish_tokenview_punct_modes`, `test_search_punct_modes`, `test_concordance_with_punct`, and `test_diversity_with_punct_and_caching` assert correct behavior across token and lemma fields.
 
+### F. Turkish Lemma Apostrophe Remediation (VNLP Kesme İşareti Fix)
+- **Problem Statement:** VNLP's Turkish lemmatizer leaves the orthographic apostrophe (*kesme işareti*) and attached inflectional case suffixes on proper nouns and compound stems in the lemma column (`türkiye'nin`, `bilim-kurgu'nun`, `fred'`, `ay'da`, `1882'de`, `1882'`). Consequently, queries for base lemmas (e.g. `türkiye`) fail to match suffixed occurrences, artificially fracturing lemma frequencies.
+- **Toolkit Solution:**
+  - `clean_lemma(lemma, language='tr')`: Strips all characters after the first apostrophe (`'`, `’`, `‘`, `` ` ``, `´`, `ʼ`, `ʻ`), returning the base stem (`Türkiye'nin` → `Türkiye`, `ay'da` → `ay`, `Fred'` → `Fred`, `1882'` → `1882`).
+  - Compound structures with hyphens (e.g. `bilim-kurgu'nun` → `bilim-kurgu`) preserve their internal hyphen while shedding the inflectional suffix `'nun`.
+  - Applied automatically at raw text ingestion (`LazyCorpusText.tokens['lem']`), in `TokenView(field='lem')`, and in `SearchQuery(field='lem')` so searches on either inflected or base forms resolve to the same underlying lemma.
+- **Verification:** Unit test `test_clean_lemma_cases` validates stem extraction across all apostrophe variants, punctuation tokens, and compounds.
+
 ---
 
 ## 3. Quality Gates Status
 
 ```bash
-# 1. Unit & Integration Test Suite (41/41 passed)
+# 1. Unit & Integration Test Suite (42/42 passed)
 python -m pytest -q
-# Output: 41 passed in 18.97s
+# Output: 42 passed in 9.58s
 
 # 2. Strict Linting & Formatting (Clean)
 python -m ruff check .
@@ -72,6 +80,7 @@ python -m ruff check .
 python -m mypy corpus_toolkit
 # Output: Success: no issues found in 29 source files
 ```
+
 
 ---
 

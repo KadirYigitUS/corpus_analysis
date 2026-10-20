@@ -113,6 +113,9 @@ def chapters() -> list[Cell]:
     - `punct='strip'`: collapses in-token punctuation without splitting (`Türkiye'nin` → `Türkiyenin`, `Fred'` → `Fred`).
     - `punct='split'`: decomposes composite tokens into sub-tokens (`Türkiye'nin` → `['türkiye', 'nin']`, `robot-bilim` → `['robot', 'bilim']`).
     Both `strip` and `split` work seamlessly on surface tokens (`tok`) and lemmatized fields (`lem`).
+
+    **Turkish Lemma Apostrophe Remediation:**
+    In raw VNLP outputs, proper nouns and hyphenated compounds retain inflectional suffixes after apostrophes in the lemma field (e.g. `Türkiye'nin` → `türkiye'nin`, `bilim-kurgu'nun` → `bilim-kurgu'nun`, `Fred'` → `fred'`). The toolkit automatically remediates this: all Turkish lemmas have sections after the apostrophe removed (e.g. `türkiye'nin` becomes `türkiye`, `bilim-kurgu'nun` becomes `bilim-kurgu`, preserving the hyphenated compound structure while stripping the case suffix `'nun`). Searches for `türkiye` or `Türkiye'nin` in `field="lem"` now resolve directly to the true base stem.
     """),
           code("""
     # 1. Search with punctuation ('keep'): find question marks
@@ -124,10 +127,15 @@ def chapters() -> list[Cell]:
     r_split = engine.search(search.SearchQuery(["Türkiye"], field="tok", punct="split"), turkish)
     print(f"Türkiyenin (strip): {len(r_strip)} hits;  Türkiye (split): {len(r_split)} hits")
 
-    # 3. Lemmatized field with in-token punctuation splitting:
+    # 3. Clean Turkish lemmas (apostrophe suffix removed, compound hyphens preserved):
+    r_lem = engine.search(search.SearchQuery(["türkiye"], field="lem"), turkish)
+    print(f"Remediated Turkish lemma 'türkiye': {len(r_lem)} hits (matches all suffixed forms)")
+
+    # 4. Lemmatized field with in-token punctuation splitting:
     r_lem_sp = engine.search(search.SearchQuery(["bilim"], field="lem", punct="split"), turkish)
     print(f"Lemma 'bilim' (split, finds inside robot-bilim): {len(r_lem_sp)} hits")
     """),
+
           pitfalls(["Hit counts do not change between `drop` and `mask`; **spans** do (Chapters 7, 10).",
                     "`per10k` divides by running words **of the chosen view** — a content view has a "
                     "smaller denominator, so per10k goes *up* even though hits stay equal.",

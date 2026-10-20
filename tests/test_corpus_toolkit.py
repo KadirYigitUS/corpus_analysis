@@ -358,7 +358,7 @@ def test_turkish_tokenview_punct_modes(turkish_mini_text):
     # 5. Lemmatized field: 'strip'
     v_lem_strip = TokenView(turkish_mini_text, field="lem", punct="strip")
     assert len(v_lem_strip) == 9
-    assert "türkiyenin" in v_lem_strip.forms
+    assert "türkiye" in v_lem_strip.forms
     assert "robotbilim" in v_lem_strip.forms
     assert "uzman" in v_lem_strip.forms
     assert "fred" in v_lem_strip.forms
@@ -366,11 +366,33 @@ def test_turkish_tokenview_punct_modes(turkish_mini_text):
 
     # 6. Lemmatized field: 'split'
     v_lem_split = TokenView(turkish_mini_text, field="lem", punct="split")
-    assert len(v_lem_split) == 12
-    assert "türkiye" in v_lem_split.forms and "nin" in v_lem_split.forms
+    assert len(v_lem_split) == 10
+    assert "türkiye" in v_lem_split.forms
     assert "robot" in v_lem_split.forms and "bilim" in v_lem_split.forms
     assert "uzman" in v_lem_split.forms
     assert "fred" in v_lem_split.forms
+
+
+def test_clean_lemma_cases():
+    from corpus_toolkit.textutil import clean_lemma, clean_lemmas
+
+    assert clean_lemma("Türkiye'nin") == "Türkiye"
+    assert clean_lemma("Türkiye’nin") == "Türkiye"  # Curly right apostrophe U+2019
+    assert clean_lemma("türkiye'nin") == "türkiye"
+    assert clean_lemma("bilim-kurgu'nun") == "bilim-kurgu"  # preserves hyphenated compound before apostrophe
+    assert clean_lemma("Fred'") == "Fred"
+    assert clean_lemma("ay'da") == "ay"
+    assert clean_lemma("1882'de") == "1882"
+    assert clean_lemma("1882'") == "1882"
+    assert clean_lemma("Hâlâ'nın") == "Hâlâ"  # Circumflex vowel
+    assert clean_lemma("kâğıt'ta") == "kâğıt"  # Circumflex vowel
+    assert clean_lemma("ak'çiçek") == "ak"  # Compound with internal apostrophe
+    assert clean_lemma("'") == "'"
+    assert clean_lemma("‘") == "‘"
+    assert clean_lemma("’") == "’"
+    assert clean_lemma("") == ""
+    assert clean_lemmas(["Türkiye'nin", "bilim-kurgu'nun", "uzman"]) == ["Türkiye", "bilim-kurgu", "uzman"]
+
 
 
 def test_search_punct_modes(turkish_mini_text):
@@ -402,11 +424,17 @@ def test_search_punct_modes(turkish_mini_text):
     # Search on lemmas with punct='strip' and 'split'
     q_lem_fred = SearchQuery(["fred"], field="lem", punct="strip")
     res_f = eng.search(q_lem_fred, [turkish_mini_text])
-    assert len(res_f) == 1 and res_f.hits["lemma"].iloc[0] == "fred'"
+    assert len(res_f) == 1 and res_f.hits["lemma"].iloc[0] == "fred"
 
-    q_lem_part = SearchQuery(["nin"], field="lem", punct="split")
-    res_nin = eng.search(q_lem_part, [turkish_mini_text])
-    assert len(res_nin) == 1 and res_nin.hits["lemma"].iloc[0] == "türkiye'nin"
+    # Searching with or without suffix on lemma matches cleaned lemma
+    q_lem_tur1 = SearchQuery(["türkiye"], field="lem")
+    q_lem_tur2 = SearchQuery(["Türkiye'nin"], field="lem")
+    res_t1 = eng.search(q_lem_tur1, [turkish_mini_text])
+    res_t2 = eng.search(q_lem_tur2, [turkish_mini_text])
+    assert len(res_t1) == 1 and res_t1.hits["lemma"].iloc[0] == "türkiye"
+    assert len(res_t2) == 1 and res_t2.hits["lemma"].iloc[0] == "türkiye"
+    assert res_t1.hits["token"].iloc[0] == "Türkiye'nin"
+
 
 
 def test_concordance_with_punct(turkish_mini_text):
