@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments & packaging
+.env
+.venv
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Testing & quality tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+.coverage
+htmlcov/
+
+# Persistent caches & data (live under <thesis>/data/corpus_analysis/, never in this repo)
+.cache/
+data/
+*.parquet
+*.pickle
+*.pkl
+*.pickle.xz
+*.xz
+*.tsv
+*.csv
+*.xlsx
+*.svg
+*.png
+
+# Generated figures, reports and tables (written to <thesis>/data/corpus_analysis/)
+figures/
+reports/
+tables/
+*.log
+
+# Headless-execution artefacts
+executed_*.ipynb
+
+# OS metadata
+.DS_Store
+Thumbs.db
+

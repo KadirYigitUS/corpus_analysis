@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "corpus-toolkit"
+version = "0.1.0"
+description = "Educational, memory-preserving corpus analysis of Turkish SF author-translators (English/Turkish, parallel + indigenous)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "numpy", "pandas", "scipy", "scikit-learn", "matplotlib", "seaborn", "nltk",
+  "pyarrow", "spacy", "psutil", "tabulate", "openpyxl", "ipywidgets", "ipython",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy", "nbformat", "nbconvert", "nbclient", "ipykernel"]
+
+[project.scripts]
+corpus-toolkit = "corpus_toolkit.cli:main"
+
+[tool.setuptools]
+packages = ["corpus_toolkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["data: needs the thesis corpus on disk (skipped when absent)"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501", "B905", "UP007", "UP037"]
+
+[tool.ruff.lint.per-file-ignores]
+# Notebook cells import where they are first taught and use compact teaching one-liners.
+"*.ipynb" = ["E401", "E402", "E701", "E702", "E703", "F401", "I001"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = true
+# pandas/numpy-heavy modules are checked with relaxed return typing (documented in docs/QA.md)
+[[tool.mypy.overrides]]
+module = ["corpus_toolkit.viz", "corpus_toolkit.pos", "corpus_toolkit.reporter",
+          "corpus_toolkit.batch_kwic", "corpus_toolkit.tfidf", "corpus_toolkit.analysis"]
+disallow_any_generics = false

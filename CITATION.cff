@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "corpus-toolkit: educational corpus analysis of Turkish SF author-translators"
+type: software
+version: 0.1.0
+date-released: "2026-10-20"
+authors:
+  - family-names: "Us"
+    given-names: "Kadir Yiğit"
+license: MIT
+repository-code: "https://github.com/KadirYigitUS/corpus_analysis"
+keywords:
+  - corpus linguistics
+  - translation studies
+  - Turkish
+  - science fiction
+  - KWIC
+  - collocation
+  - lexical diversity
