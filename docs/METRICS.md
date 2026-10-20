@@ -98,7 +98,15 @@ token itself produce no arc. English ClearNLP→UD *label* mapping only (`dobj�
 Key = `sha256([SCHEMA_VERSION, namespace, args…])[:20]`, with the source file's `size:mtime_ns` among the args.
 Parquet for tables, JSON for small dicts, atomic `os.replace`, LRU eviction above 2 GB.
 
-## 10 · References
+## 10 · NDA Parallel Corpora View & Interactive Columnar Table View
+* **NDA Parallel View (`parallel_view.py`)**:
+  * Hydrates `scored_alignment_rows.pickle` (`dict[int, AlignmentRow]`) and `initial_dictionary.pickle` (`DictionaryModel`) from `data/Neologism_Dictionary_Annotation_Cache/<Pair>/` via `_NdaSafeUnpickler`.
+  * Resolves both sentence-local `(lang, ch_no, p_no, s_no, sent_idx)` (reconstructing `sent_idx` when `-1`) and alignment-row-wide `(lang, ai, token_idx)`.
+  * Enforces 4 disjoint visual sets: **Set 1** (`manual`/`auto` bilingual links `L1..Lk`, blue `#bfdbfe` with per-row `ai` first-token SVG connector paths), **Set 2** (`single_eng` teal `#99f6e4` / `single_tur` rose `#fecdd3` unlinked Irrealia), **Set 3** (`is_neologism_candidate` / `neologism_score > 0`, amber `#fef08a`), and **Set 4** (`hits`, crimson `#be123c`), with Top-Layer `IRREALIA` (`SCIFI_*`) taking precedence over Layer 0 `REALIA` (`NER`).
+* **Interactive Columnar Table View (`table_view.py`)**:
+  * Zero-dependency HTML5 + Vanilla ES6 DataGrid with 20-row default client-side pagination (`10/20/50/100/All`), ascending/descending/reset sorting (`NaN`-last numeric + `Intl.Collator('tr')`), drag-resizable column splitters (`.ct-col-resizer`), layout presets (`Auto-Fit`, `Wrap Text`, `Compact`), instant substring filter, and TSV clipboard export.
+
+## 11 · References
 Baker 1993 · Benjamini & Hochberg 1995 · Biber 1988 · Brezina, McEnery & Wattam 2015 · Brezina, Weill-Tessier &
 McEnery 2021 · Carroll 1964 · Church & Hanks 1990 · Church et al. 1991 · Covington & McFall 2010 · Daille 1994 ·
 Dugast 1979 · Dunning 1993 · Firth 1957 · Gries 2008 · Guiraud 1954 · Halliday 1985 · Herdan 1960 · Honoré 1979 ·

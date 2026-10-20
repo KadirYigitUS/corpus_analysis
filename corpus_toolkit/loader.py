@@ -199,3 +199,7 @@ class CorpusLoader:
         for t in self._lazy.values():
             t.evict(verbose=verbose)
 
+    def rss_mb(self) -> float:
+        """Current process resident set size in megabytes."""
+        return rss_mb()
+

@@ -86,9 +86,18 @@ class PosComparativeAnalyzer:
         e, t = pos_percentages(eng, content_only), pos_percentages(tur, content_only)
         return pd.DataFrame({"English %": e, "Turkish %": t, "Δ (TR−EN) pp": t - e})
 
+    def lexical_density(self, text: LazyCorpusText) -> float:
+        """Lexical density percentage of content words excluding punctuation."""
+        return float(text_profile(text)["lexical_density"])
+
+    def noun_verb_ratio(self, text: LazyCorpusText) -> float:
+        """Noun-to-verb ratio of the text."""
+        return float(text_profile(text)["noun_verb_ratio"])
+
     def group_comparison(self, group_a: Sequence[LazyCorpusText],
                          group_b: Sequence[LazyCorpusText], labels: tuple[str, str],
-                         content_only: bool = False) -> pd.DataFrame:
+                         content_only: bool = False,
+                         n_bootstrap: int = 2000) -> pd.DataFrame:
         """Translation-vs-indigenous style comparison with uncertainty.
 
         For every UPOS: mean of per-text percentages per group, percentile bootstrap CI of the
@@ -101,7 +110,7 @@ class PosComparativeAnalyzer:
         rows = []
         for j, tag in enumerate(UPOS_ORDER):
             diffs = [rng.choice(pa[:, j], len(pa)).mean() - rng.choice(pb[:, j], len(pb)).mean()
-                     for _ in range(2000)]
+                     for _ in range(n_bootstrap)]
             lo, hi = np.percentile(diffs, [2.5, 97.5])
             rows.append({"UPOS": tag, f"{labels[0]} mean %": pa[:, j].mean(),
                          f"{labels[1]} mean %": pb[:, j].mean(),

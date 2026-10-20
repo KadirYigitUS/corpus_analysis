@@ -1,65 +1,83 @@
-"""Türkçe ders not defteri hücre yardımcıları (Bölüm modülleri tarafından kullanılır)."""
+"""Türkçe ders not defteri hücre yardımcıları (Bölüm modülleri tarafından kullanılır).
+
+Önemli: Markdown'da 4+ boşlukla başlayan satırlar *kod bloğu* sayılır. Bu yüzden çok satırlı
+değerler (``{body}``, ``{metin}``) bir üç tırnaklı f-string'e gömülmez; satırlar baştan sola
+dayalı kurulur ve ``flush`` ile ortak girinti ayrıca temizlenir.
+"""
 
 from textwrap import dedent
 
 Cell = tuple[str, str]
 
+LEARN_STYLE = ("border-left:4px solid #f59e0b;background:#fffbeb;padding:8px 12px;"
+               "border-radius:0 8px 8px 0;margin:12px 0;")
+SCHOLARLY_STYLE = ("border-left:4px solid #3b82f6;background:#eff6ff;padding:8px 12px;"
+                   "border-radius:0 8px 8px 0;margin:12px 0;")
+
+
+def flush(text: str) -> str:
+    """Ortak girintiyi kaldır ve baştaki/sondaki boş satırları at."""
+    return dedent(text).strip("\n")
+
 
 def md(text: str) -> Cell:
-    return ("md", dedent(text).strip("\n"))
+    return ("md", flush(text))
 
 
 def code(text: str) -> Cell:
-    return ("code", dedent(text).strip("\n"))
+    return ("code", flush(text))
 
 
 def bolum_basligi(numara: int, baslik: str, dakika: int, hedefler: list[str],
                   onkosullar: str, ozet: str) -> Cell:
-    obj = "\n".join(f"- {o}" for o in hedefler)
-    return md(f"""
-    ---
-    # Bölüm {numara} · {baslik}
-    ⏱ ~{dakika} dk · 📚 Önkoşullar: {onkosullar}
-
-    > {ozet}
-
-    **Kazanımlar ve Öğrenme Hedefleri** — Bu bölümün sonunda şunları yapabileceksiniz:
-    {obj}
-    """)
+    lines = [
+        "---",
+        f"# Bölüm {numara} · {baslik}",
+        f"⏱ ~{dakika} dk · 📚 Önkoşullar: {onkosullar}",
+        "",
+        f"> {ozet}",
+        "",
+        "**Kazanımlar ve Öğrenme Hedefleri** — Bu bölümün sonunda şunları yapabileceksiniz:",
+        "",  # liste öncesi boş satır: aksi halde madde imleri paragrafın parçası olur
+        *[f"- {o}" for o in hedefler],
+    ]
+    return ("md", "\n".join(lines))
 
 
 def tuzaklar(maddeler: list[str]) -> Cell:
-    body = "\n".join(f"- {i}" for i in maddeler)
-    return md(f"""
-    <div class="learn" style="border-left:4px solid #f59e0b;background:#fffbeb;padding:8px 12px;border-radius:0 8px 8px 0">
-
-    **⚠️ Sık Yapılan Hatalar ve Dikkat Edilmesi Gerekenler**
-    {body}
-
-    </div>
-    """)
+    lines = [
+        f'<div class="learn" style="{LEARN_STYLE}">',
+        "",
+        "**⚠️ Sık Yapılan Hatalar ve Dikkat Edilmesi Gerekenler**",
+        "",
+        *[f"- {i}" for i in maddeler],
+        "",
+        "</div>",
+    ]
+    return ("md", "\n".join(lines))
 
 
 def alistirmalar(maddeler: list[tuple[str, str]]) -> Cell:
     """maddeler = [(soru, cozum_markdown_veya_kod)] → açılır kapanır çözümler."""
     parts = ["### ✏️ Kendini Sınama Alıştırmaları (Önce kendiniz deneyin, sonra çözümü açın)"]
     for i, (q, sol) in enumerate(maddeler, 1):
-        parts.append(f"**{i}.** {q}\n\n<details><summary>Çözümü Göster</summary>\n\n{sol}\n\n"
+        parts.append(f"**{i}.** {q}\n\n<details><summary>Çözümü Göster</summary>\n\n{flush(sol)}\n\n"
                      "</details>\n")
-    return md("\n".join(parts))
+    return ("md", "\n".join(parts))
 
 
 def akademik_not(metin: str) -> Cell:
     """Sonuçları tez metodolojisi, Çeviribilim ve Derlem Dilbilim literatürüne bağlayan kuramsal not."""
-    return md(f"""
-    <div class="scholarly" style="border-left:4px solid #3b82f6;background:#eff6ff;padding:8px 12px;border-radius:0 8px 8px 0;margin:12px 0;">
-
-    **🎓 Kuramsal Çerçeve ve Akademik Not (Çeviribilim & Derlem Dilbilim)**
-
-    {metin.strip()}
-
-    </div>
-    """)
+    lines = [
+        f'<div class="scholarly" style="{SCHOLARLY_STYLE}">',
+        "",
+        "**🎓 Kuramsal Çerçeve ve Akademik Not (Çeviribilim & Derlem Dilbilim)**",
+        "",
+        flush(metin),
+        "",
+        "</div>",
+    ]
+    return ("md", "\n".join(lines))
 
 
 def komut_kilavuzu(baslik: str, satirlar: list[tuple[str, str, str]]) -> Cell:
@@ -72,4 +90,4 @@ def komut_kilavuzu(baslik: str, satirlar: list[tuple[str, str, str]]) -> Cell:
     ]
     for fn, params, eg in satirlar:
         lines.append(f"| `{fn}` | {params} | `{eg}` |")
-    return md("\n".join(lines))
+    return ("md", "\n".join(lines))

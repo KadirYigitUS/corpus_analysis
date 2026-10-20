@@ -33,26 +33,26 @@ def chapters() -> list[Cell]:
       $O_{11} \le R_1$ and $O_{11} \le C_1$ without double-counting words situated between two close nodes.
     - $C_1$: total frequency of the candidate collocate across the text,
     - $O_{11}$: observed count of the candidate word *inside* the node's window slots,
-    - $E_{11} = \frac{R_1 \cdot C_1}{N}$: expected co-occurrence count under independent random distribution,
+    - $E_{11} = \\frac{R_1 \cdot C_1}{N}$: expected co-occurrence count under independent random distribution,
 
-    the $2 \times 2$ contingency table is:
+    the $2 \\times 2$ contingency table is:
 
-    | | In window ($W$) | Outside window ($\neg W$) | Total |
+    | | In window ($W$) | Outside window ($\\neg W$) | Total |
     |---|---|---|---|
     | **Candidate ($C$)** | $O_{11}$ | $O_{12} = C_1 - O_{11}$ | $C_1$ |
-    | **Other tokens ($\neg C$)** | $O_{21} = R_1 - O_{11}$ | $O_{22} = N - R_1 - C_1 + O_{11}$ | $N - C_1$ |
+    | **Other tokens ($\\neg C$)** | $O_{21} = R_1 - O_{11}$ | $O_{22} = N - R_1 - C_1 + O_{11}$ | $N - C_1$ |
     | **Total** | $R_1$ | $N - R_1$ | $N$ |
 
     The standard association measures:
 
     | Measure | Formula | Favours / Properties |
     |---|---|---|
-    | **MI** (Church & Hanks 1990) | $\log_2 \frac{O_{11}}{E_{11}}$ | Strength of attraction; strongly favours low-frequency words |
-    | **MI²** (Daille 1994) | $\log_2 \frac{O_{11}^2}{E_{11}}$ | Intermediate; tempers low-frequency bias |
-    | **MI³** (Daille 1994) | $\log_2 \frac{O_{11}^3}{E_{11}}$ | Strong and frequent recurrent pairs |
-    | **T-score** (Church et al. 1991) | $\frac{O_{11} - E_{11}}{\sqrt{O_{11}}}$ | Certainty / evidence; favours frequent grammatical partners |
-    | **G²** (Dunning 1993) | $2 \sum_{i,j} O_{ij} \ln \frac{O_{ij}}{E_{ij}}$ | Signed likelihood ratio test; positive = attraction, negative = repulsion |
-    | **Log-Dice** (Rychlý 2008) | $14 + \log_2 \frac{2 O_{11}}{f_{\text{node}} + C_1}$ | Corpus-size independent; maximum 14 for perfect co-occurrence |
+    | **MI** (Church & Hanks 1990) | $\log_2 \\frac{O_{11}}{E_{11}}$ | Strength of attraction; strongly favours low-frequency words |
+    | **MI²** (Daille 1994) | $\log_2 \\frac{O_{11}^2}{E_{11}}$ | Intermediate; tempers low-frequency bias |
+    | **MI³** (Daille 1994) | $\log_2 \\frac{O_{11}^3}{E_{11}}$ | Strong and frequent recurrent pairs |
+    | **T-score** (Church et al. 1991) | $\\frac{O_{11} - E_{11}}{\sqrt{O_{11}}}$ | Certainty / evidence; favours frequent grammatical partners |
+    | **G²** (Dunning 1993) | $2 \sum_{i,j} O_{ij} \ln \\frac{O_{ij}}{E_{ij}}$ | Signed likelihood ratio test; positive = attraction, negative = repulsion |
+    | **Log-Dice** (Rychlý 2008) | $14 + \log_2 \\frac{2 O_{11}}{f_{\\text{node}} + C_1}$ | Corpus-size independent; maximum 14 for perfect co-occurrence |
 
     **Strength vs Evidence (GraphColl, Brezina et al. 2015).** MI measures *effect size* (strength),
     while $G^2$ measures *statistical evidence* (sample size / certainty). A scatter plot of MI vs $G^2$
@@ -60,13 +60,13 @@ def chapters() -> list[Cell]:
     collocates (high MI, high $G^2$), grammatical collocations (low MI, high $G^2$), and noise.
 
     ### 10.2 Worked toy example (hand-checkable)
-    Given: $N = 1000$, $R_1 = 100$, $C_1 = 20$, $O_{11} = 10$, $f_{\text{node}} = 50$:
-    1. $E_{11} = \frac{100 \times 20}{1000} = 2.0$
-    2. $\text{MI} = \log_2(10 / 2) = \log_2(5) \approx 2.322$
-    3. $\text{MI}^2 = \log_2(100 / 2) = \log_2(50) \approx 5.644$
-    4. $\text{MI}^3 = \log_2(1000 / 2) = \log_2(500) \approx 8.966$
-    5. $\text{T-score} = \frac{10 - 2}{\sqrt{10}} = \frac{8}{3.1623} \approx 2.530$
-    6. $\text{Log-Dice} = 14 + \log_2 \left(\frac{20}{50 + 20}\right) = 14 + \log_2(0.2857) = 14 - 1.8074 \approx 12.193$
+    Given: $N = 1000$, $R_1 = 100$, $C_1 = 20$, $O_{11} = 10$, $f_{\\text{node}} = 50$:
+    1. $E_{11} = \\frac{100 \\times 20}{1000} = 2.0$
+    2. $\\text{MI} = \log_2(10 / 2) = \log_2(5) \\approx 2.322$
+    3. $\\text{MI}^2 = \log_2(100 / 2) = \log_2(50) \\approx 5.644$
+    4. $\\text{MI}^3 = \log_2(1000 / 2) = \log_2(500) \\approx 8.966$
+    5. $\\text{T-score} = \\frac{10 - 2}{\sqrt{10}} = \\frac{8}{3.1623} \\approx 2.530$
+    6. $\\text{Log-Dice} = 14 + \log_2 \left(\\frac{20}{50 + 20}\\right) = 14 + \log_2(0.2857) = 14 - 1.8074 \\approx 12.193$
     """),
           cheat_sheet("Collocation Commands", [
               ("collocation.association_table([o11], [c1], r1, n, f_node)", "Compute all 6 association measures for given contingency counts", "collocation.association_table([10], [20], 100, 1000, 50)"),
@@ -87,7 +87,7 @@ def chapters() -> list[Cell]:
     node_view = TokenView(br, "lem", False, "drop")
     tab = collocation.collocates(node_view, "robot", left=5, right=5, min_freq=5, sort_by="G2")
     print("Contingency parameters:", tab.attrs)
-    display(tab.head(12).round(2))
+    show_table(tab.round(3), page_size=20, title="Collocates of 'robot' in Ben, Robot (20 rows/page, sortable)")
     """),
           code("""
     # GraphColl-style strength vs evidence visualization
@@ -148,24 +148,24 @@ def chapters() -> list[Cell]:
     TF-IDF (Spärck Jones 1972) weights words by multiplying within-document frequency (**TF**)
     with across-corpus distinctiveness (**IDF**). In our implementation (matching scikit-learn):
 
-    - **Sublinear TF**: $\text{TF}(t, d) = 1 + \ln(\text{count}(t, d))$ for $\text{count} > 0$ (diminishing returns of repetition).
-    - **Smooth IDF**: $\text{IDF}(t) = \ln\left(\frac{1 + N}{1 + \text{DF}(t)}\right) + 1$, where $N$ is total documents and $\text{DF}(t)$ is document frequency.
-    - **L2 Normalisation**: $\vec{v}_{\text{norm}} = \frac{\vec{v}}{\|\vec{v}\|_2}$ ensures document length does not distort keyness.
+    - **Sublinear TF**: $\\text{TF}(t, d) = 1 + \ln(\\text{count}(t, d))$ for $\\text{count} > 0$ (diminishing returns of repetition).
+    - **Smooth IDF**: $\\text{IDF}(t) = \ln\left(\\frac{1 + N}{1 + \\text{DF}(t)}\\right) + 1$, where $N$ is total documents and $\\text{DF}(t)$ is document frequency.
+    - **L2 Normalisation**: $\\vec{v}_{\\text{norm}} = \\frac{\\vec{v}}{\|\\vec{v}\|_2}$ ensures document length does not distort keyness.
 
     Because English and Turkish possess fundamentally distinct morphological structures and vocabularies,
     they are fitted as **separate subcorpora**.
 
     ### 11.2 Worked toy example — hand calculation vs scikit-learn
     Three documents: $d_1 = [a, b, b]$, $d_2 = [a, c]$, $d_3 = [c, c, d]$ ($N = 3$).
-    - $a$: in $d_1, d_2$ $\Rightarrow \text{DF} = 2 \Rightarrow \text{IDF} = \ln(4/3) + 1 \approx 1.2877$
-    - $b$: in $d_1$ $\Rightarrow \text{DF} = 1 \Rightarrow \text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \approx 1.6931$
-    - $c$: in $d_2, d_3$ $\Rightarrow \text{DF} = 2 \Rightarrow \text{IDF} = \ln(4/3) + 1 \approx 1.2877$
-    - $d$: in $d_3$ $\Rightarrow \text{DF} = 1 \Rightarrow \text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \approx 1.6931$
+    - $a$: in $d_1, d_2$ $\Rightarrow \\text{DF} = 2 \Rightarrow \\text{IDF} = \ln(4/3) + 1 \\approx 1.2877$
+    - $b$: in $d_1$ $\Rightarrow \\text{DF} = 1 \Rightarrow \\text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \\approx 1.6931$
+    - $c$: in $d_2, d_3$ $\Rightarrow \\text{DF} = 2 \Rightarrow \\text{IDF} = \ln(4/3) + 1 \\approx 1.2877$
+    - $d$: in $d_3$ $\Rightarrow \\text{DF} = 1 \Rightarrow \\text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \\approx 1.6931$
 
-    In $d_1$: $\text{tf}(a) = 1 + \ln(1) = 1.0$; $\text{tf}(b) = 1 + \ln(2) \approx 1.6931$.
-    Unnormalized: $w(a) = 1.0 \times 1.2877 = 1.2877$; $w(b) = 1.6931 \times 1.6931 \approx 2.8667$.
+    In $d_1$: $\\text{tf}(a) = 1 + \ln(1) = 1.0$; $\\text{tf}(b) = 1 + \ln(2) \\approx 1.6931$.
+    Unnormalized: $w(a) = 1.0 \\times 1.2877 = 1.2877$; $w(b) = 1.6931 \\times 1.6931 \\approx 2.8667$.
     L2 norm: $\sqrt{1.2877^2 + 2.8667^2} = \sqrt{1.6582 + 8.2180} = 3.1427$.
-    Normalized $d_1$: $a \approx 0.410$, $b \approx 0.912$.
+    Normalized $d_1$: $a \\approx 0.410$, $b \\approx 0.912$.
     """),
           cheat_sheet("TF-IDF Analyzer Commands", [
               ("tfidf.tfidf_manual(docs)", "Compute sublinear smooth TF-IDF table from token lists", "tfidf.tfidf_manual([['a', 'b'], ['b', 'c']])"),
@@ -332,7 +332,7 @@ def chapters() -> list[Cell]:
     """),
           cheat_sheet("Interactive Explorer Commands", [
               ("explorer.CorpusExplorerUI(loader).show()", "Render interactive ipywidgets search and concordance panel", "ui = explorer.CorpusExplorerUI(loader); ui.show()"),
-              ("explorer.quick_search(loader, ['word'], ...)", "Headless, scriptable equivalent returning DataFrame", "quick_search(loader, ['robot'], author='Selma Mine')"),
+              ("explorer.quick_search(loader, ['word'], ...)", "Headless, scriptable equivalent returning a ConcordanceResult (self-rendering; .to_dataframe() for a DataFrame)", "quick_search(loader, ['robot'], author='Selma Mine')"),
               ("loader.evict_all()", "Evict all loaded text tables from memory", "loader.evict_all()"),
           ]),
           code("""
@@ -346,12 +346,11 @@ def chapters() -> list[Cell]:
     """),
           md("### 13.2 Headless scriptable equivalent: `quick_search`"),
           code("""
-    # Scriptable search across Selma Mine's texts for 'robot' as noun
+    # Scriptable search across Selma Mine's texts for 'robot' as noun (with NDA parallel view)
     from corpus_toolkit.explorer import quick_search
     qs_res = quick_search(loader, ["robot"], category="Author-translator related texts",
                           author="Selma Mine", field="lem", pos={"NOUN"},
-                          span="phrase", view="kwic", max_lines=6)
-    display(qs_res)
+                          span="phrase", view="parallel", max_lines=3)
     """),
           code("""
     # Explicit memory cleanup: evict all tables after exploration
@@ -361,7 +360,7 @@ def chapters() -> list[Cell]:
           pitfalls(["Interactive widgets require an active Jupyter notebook environment with `ipywidgets` installed and enabled.",
                     "Iterative browsing can accumulate multiple texts in RAM: call `loader.evict_all()` periodically during extended exploratory sessions."]),
           exercises([("Execute a quick search for `uzay` (space) across all Turkish translations and inspect the first 5 hits.",
-                      "```python\nfrom corpus_toolkit.explorer import quick_search\nres = quick_search(loader, ['uzay'], category='Turkish translations', field='lem', view='kwic', max_lines=5)\ndisplay(res)\n```")]),
+                      "```python\nfrom corpus_toolkit.explorer import quick_search\nres = quick_search(loader, ['uzay'], category='Turkish translations', field='lem', view='kwic', max_lines=5)\n```")]),
           scholarly("""
           **Exploratory Data Analysis and Hermeneutic Inquiry (Tukey 1977; Rockwell & Sinclair 2016):**
           In digital literary studies, computer-assisted reading does not replace close reading;

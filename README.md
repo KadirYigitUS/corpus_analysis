@@ -40,7 +40,9 @@ Every user-facing message prints **full author names and book titles**; short co
 | **Views** | tokens **or** lemmas (with Turkish VNLP apostrophe suffix remediation: `Türkiye'nin` → `türkiye`) · raw **or** content (function words hidden, rules from `passim_analysis`) · `drop` **or** `mask` spans · 4 punctuation modes (`drop`, `keep`, `strip`, `split`) |
 
 | **Search** | token, lemma, glob, regex, UPOS filter, context-word (collocate) constraint, with/without punctuation, in-token strip & split |
-| **KWIC** | spans `phrase/collocation/extended/discourse/sentence/N/L5R2`, 3 notebook views + console, sorting by L1…R3, bilingual sentence cards |
+| **KWIC & Views** | spans `phrase/collocation/extended/discourse/sentence/N/L5R2`, 5 notebook views (`kwic`, `chips`, `cards`, `parallel`, `table`) + `console`, sorting by L1…R5 |
+| **NDA Parallel View** | side-by-side English ↔ Turkish alignment groups (`parallel_view.py`) importing `Neologism_Dictionary_Annotation` caches: dual-row `tok` + `lem · pos` pills, 4 disjoint visual sets (`Linked L#`, `Single-EN` teal, `Single-TR` rose, `Candidate` amber, `Hit` crimson), Layer 0 Realia (NER) vs Top-Layer Irrealia, interactive per-row SVG connector lines (`first EN ↔ first TR`), and Current Label Attributions summary footer |
+| **Columnar Table View** | flexible, self-contained HTML5/ES6 DataGrid (`table_view.py`): 20-row default client-side pagination (`10/20/50/100/All`), multi-type ascending/descending sorting (`NaN`-last numeric + Turkish/English `Intl.Collator`), drag-to-resize column splitters, layout presets (`Auto-Fit`, `Wrap Text`, `Compact`), instant filter, and one-click TSV copy |
 | **Statistics** | per10k, Juilland D, Pearson/Spearman/cosine, BH-FDR, MI/MI²/MI³/T/G²/Log-Dice, TF-IDF, 14+ lexical-diversity metrics |
 | **Parallel corpus** | alignment shapes (1:1 … omission/addition), `R_sent`, word/char ratios |
 | **Grammar** | POS comparative analysis, lexical density, noun/verb ratio, translated-vs-indigenous bootstrap CIs |
@@ -74,15 +76,16 @@ variables ([Configuration](#configuration)).
 ## Quick start
 ```bash
 cd scripts/corpus_analysis
-python -m pytest -q                                   # 29+ known-answer tests
+python -m pytest -q                                   # 47 known-answer tests
 python -m corpus_toolkit inventory                    # all 13 texts, full names
 python -m corpus_toolkit search robot --category "All Turkish texts" --pos NOUN --span L3R2
-jupyter lab Corpus_Analysis.ipynb                     # the teaching notebook
+jupyter lab Corpus_Analysis.ipynb                     # the teaching notebook (186 cells; or Corpus_Analysis_tr.ipynb)
 ```
 
-Headless execution (also the notebook's acceptance test):
+Headless execution (also the notebooks' acceptance test):
 ```bash
-python tools/build_notebook.py --execute              # rebuilds + executes + saves outputs
+python tools/build_notebook.py --execute              # rebuilds + executes + saves executed_Corpus_Analysis.ipynb
+python tools/build_notebook_tr.py --execute           # rebuilds + executes + saves executed_Corpus_Analysis_tr.ipynb
 # or:  CORPUS_CACHE_POLICY=keep python -m jupyter nbconvert --to notebook --execute Corpus_Analysis.ipynb
 ```
 
@@ -147,6 +150,10 @@ conc = kwic.Concordancer().run(res, texts, span="collocation")   # or 'phrase','
 render.show(conc, "kwic")                       # aligned table
 render.show(conc, "chips")                      # coordinate chips  (ch · p · s · tok)
 render.show(conc, "cards", loader=loader)       # sentence cards + aligned counterpart sentence
+render.show(conc, "parallel", loader=loader)    # NDA side-by-side parallel view with SVG links & tags
+render.show(conc, "table", page_size=20)        # interactive 20-row paginated, sortable, resizable DataGrid
+render.show_parallel(loader, "BR-SM", [4, 5], hits={"robot"})  # direct parallel group inspection
+render.show_table(res.summary(), page_size=20, title="Search Summary")  # interactive DataFrame table
 render.show(conc.sorted("R1"), "console")       # sort by first word right of the node (L1…R3, node, text)
 conc.to_frame()                                 # plain DataFrame
 ```
@@ -308,9 +315,12 @@ collocate  O11   C1     E11    MI   MI2    MI3     T      G2  p_G2  LogDice
 | `CORPUS_AUTHOR_CODES` | `SM,ZB,OK` | focal author-translators |
 | `CORPUS_CACHE_POLICY` | `ask` | `keep` \| `clear` \| `ask` |
 
-## Metrics and formulas
-See [`docs/METRICS.md`](docs/METRICS.md) (every formula, edge-case rule and citation) and
-[`docs/QA.md`](docs/QA.md) (quality rubric and acceptance results).
+## Documentation, PRD, Metrics and Formulas
+See:
+* [`docs/Corpus_Analysis_PRD.md`](docs/Corpus_Analysis_PRD.md) — full Product Requirements Document (13-text pioneer scope, lazy Parquet cache, 3-switch + 4-punctuation `TokenView`, NDA parallel view, and interactive columnar table specifications).
+* [`docs/ARCHITECTURE_AND_DATAFLOW.md`](docs/ARCHITECTURE_AND_DATAFLOW.md) — end-to-end data flow diagrams and stage specifications from alignment & NDA pickles into `TokenView`, `ParallelView`, and `TableView`.
+* [`docs/METRICS.md`](docs/METRICS.md) — every mathematical formula, edge-case rule, and citation.
+* [`docs/QA.md`](docs/QA.md) — quality rubric, hand-checked benchmarks, and acceptance results.
 
 ## Development
 ```bash

@@ -192,6 +192,8 @@ def chapters() -> list[Cell]:
               ("render.show(conc, view='kwic')", "HTML aligned node view with highlighted keyword", "render.show(conc, 'kwic')"),
               ("render.show(conc, view='chips')", "Compact coordinate chips for scholarly citations (ch·p·s·tok)", "render.show(conc, 'chips')"),
               ("render.show(conc, view='cards', loader=loader)", "Sentence cards with bilingual aligned parallel sentences", "render.show(conc, 'cards', loader=loader)"),
+              ("render.show(conc, view='parallel', loader=loader)", "NDA side-by-side EN ⇄ TR sentence table with SVG links & lemmas", "render.show(conc, 'parallel', loader=loader, max_lines=4)"),
+              ("render.show(conc, view='table')", "Interactive paginated (20/page), sortable, resizable table view", "render.show(conc, 'table', max_lines=20)"),
               ("render.show(conc, view='console')", "Plain text view suitable for terminal and log inspection", "render.show(conc, 'console')"),
           ]),
           code("""
@@ -208,6 +210,11 @@ def chapters() -> list[Cell]:
           code("render.show(conc, 'chips', max_lines=8)"),
           md("#### View 3 — bilingual sentence cards (the aligned counterpart appears below)"),
           code("render.show(conc, 'cards', loader=loader, max_lines=4)"),
+          md("#### View 4 — NDA side-by-side parallel view (`view='parallel'`) & View 5 — interactive paged table (`view='table'`)"),
+          code("""
+    render.show(conc, "parallel", loader=loader, max_lines=3)
+    render.show(conc, "table", max_lines=20)
+    """),
           md("#### Console view (terminal / logs)"),
           code("render.show(conc, 'console', max_lines=8)"),
           md("#### Sorting reveals patterns — by the word *right* of the node (`R1`), then *left* (`L1`)"),
@@ -397,11 +404,12 @@ def chapters() -> list[Cell]:
           md("#### 9.4 Diversity of all 13 texts (lemmas, raw view) — cached after the first run"),
           code("""
     div_raw = analysis.diversity_for(loader, loader.load_all(), field="lem", filter_function_words=False)
-    display(div_raw.round(3))
+    show_table(div_raw.round(3), page_size=20, title="Lexical Diversity (All 13 Texts — Raw Lemmas)")
     """),
           code("""
     div_con = analysis.diversity_for(loader, loader.load_all(), field="lem", filter_function_words=True)
-    display(div_con[["N", "V", "TTR", "STTR", "MATTR_100", "MTLD", "HD_D", "Yule_K", "Hapax_types_pct"]].round(3))
+    show_table(div_con[["N", "V", "TTR", "STTR", "MATTR_100", "MTLD", "HD_D", "Yule_K", "Hapax_types_pct"]].round(3),
+               page_size=20, title="Lexical Diversity (Content Lemmas)")
     """),
           code("""
     # token (surface) vs lemma diversity: agglutination inflates token types in Turkish

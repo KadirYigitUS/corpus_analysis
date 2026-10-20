@@ -113,10 +113,11 @@ def chapters() -> list[Cell]:
     import matplotlib.pyplot as plt
     from IPython.display import HTML, display
 
-    from corpus_toolkit import CorpusLoader, TokenView
+    from corpus_toolkit import (CorpusLoader, TokenView, enable_interactive_tables,
+                                show_parallel, show_table)
     from corpus_toolkit import (alignment, analysis, batch_kwic, collocation, depviz, diversity,
-                                kwic, nltk_adapter, pos, render, reporter, search, stats, style,
-                                tfidf, viz)
+                                kwic, nltk_adapter, parallel_view, pos, render, reporter, search,
+                                stats, style, table_view, tfidf, viz)
     display(HTML(style.CSS))                      # one CSS block for all HTML views
     pd.set_option("display.max_columns", 40); pd.set_option("display.width", 160)
     """),
@@ -147,7 +148,7 @@ def chapters() -> list[Cell]:
     c += [chapter_header(1, "Corpus inventory", 10,
                          ["list every author-translator, text and translation pair by full name",
                           "verify that all 13 pickle files exist",
-                          "read basic size statistics (sentences, tokens)"],
+                          "read basic size statistics (sentences, tokens) in interactive paged tables"],
                          "Chapter 0", "Know your data before you measure it."),
           md("""
     ### 1.1 Why an inventory first?
@@ -166,22 +167,22 @@ def chapters() -> list[Cell]:
     inv = loader.registry.inventory()
     display(inv[inv["focal_code"] == "SM"][["code", "creator", "title", "type", "year"]])
     """),
-          cheat_sheet("Registry & Inventory Commands", [
-              ("loader.registry.inventory()", "Returns a full DataFrame of all 13 texts with metadata", "display(loader.registry.inventory())"),
+          cheat_sheet("Registry & Interactive Table Commands", [
+              ("loader.registry.inventory()", "Returns a full DataFrame of all 13 texts with metadata", "show_table(loader.registry.inventory())"),
               ("loader.registry.verify_files()", "Checks that every .pickle.xz file exists on disk", "loader.registry.verify_files()"),
+              ("show_table(df, page_size=20)", "Interactive paginated (20 rows/page), sortable, column-resizable table", "show_table(inv, page_size=20, title='Inventory')"),
+              ("enable_interactive_tables()", "Make every DataFrame display as an interactive paged table", "enable_interactive_tables(page_size=20)"),
               ("loader.registry.display(rec)", "Human-readable label: 'Author — Title [CODE]'", "print(loader.registry.display('BR-SM'))"),
-              ("loader.registry.resolve_author(query)", "Resolves code or full name to author code", "loader.registry.resolve_author('Selma Mine')"),
-              ("loader.registry.resolve_text(query)", "Resolves code or title substring to TextRecord", "loader.registry.resolve_text('Ben, Robot')"),
           ]),
-          md("### 1.3 Full corpus verification and size distribution"),
+          md("### 1.3 Full corpus verification and size distribution (Interactive Columnar View)"),
           code("""
-    display(loader.registry.inventory())
-    display(loader.registry.verify_files())
+    show_table(loader.registry.inventory(), page_size=20, title="Corpus Inventory (13 Texts)")
+    show_table(loader.registry.verify_files(), page_size=20, title="Disk Pickle Verification")
     """),
           code("""
     loader.load_all().describe();
     sizes = loader.load_all().summary()          # first run builds the cache (≈ 20 s once)
-    display(sizes.sort_values(["author_translator", "type"]))
+    show_table(sizes.sort_values(["author_translator", "type"]), page_size=20, title="Corpus Size Summary")
     """),
           code("""
     fig, ax = plt.subplots(figsize=(9, 4))
@@ -305,11 +306,11 @@ def chapters() -> list[Cell]:
           ]
 
     # ------------------------------------------------------------------ Chapter 3
-    c += [chapter_header(3, "Alignment structure of the parallel corpus", 20,
+    c += [chapter_header(3, "Alignment structure & NDA side-by-side parallel view", 20,
                          ["classify sentence alignments into 1:1, 1:N, N:1, N:M, omission, addition",
                           "compute and interpret `R_sent`, word- and character-ratios",
-                          "read Figures 1A and 1B critically"],
-                         "Chapters 0–2", "How do translators cut and join sentences?"),
+                          "inspect aligned EN ⇄ TR sentences with the Neologism Dictionary Annotation (NDA) parallel viewer"],
+                         "Chapters 0–2", "How do translators cut, join, and transfer neologisms across sentences?"),
           md("""
     ### 3.1 Theory
     A sentence aligner pairs *groups* of English and Turkish sentences. The **shape** of the
@@ -337,17 +338,18 @@ def chapters() -> list[Cell]:
     print([alignment.alignment_type(a, b) for a, b in toy])
     print("R_sent =", sum(b for _, b in toy) / sum(a for a, _ in toy))
     """),
-          cheat_sheet("Alignment Structure Commands", [
+          cheat_sheet("Alignment & NDA Parallel View Commands", [
               ("alignment.alignment_type(n_en, n_tr)", "Classifies cardinality into '1:1', '1:N', 'N:1', 'N:M', 'omission', 'addition'", "alignment.alignment_type(1, 2)"),
               ("AlignmentStructureAnalyzer(cache).summary(pairs)", "Summary DataFrame with percentages and R_sent for all pairs", "ana.summary(pairs)"),
               ("AlignmentStructureAnalyzer.cardinality_table(pair)", "Per-alignment-group table with token counts and types", "ana.cardinality_table(pair)"),
+              ("show_parallel(loader, pair_or_code, ais, overlay=True)", "Side-by-side EN ⇄ TR view with NDA dictionary links, SVG connectors & lemmas", "show_parallel(loader, 'I_Robot', [3350, 4288, 4313])"),
               ("AlignmentIndex.texts(ai)", "Returns (eng_text, tur_text) tuple for alignment id ai", "idx.texts(14)"),
           ]),
           code("""
     pairs = [p for p, _, _ in loader.load_translation_pairs()]
     ana = alignment.AlignmentStructureAnalyzer(loader.cache)
     summary = ana.summary(pairs)
-    display(summary.round(2))
+    show_table(summary.round(2), page_size=20, title="Parallel Alignment Structure Summary")
     """),
           code("""
     fig = viz.alignment_stacked(summary); plt.show()                       # Figure 1A
@@ -355,14 +357,21 @@ def chapters() -> list[Cell]:
     fig = viz.alignment_scatter(tables); plt.show()                        # Figure 1B
     """),
           md("""
-    ### 3.3 Interpretation guide
+    ### 3.3 Interpretation guide & NDA Side-by-Side Parallel Corpora View
     - **Mostly 1:1** → the translation keeps sentence boundaries; high **1:N** → splitting
       (typical when English long sentences are rendered into Turkish clause chains).
     - **omission / addition** may be *translator decisions* **or aligner artefacts** (paratext,
-      different editions, OCR). Always inspect examples (use `AlignmentIndex.texts(ai)`)
-      before attributing them to a translator.
-    - `word_ratio < 1` is typical for English→Turkish because Turkish packs function words
-      into suffixes (agglutination) — it is **typological**, not necessarily stylistic.
+      different editions, OCR). Always inspect examples before attributing them to a translator.
+    - **`show_parallel(loader, pair, ais)`** imports the side-by-side methodology from
+      `scripts/Neologism_Dictionary_Annotation`: every token is rendered as a 2-tier pill
+      (`surface` + `lemma·UPOS`), curated bilingual neologisms (`initial_dictionary.pickle`) are
+      joined by **SVG connectors (`L#`)**, single-language Irrealia (`single_eng` teal /
+      `single_tur` rose) and high-salience candidates (`scored_alignment_rows.pickle`) are
+      color-coded, and a **Current Label Attributions** summary footer appears beneath each `ai` group.
+    """),
+          code("""
+    # NDA side-by-side parallel view: linked bilingual pairs (L#), single-language irrealia, and SVG connectors
+    show_parallel(loader, "I_Robot", [3350, 4288, 4313], overlay=True, hits={"brain"})
     """),
           code("""
     # inspect the first omissions of one pair (always look at examples!)
@@ -416,7 +425,7 @@ def chapters() -> list[Cell]:
           code("""
     P = pos.PosComparativeAnalyzer()
     profile = P.profile_table(loader.load_all())
-    display(profile.round(1))
+    show_table(profile.round(1), page_size=20, title="UPOS Profile Across All 13 Texts")
     fig = viz.pos_heatmap(profile, pos.UPOS_ORDER); plt.show()             # Figure 2A
     """),
           md("""
@@ -427,7 +436,7 @@ def chapters() -> list[Cell]:
     en, tr = loader.load_text("IR-IA"), loader.load_text("BR-SM")
     print(loader.registry.display(en)); print(loader.registry.display(tr))
     cmp_df = P.pair_comparison(en, tr)
-    display(cmp_df.round(1))
+    show_table(cmp_df.round(1), page_size=20, title="Pair UPOS Comparison: I, Robot ⇄ Ben, Robot")
     fig = viz.pos_pair(cmp_df, f"{en.record.title} → {tr.record.title}"); plt.show()
     en.evict(); tr.evict()
     """),
@@ -443,13 +452,14 @@ def chapters() -> list[Cell]:
     print("Translations:", ", ".join(loader.registry.display(t) for t in trans))
     print("Indigenous:", ", ".join(loader.registry.display(t) for t in indig))
     grp = P.group_comparison(trans, indig, ("translation", "indigenous"))
-    display(grp.round(2)); print(grp.attrs)
+    show_table(grp.round(2), page_size=20, title="Translated vs Indigenous UPOS (Bootstrap 95% CI)")
+    print(grp.attrs)
     fig = viz.pos_group(grp, ("translation", "indigenous")); plt.show()
     """),
           code("""
     # same question restricted to content words only (function words hidden)
     grp_c = P.group_comparison(trans, indig, ("translation", "indigenous"), content_only=True)
-    display(grp_c.round(2))
+    show_table(grp_c.round(2), page_size=20, title="Content-Only UPOS Comparison (Translated vs Indigenous)")
     """),
           pitfalls(["Different taggers/lemmatisers for English and Turkish ⇒ tag *inventories* are "
                     "comparable, tag *accuracy* is not.",

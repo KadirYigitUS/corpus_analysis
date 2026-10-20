@@ -184,14 +184,14 @@ def chapters() -> list[Cell]:
     | `'extended'` | (10, 10) | Anlamsal bürün (semantic prosody), izleksel bağlam |
     | `'discourse'` | (20, 20) | Söylem düzeyinde çerçeveleme |
     | `'sentence'` | Tüm tümce | Eksiksiz bağlamsal çevre |
-    | `7`, `(5, 2)`, `'L5R2'` | Özel | Asimetrik: *ardından ne geliyor?* $\rightarrow$ `(0, 4)`; *öncesinde ne var?* $\rightarrow$ `(4, 0)` |
+    | `7`, `(5, 2)`, `'L5R2'` | Özel | Asimetrik: *ardından ne geliyor?* $\\rightarrow$ `(0, 4)`; *öncesinde ne var?* $\\rightarrow$ `(4, 0)` |
 
     `sentence_clamped=True` (varsayılan) seçeneği, pencere aralığının tümce sınırını aşmasına asla izin vermez.
 
     ### 7.3 Elle Doğrulanabilir Oyuncak Örnek: Dizin Satırları ve Sıralama
     Verilen tümceler:
-    1. *“The smart **robot** moved quickly .”* $\rightarrow$ L1=`smart`, düğüm=`robot`, R1=`moved`
-    2. *“A tiny **robot** spoke quietly .”* $\rightarrow$ L1=`tiny`, düğüm=`robot`, R1=`spoke`
+    1. *“The smart **robot** moved quickly .”* $\\rightarrow$ L1=`smart`, düğüm=`robot`, R1=`moved`
+    2. *“A tiny **robot** spoke quietly .”* $\\rightarrow$ L1=`tiny`, düğüm=`robot`, R1=`spoke`
     - **R1** sözcüğüne göre sıralandığında: Önce 1. satır (`moved`), sonra 2. satır (`spoke`).
     - **L1** sözcüğüne göre sıralandığında: Önce 1. satır (`smart`), sonra 2. satır (`tiny`).
     """),
@@ -201,6 +201,8 @@ def chapters() -> list[Cell]:
               ("render.show(conc, view='kwic')", "Düğüm sözcüğü vurgulanmış HTML merkezli hizalama görünümü", "render.show(conc, 'kwic')"),
               ("render.show(conc, view='chips')", "Akademik alıntılar için tam koordinat rozetleri (bölüm·paragraf·tümce·sözcük)", "render.show(conc, 'chips')"),
               ("render.show(conc, view='cards', loader=loader)", "İki dilli hizalanmış karşılıkları içeren tümce kartları", "render.show(conc, 'cards', loader=loader)"),
+              ("render.show(conc, view='parallel', loader=loader)", "NDA yan yana EN ⇄ TR tümce tablosu (SVG bağlantıları ve sözlükbirimler)", "render.show(conc, 'parallel', loader=loader, max_lines=4)"),
+              ("render.show(conc, view='table')", "Etkileşimli sayfalı (20 satır/sayfa), sıralanabilir ve boyutlandırılabilir tablo", "render.show(conc, 'table', max_lines=20)"),
               ("render.show(conc, view='console')", "Uçbirim ve günlük incelemelerine uygun düz metin görünümü", "render.show(conc, 'console')"),
           ]),
           code("""
@@ -217,6 +219,11 @@ def chapters() -> list[Cell]:
           code("render.show(conc, 'chips', max_lines=8)"),
           md("#### Görünüm 3 — İki Dilli Tümce Kartları (Hizalanmış çeviri karşılığı altta görüntülenir)"),
           code("render.show(conc, 'cards', loader=loader, max_lines=4)"),
+          md("#### Görünüm 4 — NDA Yan Yana Paralel Görünüm (`view='parallel'`) ve Görünüm 5 — Etkileşimli Sayfalı Tablo (`view='table'`)"),
+          code("""
+    render.show(conc, "parallel", loader=loader, max_lines=3)
+    render.show(conc, "table", max_lines=20)
+    """),
           md("#### Uçbirim Görünümü (Konsol / Günlük çıktıları için)"),
           code("render.show(conc, 'console', max_lines=8)"),
           md("#### Sıralama Örüntüleri Ortaya Çıkarır — Düğümün *sağındaki* (`R1`), ardından *solundaki* (`L1`) sözcüğe göre"),
@@ -280,7 +287,7 @@ def chapters() -> list[Cell]:
     2. **Sözcüksel Yayılım — Juilland's D** (Juilland & Chang-Rodríguez 1964; Gries 2008):
        Her metin *n = 10* eşit dilime (chunk) bölünür. Dilim sıklıklarının değişim katsayısı
        `V = σ / μ` hesaplanır (yığın standart sapması $\sigma$):
-       $D = 1 - \frac{V}{\sqrt{n - 1}}$ $\Rightarrow$ 1 = kusursuz dengeli dağılım, 0 = tek bir dilime yığılmış dağılım.
+       $D = 1 - \\frac{V}{\sqrt{n - 1}}$ $\Rightarrow$ 1 = kusursuz dengeli dağılım, 0 = tek bir dilime yığılmış dağılım.
     3. **Profil Karşılaştırma**: Her sözcük metin dilimlerindeki oranlardan oluşan bir vektör alır (metin başına 10 dilim).
        **Pearson r** (doğrusal bağıntı), **Spearman ρ** (sıra bağıntısı) ve **kosinüs** (vektör açısı)
        sözcüklerin metin boyunca birlikte hareket edip etmediğini gösterir.
@@ -384,9 +391,9 @@ def chapters() -> list[Cell]:
 
     ### 9.2 Elle Doğrulanabilir Oyuncak Örnek
     Sözcükler: `the cat saw the dog the dog saw the cat` ($N = 10$): sözcük türleri {the: 4, cat: 2, dog: 2, saw: 2}
-    $\Rightarrow V = 4$, $\text{TTR} = 0.4$, $\text{Guiraud} = 4 / \sqrt{10} = 1.26$,
-    $\text{Yule K} = 10^4(16 + 3 \cdot 4 - 10) / 100 = \mathbf{1800}$,
-    $\text{Simpson D} = (12 + 2 + 2 + 2) / 90 = \mathbf{0.2}$ — tümü `tests/test_corpus_toolkit.py` içinde doğrulanmıştır.
+    $\Rightarrow V = 4$, $\\text{TTR} = 0.4$, $\\text{Guiraud} = 4 / \sqrt{10} = 1.26$,
+    $\\text{Yule K} = 10^4(16 + 3 \cdot 4 - 10) / 100 = \mathbf{1800}$,
+    $\\text{Simpson D} = (12 + 2 + 2 + 2) / 90 = \mathbf{0.2}$ — tümü `tests/test_corpus_toolkit.py` içinde doğrulanmıştır.
     """),
           komut_kilavuzu("Çeşitlilik Yöntemleri ve Komutları", [
               ("diversity.diversity_metrics(forms)", "14+ LancsBox-X metriğinin tümünü sözlük olarak döndürür", "diversity.diversity_metrics(forms)"),
@@ -412,11 +419,12 @@ def chapters() -> list[Cell]:
           md("#### 9.4 13 Metnin Çeşitlilik Profili (Sözlükbirimler, Ham Görünüm) — İlk çalıştırmadan sonra önbelleklenir"),
           code("""
     div_raw = analysis.diversity_for(loader, loader.load_all(), field="lem", filter_function_words=False)
-    display(div_raw.round(3))
+    show_table(div_raw.round(3), page_size=20, title="Sözcüksel Çeşitlilik (13 Metin — Ham Sözlükbirimler)")
     """),
           code("""
     div_con = analysis.diversity_for(loader, loader.load_all(), field="lem", filter_function_words=True)
-    display(div_con[["N", "V", "TTR", "STTR", "MATTR_100", "MTLD", "HD_D", "Yule_K", "Hapax_types_pct"]].round(3))
+    show_table(div_con[["N", "V", "TTR", "STTR", "MATTR_100", "MTLD", "HD_D", "Yule_K", "Hapax_types_pct"]].round(3),
+               page_size=20, title="Sözcüksel Çeşitlilik (İçerik Sözlükbirimleri)")
     """),
           code("""
     # Yüzey sözcük (token) ve sözlükbirim (lemma) çeşitliliği: Sondan eklemelilik Türkçede token türlerini şişirir

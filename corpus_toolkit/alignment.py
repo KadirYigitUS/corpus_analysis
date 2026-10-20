@@ -99,6 +99,10 @@ class AlignmentIndex:
     def coords(self, ai: int) -> tuple[list[tuple[int, int, int]], list[tuple[int, int, int]]]:
         return list(self.map_eng.get(ai, [])), list(self.map_tur.get(ai, []))
 
+    def table(self) -> pd.DataFrame:
+        """Alignment pairs as a DataFrame with 'file_no' and 'ai' columns."""
+        return self.frame.reset_index()
+
 
 class AlignmentStructureAnalyzer:
     """Counts and ratios of alignment types per pair (Figures 1A/1B)."""

@@ -6,6 +6,7 @@ Three notebook views and one console view, all driven by the same data:
 ``chips``   coordinate-chip table – every hit carries ``ch · p · s · tok`` so it can be cited
 ``cards``   sentence cards – full sentence with node marked; for translation pairs the aligned
             counterpart sentence in the other language is shown underneath
+``parallel`` side-by-side EN ⇄ TR sentence table (NDA-style C·P·S layout, see ``parallel_view``)
 ``console`` plain-text KWIC (works in a terminal, CI logs, nbconvert text output)
 """
 
@@ -108,8 +109,40 @@ def show(res: ConcordanceResult, view: str = "kwic", loader: Any = None, max_lin
         if view == "console":
             print(console_view(res, max_lines))
             return
+        if view == "parallel":
+            from .parallel_view import hits_to_view
+
+            display(HTML(hits_to_view(res, loader, max_groups=max_lines)))
+            return
+        if view == "table":
+            from .table_view import show_table
+
+            show_table(res, page_size=min(max_lines, 20) or 20)
+            return
         fn = {"kwic": lambda: kwic_html(res, max_lines), "chips": lambda: chips_html(res, max_lines),
               "cards": lambda: cards_html(res, loader, max_lines)}[view]
         display(HTML(CSS + fn()))
     except ImportError:  # pragma: no cover
         print(console_view(res, max_lines))
+
+
+from .parallel_view import show_parallel  # noqa: E402
+from .table_view import (  # noqa: E402
+    disable_interactive_tables,
+    enable_interactive_tables,
+    show_table,
+    table_html,
+)
+
+__all__ = [
+    "kwic_html",
+    "chips_html",
+    "cards_html",
+    "console_view",
+    "show",
+    "show_parallel",
+    "show_table",
+    "table_html",
+    "enable_interactive_tables",
+    "disable_interactive_tables",
+]

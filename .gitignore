@@ -45,6 +45,8 @@ tables/
 
 # Headless-execution artefacts
 executed_*.ipynb
+*.html
+*.ipynb.bak
 
 # OS metadata
 .DS_Store

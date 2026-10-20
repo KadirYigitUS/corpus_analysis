@@ -91,6 +91,10 @@ class KwicLine:
     def right_text(self) -> str:
         return " ".join(w for w, _ in self.right)
 
+    def __repr__(self) -> str:
+        return (f"<KwicLine {self.code} {self.coordinate}: "
+                f"{self.left_text()[-20:]} [{self.node[0]}] {self.right_text()[:20]}>")
+
 
 @dataclass
 class ConcordanceResult:
@@ -104,6 +108,33 @@ class ConcordanceResult:
 
     def __len__(self) -> int:
         return len(self.lines)
+
+    def __repr__(self) -> str:
+        left, right = self.span
+        span_str = "sentence" if left > 1000 else f"−{left}/+{right}"
+        return (f"<ConcordanceResult: {len(self.lines)} line(s) ({self.total_hits} total hits), "
+                f"span={span_str}, view={self.view_label!r}>")
+
+    def _repr_html_(self) -> str:
+        from .render import CSS, cards_html, chips_html, kwic_html
+        view = str(self.meta.get("view", "kwic"))
+        max_lines = int(str(self.meta.get("max_lines", min(len(self.lines), 30))))
+        if view == "chips":
+            body = chips_html(self, max_lines=max_lines)
+        elif view == "cards":
+            loader = self.meta.get("loader")
+            body = cards_html(self, loader=loader, max_lines=max_lines)
+        elif view == "parallel":
+            from .parallel_view import hits_to_view
+
+            return hits_to_view(self, self.meta.get("loader"), max_groups=min(max_lines, 8))
+        elif view == "table":
+            from .table_view import TABLE_CSS, table_html
+
+            return CSS + TABLE_CSS + table_html(self, page_size=min(max_lines, 20) or 20)
+        else:
+            body = kwic_html(self, max_lines=max_lines)
+        return CSS + body
 
     def sorted(self, by: SortKey = "position") -> "ConcordanceResult":
         """Return a copy sorted by node form, n-th word left/right of node, or text order."""
@@ -130,6 +161,10 @@ class ConcordanceResult:
             "type": ln.corpus_type, "ch": ln.ch_no, "p": ln.p_no, "s": ln.s_no, "tok": ln.ti,
             "left": ln.left_text(), "node": ln.node[0], "right": ln.right_text(),
         } for ln in self.lines])
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """Alias of :meth:`to_frame` used by :func:`~corpus_toolkit.table_view.table_html`."""
+        return self.to_frame()
 
 
 def _cells(forms: np.ndarray, classes: np.ndarray, lo: int, hi: int) -> list[Cell]:

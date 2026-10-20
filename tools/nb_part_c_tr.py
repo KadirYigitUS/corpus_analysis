@@ -32,27 +32,27 @@ def chapters() -> list[Cell]:
       Araç setimizde çakışan pencereler her konumu **bir kez** sayar (birleşimli yuvalar / union slots).
       Bu yöntem iki yakın düğümün arasındaki sözcükleri çift saymaz ve $O_{11} \le R_1$ ile $O_{11} \le C_1$ güvencesi verir.
     - $C_1$: Aday eşdizimli sözcüğün tüm metindeki toplam sıklığı,
-    - $O_{11}$: Aday sözcüğün düğüm penceresi yuvaları *içinde* gözlenen sıklığı ($O = \text{observed}$),
-    - $E_{11} = \frac{R_1 \cdot C_1}{N}$: Bağımsız rastgele dağılım varsayımı altında beklenen birlikte geçiş sayısı ($E = \text{expected}$),
+    - $O_{11}$: Aday sözcüğün düğüm penceresi yuvaları *içinde* gözlenen sıklığı ($O = \\text{observed}$),
+    - $E_{11} = \\frac{R_1 \cdot C_1}{N}$: Bağımsız rastgele dağılım varsayımı altında beklenen birlikte geçiş sayısı ($E = \\text{expected}$),
 
-    $2 \times 2$ olasılık tablosu şu şekilde kurulur:
+    $2 \\times 2$ olasılık tablosu şu şekilde kurulur:
 
-    | | Pencere İçinde ($W$) | Pencere Dışında ($\neg W$) | Toplam |
+    | | Pencere İçinde ($W$) | Pencere Dışında ($\\neg W$) | Toplam |
     |---|---|---|---|
     | **Aday Sözcük ($C$)** | $O_{11}$ | $O_{12} = C_1 - O_{11}$ | $C_1$ |
-    | **Diğer Sözcükler ($\neg C$)** | $O_{21} = R_1 - O_{11}$ | $O_{22} = N - R_1 - C_1 + O_{11}$ | $N - C_1$ |
+    | **Diğer Sözcükler ($\\neg C$)** | $O_{21} = R_1 - O_{11}$ | $O_{22} = N - R_1 - C_1 + O_{11}$ | $N - C_1$ |
     | **Toplam** | $R_1$ | $N - R_1$ | $N$ |
 
     Standart eşdizim ve bağıntı ölçütleri:
 
     | Ölçüt | Formül | Özellikler ve Tercih Eğilimi |
     |---|---|---|
-    | **MI** (Church & Hanks 1990) | $\log_2 \frac{O_{11}}{E_{11}}$ | Birliktelik gücü (etki büyüklüğü); düşük sıklıklı nadir sözcüklere aşırı duyarlıdır |
-    | **MI²** (Daille 1994) | $\log_2 \frac{O_{11}^2}{E_{11}}$ | Düşük sıklık yanlılığını dengeler |
-    | **MI³** (Daille 1994) | $\log_2 \frac{O_{11}^3}{E_{11}}$ | Sık tekrarlanan güçlü kalıpları öne çıkarır |
-    | **T-skoru** (Church vd. 1991) | $\frac{O_{11} - E_{11}}{\sqrt{O_{11}}}$ | İstatistiksel kesinlik/kanıt; sık geçen dilbilgisel ortakları öne çıkarır |
-    | **G²** (Dunning 1993) | $2 \sum_{i,j} O_{ij} \ln \frac{O_{ij}}{E_{ij}}$ | İşaretli olabilirlik oranı testi; pozitif = çekim, negatif = itim |
-    | **Log-Dice** (Rychlý 2008) | $14 + \log_2 \frac{2 O_{11}}{f_{\text{düğüm}} + C_1}$ | Derlem boyutundan bütünüyle bağımsızdır; kusursuz eşdizim için en çok 14 değerini alır |
+    | **MI** (Church & Hanks 1990) | $\log_2 \\frac{O_{11}}{E_{11}}$ | Birliktelik gücü (etki büyüklüğü); düşük sıklıklı nadir sözcüklere aşırı duyarlıdır |
+    | **MI²** (Daille 1994) | $\log_2 \\frac{O_{11}^2}{E_{11}}$ | Düşük sıklık yanlılığını dengeler |
+    | **MI³** (Daille 1994) | $\log_2 \\frac{O_{11}^3}{E_{11}}$ | Sık tekrarlanan güçlü kalıpları öne çıkarır |
+    | **T-skoru** (Church vd. 1991) | $\\frac{O_{11} - E_{11}}{\sqrt{O_{11}}}$ | İstatistiksel kesinlik/kanıt; sık geçen dilbilgisel ortakları öne çıkarır |
+    | **G²** (Dunning 1993) | $2 \sum_{i,j} O_{ij} \ln \\frac{O_{ij}}{E_{ij}}$ | İşaretli olabilirlik oranı testi; pozitif = çekim, negatif = itim |
+    | **Log-Dice** (Rychlý 2008) | $14 + \log_2 \\frac{2 O_{11}}{f_{\\text{düğüm}} + C_1}$ | Derlem boyutundan bütünüyle bağımsızdır; kusursuz eşdizim için en çok 14 değerini alır |
 
     **Güç ile Kanıtın Ayrıştırılması (GraphColl Yaklaşımı, Brezina vd. 2015).**
     MI metriği *etki büyüklüğünü (gücü)* ölçerken, $G^2$ metriği *örneklem büyüklüğüne dayalı istatistiksel kanıtı*
@@ -61,13 +61,13 @@ def chapters() -> list[Cell]:
     dilbilgisel rutinler (düşük MI, yüksek $G^2$) ve rastgele gürültü.
 
     ### 10.2 Elle Doğrulanabilir Oyuncak Örnek
-    Verilenler: $N = 1000$, $R_1 = 100$, $C_1 = 20$, $O_{11} = 10$, $f_{\text{düğüm}} = 50$:
-    1. $E_{11} = \frac{100 \times 20}{1000} = 2.0$
-    2. $\text{MI} = \log_2(10 / 2) = \log_2(5) \approx 2.322$
-    3. $\text{MI}^2 = \log_2(100 / 2) = \log_2(50) \approx 5.644$
-    4. $\text{MI}^3 = \log_2(1000 / 2) = \log_2(500) \approx 8.966$
-    5. $\text{T-skoru} = \frac{10 - 2}{\sqrt{10}} = \frac{8}{3.1623} \approx 2.530$
-    6. $\text{Log-Dice} = 14 + \log_2 \left(\frac{20}{50 + 20}\right) = 14 + \log_2(0.2857) = 14 - 1.8074 \approx 12.193$
+    Verilenler: $N = 1000$, $R_1 = 100$, $C_1 = 20$, $O_{11} = 10$, $f_{\\text{düğüm}} = 50$:
+    1. $E_{11} = \\frac{100 \\times 20}{1000} = 2.0$
+    2. $\\text{MI} = \log_2(10 / 2) = \log_2(5) \\approx 2.322$
+    3. $\\text{MI}^2 = \log_2(100 / 2) = \log_2(50) \\approx 5.644$
+    4. $\\text{MI}^3 = \log_2(1000 / 2) = \log_2(500) \\approx 8.966$
+    5. $\\text{T-skoru} = \\frac{10 - 2}{\sqrt{10}} = \\frac{8}{3.1623} \\approx 2.530$
+    6. $\\text{Log-Dice} = 14 + \log_2 \left(\\frac{20}{50 + 20}\\right) = 14 + \log_2(0.2857) = 14 - 1.8074 \\approx 12.193$
     """),
           komut_kilavuzu("Eşdizim Komutları", [
               ("collocation.association_table([o11], [c1], r1, n, f_node)", "Verilen sayımlar için 6 temel eşdizim ölçütünü hesaplama", "collocation.association_table([10], [20], 100, 1000, 50)"),
@@ -88,7 +88,7 @@ def chapters() -> list[Cell]:
     node_view = TokenView(br, "lem", False, "drop")
     tab = collocation.collocates(node_view, "robot", left=5, right=5, min_freq=5, sort_by="G2")
     print("Olasılık tablosu parametreleri:", tab.attrs)
-    display(tab.head(12).round(2))
+    show_table(tab.round(3), page_size=20, title="'robot' Eşdizimlileri — Ben, Robot (20 satır/sayfa, sıralanabilir)")
     """),
           code("""
     # GraphColl tarzı güç (MI) vs kanıt (G2) dağılım grafiği
@@ -150,24 +150,24 @@ def chapters() -> list[Cell]:
     TF-IDF (Spärck Jones 1972), sözcükleri metin içi sıklıkları (**TF**) ile metinlerarası ayırt ediciliklerinin
     (**IDF**) çarpımıyla ağırlıklandırır. Scikit-learn kütüphanesiyle birebir eşleşen algoritmamız şu bileşenleri kullanır:
 
-    - **Alt-doğrusal TF**: $\text{count} > 0$ için $\text{TF}(t, d) = 1 + \ln(\text{count}(t, d))$ (tekrarların azalan marjinal etkisi).
-    - **Düzeltilmiş (Smooth) IDF**: $\text{IDF}(t) = \ln\left(\frac{1 + N}{1 + \text{DF}(t)}\right) + 1$; burada $N$ toplam metin sayısı, $\text{DF}(t)$ ise terimin geçtiği metin sayısıdır.
-    - **L2 Normu**: $\vec{v}_{\text{norm}} = \frac{\vec{v}}{\|\vec{v}\|_2}$ metin uzunluğunun anahtarlık ağırlıklarını çarpıtmasını önler.
+    - **Alt-doğrusal TF**: $\\text{count} > 0$ için $\\text{TF}(t, d) = 1 + \ln(\\text{count}(t, d))$ (tekrarların azalan marjinal etkisi).
+    - **Düzeltilmiş (Smooth) IDF**: $\\text{IDF}(t) = \ln\left(\\frac{1 + N}{1 + \\text{DF}(t)}\\right) + 1$; burada $N$ toplam metin sayısı, $\\text{DF}(t)$ ise terimin geçtiği metin sayısıdır.
+    - **L2 Normu**: $\\vec{v}_{\\text{norm}} = \\frac{\\vec{v}}{\|\\vec{v}\|_2}$ metin uzunluğunun anahtarlık ağırlıklarını çarpıtmasını önler.
 
     İngilizce ve Türkçe kökten farklı dilbilgisel ve biçimbilimsel yapılara sahip olduğundan, iki dil **ayrı alt derlemler**
     olarak modellenir.
 
     ### 11.2 Elle Doğrulanabilir Oyuncak Örnek — Elle Hesaplama vs scikit-learn
     Üç belge: $d_1 = [a, b, b]$, $d_2 = [a, c]$, $d_3 = [c, c, d]$ ($N = 3$).
-    - $a$: $d_1, d_2$ belgelerinde geçer $\Rightarrow \text{DF} = 2 \Rightarrow \text{IDF} = \ln(4/3) + 1 \approx 1.2877$
-    - $b$: $d_1$ belgesinde geçer $\Rightarrow \text{DF} = 1 \Rightarrow \text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \approx 1.6931$
-    - $c$: $d_2, d_3$ belgelerinde geçer $\Rightarrow \text{DF} = 2 \Rightarrow \text{IDF} = \ln(4/3) + 1 \approx 1.2877$
-    - $d$: $d_3$ belgesinde geçer $\Rightarrow \text{DF} = 1 \Rightarrow \text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \approx 1.6931$
+    - $a$: $d_1, d_2$ belgelerinde geçer $\Rightarrow \\text{DF} = 2 \Rightarrow \\text{IDF} = \ln(4/3) + 1 \\approx 1.2877$
+    - $b$: $d_1$ belgesinde geçer $\Rightarrow \\text{DF} = 1 \Rightarrow \\text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \\approx 1.6931$
+    - $c$: $d_2, d_3$ belgelerinde geçer $\Rightarrow \\text{DF} = 2 \Rightarrow \\text{IDF} = \ln(4/3) + 1 \\approx 1.2877$
+    - $d$: $d_3$ belgesinde geçer $\Rightarrow \\text{DF} = 1 \Rightarrow \\text{IDF} = \ln(4/2) + 1 = \ln(2) + 1 \\approx 1.6931$
 
-    $d_1$ içinde: $\text{tf}(a) = 1 + \ln(1) = 1.0$; $\text{tf}(b) = 1 + \ln(2) \approx 1.6931$.
-    Norm öncesi ağırlıklar: $w(a) = 1.0 \times 1.2877 = 1.2877$; $w(b) = 1.6931 \times 1.6931 \approx 2.8667$.
+    $d_1$ içinde: $\\text{tf}(a) = 1 + \ln(1) = 1.0$; $\\text{tf}(b) = 1 + \ln(2) \\approx 1.6931$.
+    Norm öncesi ağırlıklar: $w(a) = 1.0 \\times 1.2877 = 1.2877$; $w(b) = 1.6931 \\times 1.6931 \\approx 2.8667$.
     L2 normu: $\sqrt{1.2877^2 + 2.8667^2} = \sqrt{1.6582 + 8.2180} = 3.1427$.
-    Normalize $d_1$: $a \approx 0.410$, $b \approx 0.912$.
+    Normalize $d_1$: $a \\approx 0.410$, $b \\approx 0.912$.
     """),
           komut_kilavuzu("TF-IDF Komutları", [
               ("tfidf.tfidf_manual(docs)", "Belge listelerinden alt-doğrusal düzeltilmiş TF-IDF tablosu üretme", "tfidf.tfidf_manual([['a', 'b'], ['b', 'c']])"),
@@ -226,7 +226,7 @@ def chapters() -> list[Cell]:
     print(f"Toplam {len(ch.doc_ids)} adet dilimlenmiş sanal belge üretildi.")
     print("BR-SM (Ben, Robot) ilk dilimi:", ch.top_terms("BR-SM#1", 6)["term"].tolist())
     """),
-          tuzaklar(["Her belgede geçen sözcükler $\text{IDF} \approx 1.0$ alır ve neredeyse sıfır anahtarlık ağırlığına sahip olur — bu tasarımın doğal sonucudur.",
+          tuzaklar(["Her belgede geçen sözcükler $\\text{IDF} \\approx 1.0$ alır ve neredeyse sıfır anahtarlık ağırlığına sahip olur — bu tasarımın doğal sonucudur.",
                     "TF-IDF keşifsel bir ağırlıklandırma yöntemidir, bir istatistiksel hipotez testi değildir: iki derlem arasında istatistiksel anlamlılık iddia ederken $G^2$ anahtarlık testini tercih edin."]),
           alistirmalar([("Philip K. Dick'in *A Scanner Darkly* yapıtında geçen en ayırt edici 8 İngilizce sözlükbirim hangileridir (özel adlar hariç)?",
                          "```python\nr = T.fit(loader.load_all_english(), 'lem', True, exclude_pos={'PROPN'})\ndisplay(r.top_terms('ASD-PKD', 8))\n```")]),
@@ -338,7 +338,7 @@ def chapters() -> list[Cell]:
     """),
           komut_kilavuzu("Etkileşimli Gezgin Komutları", [
               ("explorer.CorpusExplorerUI(loader).show()", "Etkileşimli ipywidgets arama ve dizin panelini görüntüleme", "ui = explorer.CorpusExplorerUI(loader); ui.show()"),
-              ("explorer.quick_search(loader, ['sözcük'], ...)", "Doğrudan DataFrame döndüren komut satırı / betik eşdeğeri", "quick_search(loader, ['robot'], author='Selma Mine')"),
+              ("explorer.quick_search(loader, ['sözcük'], ...)", "ConcordanceResult döndüren (kendini görüntüler; DataFrame için .to_dataframe()) betik eşdeğeri", "quick_search(loader, ['robot'], author='Selma Mine')"),
               ("loader.evict_all()", "Yüklenmiş tüm metin tablolarını bellekten tahliye etme", "loader.evict_all()"),
           ]),
           code("""
@@ -352,12 +352,11 @@ def chapters() -> list[Cell]:
     """),
           md("### 13.2 Betik Tabanlı Eşdeğer: `quick_search`"),
           code("""
-    # Selma Mine metinlerinde 'robot' adını arayan betik çağrısı
+    # Selma Mine metinlerinde 'robot' adını arayan betik çağrısı (NDA yan yana paralel görünüm)
     from corpus_toolkit.explorer import quick_search
     qs_res = quick_search(loader, ["robot"], category="Author-translator related texts",
                           author="Selma Mine", field="lem", pos={"NOUN"},
-                          span="phrase", view="kwic", max_lines=6)
-    display(qs_res)
+                          span="phrase", view="parallel", max_lines=3)
     """),
           code("""
     # Açık bellek temizliği: Keşif sonrası tüm tabloları RAM'den tahliye etme
@@ -368,8 +367,7 @@ def chapters() -> list[Cell]:
                     "Gezginde art arda birçok metni açmak RAM kullanımını artırabilir: uzun oturumlar arasında `loader.evict_all()` çağrısı yapın."]),
           alistirmalar([("Tüm Türkçe çeviri metinlerinde `uzay` sözlükbirimi için hızlı arama yapın ve ilk 5 bulguyu listeleyin.",
                          "```python\nfrom corpus_toolkit.explorer import quick_search\n"
-                         "res = quick_search(loader, ['uzay'], category='Turkish translations', field='lem', view='kwic', max_lines=5)\n"
-                         "display(res)\n```")]),
+                         "res = quick_search(loader, ['uzay'], category='Turkish translations', field='lem', view='kwic', max_lines=5)\n```")]),
           akademik_not("""
           **Keşifsel Veri Çözümlemesi ve Yorumbilimsel Soruşturma (Tukey 1977; Rockwell & Sinclair 2016):**
           Dijital edebiyat araştırmalarında bilgisayar destekli okuma, yakın okumanın (close reading)

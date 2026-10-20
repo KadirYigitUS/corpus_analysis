@@ -111,10 +111,11 @@ def chapters() -> list[Cell]:
     import matplotlib.pyplot as plt
     from IPython.display import HTML, display
 
-    from corpus_toolkit import CorpusLoader, TokenView
+    from corpus_toolkit import (CorpusLoader, TokenView, enable_interactive_tables,
+                                show_parallel, show_table)
     from corpus_toolkit import (alignment, analysis, batch_kwic, collocation, depviz, diversity,
-                                kwic, nltk_adapter, pos, render, reporter, search, stats, style,
-                                tfidf, viz)
+                                kwic, nltk_adapter, parallel_view, pos, render, reporter, search,
+                                stats, style, table_view, tfidf, viz)
     display(HTML(style.CSS))                      # HTML görünümleri için merkezi CSS
     pd.set_option("display.max_columns", 40); pd.set_option("display.width", 160)
     """),
@@ -142,7 +143,7 @@ def chapters() -> list[Cell]:
     c += [bolum_basligi(1, "Derlem Envanteri ve Boyut Dağılımı", 10,
                         ["Tüm yazar-çevirmenleri, yapıtları ve çeviri çiftlerini tam adlarıyla listeleme",
                          "13 ayrıştırılmış pickle dosyasının disk üzerindeki varlığını doğrulama",
-                         "Temel boyut istatistiklerini (tümce ve sözcük sayıları) inceleme"],
+                         "Temel boyut istatistiklerini (tümce ve sözcük sayıları) etkileşimli sayfalı tablolarda inceleme"],
                         "Bölüm 0", "Verinizi ölçmeden önce onu envanteriyle tanıyın."),
           md("""
     ### 1.1 Neden Önce Envanter?
@@ -161,22 +162,22 @@ def chapters() -> list[Cell]:
     inv = loader.registry.inventory()
     display(inv[inv["focal_code"] == "SM"][["code", "creator", "title", "type", "year"]])
     """),
-          komut_kilavuzu("Kayıt Defteri ve Envanter Komutları", [
-              ("loader.registry.inventory()", "13 metnin tüm üstverisini içeren DataFrame döndürür", "display(loader.registry.inventory())"),
+          komut_kilavuzu("Kayıt Defteri ve Etkileşimli Tablo Komutları", [
+              ("loader.registry.inventory()", "13 metnin tüm üstverisini içeren DataFrame döndürür", "show_table(loader.registry.inventory())"),
               ("loader.registry.verify_files()", "Tüm .pickle.xz dosyalarının diskte var olduğunu doğrular", "loader.registry.verify_files()"),
+              ("show_table(df, page_size=20)", "Sayfalı (20 satır/sayfa), sıralanabilir ve sütun genişliği ayarlanabilir tablo", "show_table(inv, page_size=20, title='Envanter')"),
+              ("enable_interactive_tables()", "Tüm DataFrame çıktılarını etkileşimli tabloya dönüştürür", "enable_interactive_tables(page_size=20)"),
               ("loader.registry.display(rec)", "Okunabilir tam etiket üretir: 'Yazar — Başlık [KOD]'", "print(loader.registry.display('BR-SM'))"),
-              ("loader.registry.resolve_author(query)", "Yazar adı veya kodundan standart yazar koduna çözer", "loader.registry.resolve_author('Selma Mine')"),
-              ("loader.registry.resolve_text(query)", "Kitap başlığı veya kodundan TextRecord nesnesine çözer", "loader.registry.resolve_text('Ben, Robot')"),
           ]),
-          md("### 1.3 Tüm Derlemin Doğrulanması ve Boyut Dağılımı"),
+          md("### 1.3 Tüm Derlemin Doğrulanması ve Boyut Dağılımı (Etkileşimli Sütunlu Tablo Görünümü)"),
           code("""
-    display(loader.registry.inventory())
-    display(loader.registry.verify_files())
+    show_table(loader.registry.inventory(), page_size=20, title="Derlem Envanteri (13 Metin)")
+    show_table(loader.registry.verify_files(), page_size=20, title="Disk Pickle Doğrulama Tablosu")
     """),
           code("""
     loader.load_all().describe();
     sizes = loader.load_all().summary()          # İlk çalıştırma önbelleği kurar
-    display(sizes.sort_values(["author_translator", "type"]))
+    show_table(sizes.sort_values(["author_translator", "type"]), page_size=20, title="Derlem Boyut Özeti")
     """),
           code("""
     fig, ax = plt.subplots(figsize=(9, 4))
@@ -212,175 +213,248 @@ def chapters() -> list[Cell]:
     |---|---|---|
     | `load_all_english()` | CorpusSelection | 5 İngilizce kaynak roman |
     | `load_all_turkish()` | CorpusSelection | 5 çeviri + 3 yerli roman |
-    | `load_translation_pairs()` | list[PairSpec] | 5 hizalanmış çeviri çifti |
-    | `load_indigenous()` | CorpusSelection | 3 yerli Türkçe roman |
+    | `load_translation_pairs([author])` | ParallelCorpus | 5 hizalanmış çeviri çifti |
+    | `load_indigenous([author])` | CorpusSelection | 3 yerli Türkçe roman |
     | `load_all()` | CorpusSelection | 13 metnin tamamı |
-    | `load_author_related(code)` | CorpusSelection | Belirli bir yazarın tüm kaynak, çeviri ve yerli metinleri |
-    | `load_author_turkish(code)` | CorpusSelection | Belirli bir yazarın yalnızca Türkçe metinleri |
-    | `load_text(code_or_title)` | LazyCorpusText | Belirli bir tekil metin |
+    | `load_author_related([author])` | CorpusSelection | Belirli bir yazarın tüm kaynak, çeviri ve yerli metinleri |
+    | `load_author_turkish([author])` | CorpusSelection | Belirli bir yazarın yalnızca Türkçe metinleri |
+    | `load_text(code_or_title)` | LazyCorpusText | Belirli bir tekil metin (`'BR-SM'` veya `'Karanlığı Taramak'`) |
 
+    `author` parametresi kısa kod (`'SM'`) **veya** tam yazar adı (`'Selma Mine'`, `'ozlem kurdoglu'`) kabul eder.
+    """),
+          md("""
     ### 2.2 Adım Adım Bellek Yaşam Döngüsü: Yükle, Ölç ve Tahliye Et
-    Tek bir romanı yüklüyoruz, RAM kullanımını gözlemliyoruz ve `.evict()` ile belleği boşaltıyoruz.
+    1. Yükleyici çağrıldığında veri tablosu henüz belleğe açılmaz (`text.is_loaded() == False`).
+    2. `text.tokens` erişildiğinde Parquet/pickle tablosu RAM'e alınır (`text.is_loaded() == True`).
+    3. `text.evict()` çağrıldığında tablo bellekten silinir ve çöp toplayıcı (`gc.collect()`) çalıştırılır.
     """),
           code("""
-    print(f"Başlangıç RAM kullanımı: {loader.rss_mb():.1f} MB")
-    text = loader.load_text("BR-SM")             # Selma Mine - Ben, Robot
-    print(f"Tablolar yüklenmeden önce: {loader.rss_mb():.1f} MB")
-    df_tok = text.tokens                         # Bu satırda Parquet önbellekten RAM'e okunur
-    print(f"Tablolar yüklendikten sonra: {loader.rss_mb():.1f} MB (Sözcük tablosu satır sayısı: {len(df_tok)})")
-    text.evict()                                 # Bellekten tahliye
-    print(f"evict() sonrasında RAM: {loader.rss_mb():.1f} MB")
+    toy_t = loader.load_text("BR-SM")
+    print("tokens erişiminden önce:", toy_t.is_loaded())
+    _ = toy_t.tokens
+    print("tokens erişiminden sonra:", toy_t.is_loaded(), f"({toy_t.memory_mb():.1f} MB)")
+    toy_t.evict()
+    print("evict() sonrasında:", toy_t.is_loaded())
     """),
           komut_kilavuzu("Yükleme ve Bellek Yönetimi", [
-              ("loader.load_all_turkish()", "Tüm Türkçe metinleri içeren CorpusSelection seçkisi", "turkish = loader.load_all_turkish()"),
-              ("loader.load_translation_pairs()", "Hizalanmış çeviri çiftleri listesi", "pairs = loader.load_translation_pairs()"),
-              ("loader.load_text(code)", "Tekil LazyCorpusText nesnesi yükler", "text = loader.load_text('SU-ZB')"),
-              ("text.tokens", "Biçimbilimsel ve sözdizimsel etiketli sözcük DataFrame'i", "tokens = text.tokens"),
-              ("text.sentences", "Tümce metinleri ve sözcük sayılarını içeren DataFrame", "sentences = text.sentences"),
-              ("text.evict()", "DataFrameleri bellekten atar ve çöp toplayıcıyı tetikler", "text.evict()"),
-              ("loader.rss_mb()", "Mevcut Python sürecinin RAM tüketimini MB cinsinden ölçer", "print(loader.rss_mb())"),
+              ("loader.load_all_english()", "5 İngilizce kaynak bilimkurgu metni", "loader.load_all_english()"),
+              ("loader.load_all_turkish()", "5 çeviri + 3 yerli Türkçe bilimkurgu romanı", "loader.load_all_turkish()"),
+              ("loader.load_translation_pairs(author=None)", "5 paralel hizalanmış çeviri çifti", "loader.load_translation_pairs('SM')"),
+              ("loader.load_indigenous(author=None)", "3 yerli Türkçe bilimkurgu romanı", "loader.load_indigenous('ZB')"),
+              ("loader.load_all()", "Odak derlemdeki 13 metnin tamamı", "loader.load_all()"),
+              ("loader.load_text(identifier)", "Kod veya başlık alt-dizesiyle tekil metin yükleme", "loader.load_text('BR-SM')"),
+              ("text.evict()", "DataFrame belleğini serbest bırakır ve gc.collect() tetikler", "text.evict()"),
           ]),
-          md("### 2.3 Sözcük ve Tümce Tablolarının Yapısı"),
           code("""
-    text = loader.load_text("SU-ZB")             # Zühtü Bayar - Sahte Uygarlık
-    display(text.tokens.head(8))
-    display(text.sentences.head(4))
-    text.evict()
+    loader.load_all_english().describe()
+    loader.load_all_turkish().describe()
+    loader.load_translation_pairs().describe()
+    loader.load_indigenous().describe()
+    loader.load_author_related("Özlem Kurdoğlu").describe()
+    loader.load_author_turkish("zuhtu bayar").describe();
     """),
-          tuzaklar(["`text.tokens` çağrıldığında tablo RAM'e alınır; döngülerde her metin işlendikten sonra `text.evict()` çağırmamak bellek birikimine yol açar.",
-                    "Sözcük tablosundaki sütunlar bellek optimizasyonu için `category` tipindedir; metin işlemleri yaparken `astype(str)` kullanın."]),
-          alistirmalar([("Özlem Kurdoğlu'nun *Karanlığı Taramak* çevirisindeki tümce sayısını bulunuz.",
-                         "```python\nt=loader.load_text('KT-OK'); print(len(t.sentences)); t.evict()\n```")]),
+          md("""
+    ### 2.3 Sözcük ve Tümce Tablolarının Yapısı
+    Her sözcükbirim bir satırdır; sütunlar: `sid` (tümce), `ti` (konum), `tok`, `lem`, `pos` (UPOS),
+    `morph`, `head`, `rel` (bağımlılık), `fcl` (0 içerik / 1 işlevsel / 2 noktalama).
+    """),
+          code("""
+    import time
+    text = loader.load_text("Ben, Robot: Mekanik Adam Devri")     # henüz tembel (lazy) …
+    print(loader.registry.display(text))
+    t0 = time.perf_counter(); tab = text.tokens                    # … şimdi belleğe alındı
+    print(f"{len(tab):,} sözcük {time.perf_counter()-t0:.2f} sn içinde · tablo ≈ {text.memory_mb():.1f} MB")
+    display(tab.head(8))
+    """),
+          code("""
+    # Soğuk vs sıcak yükleme: tahliye et, ardından Parquet önbellekten yeniden yükle
+    text.evict(verbose=True)
+    t0 = time.perf_counter(); _ = text.tokens
+    print(f"önbellekten yeniden yükleme: {time.perf_counter()-t0:.3f} sn")
+    display(loader.memory_report())
+    """),
+          code("""
+    # Çok sayıda metin üzerinde bellek korumalı döngü: her metin kullanımdan hemen sonra tahliye edilir
+    rows = []
+    for t in loader.load_all().iter_evicting():
+        n = len(TokenView(t, "lem", filter_function_words=True))
+        rows.append((t.record.focal_name, t.record.title, n))
+    pd.DataFrame(rows, columns=["author_translator", "title", "content_lemmas"])
+    """),
+          tuzaklar(["Bir değişkende tutulan `LazyCorpusText`, `.evict()` çağrılana (veya `iter_evicting()` kullanılana) dek tablolarını RAM'de tutar.",
+                    "Bir `.pickle.xz` dosyasının güncellenmesi önbellek kaydını otomatik olarak geçersiz kılar; `.cache/` dizinini silmek her zaman güvenlidir."]),
+          alistirmalar([("Zühtü Bayar'ın çeviri çiftlerini yükleyiniz ve her İngilizce/Türkçe metnin tümce sayısını yazdırınız.",
+                         "```python\nfor pair, en, tr in loader.load_translation_pairs('ZB'):\n"
+                         "    print(en.summary()['title'], en.summary()['n_sentences'], '→', "
+                         "tr.summary()['title'], tr.summary()['n_sentences'])\n```")]),
           akademik_not("""
-          **Büyük Ölçekli Dijital Beşeri Bilimlerde Veri Verimliliği:**
-          Kapsamlı derlem çalışmalarında tüm metinlerin belleğe kontrolsüz biçimde yüklenmesi
-          bellek tükenmesine (*Out-Of-Memory*) neden olur. Tembel yükleme ve içerik-adresli Parquet
-          önbelleği, yüz binlerce sözcüklük edebi külliyatın taşınabilir dizüstü bilgisayarlarda
-          dahi deterministik ve sıfır kayıpla analiz edilmesini mümkün kılar.
+          **Dijital Çeviribilimde Hesaplamalı Bellek Korunumu (Sinclair 1991):**
+          Kitap uzunluğundaki paralel ve karşılaştırılabilir derlemlerin analizi disiplinli bir bellek
+          yönetimi gerektirir. DataFrame yapılarını yalnızca talep anında belleğe açarak, optimize edilmiş
+          sütun tiplerini Parquet olarak önbellekleyerek ve işi biten yapıları tahliye ederek yüz binlerce
+          etiketli sözcüğü 1.5 GB RAM sınırının altında analiz edebiliyoruz.
           """),
           ]
 
     # ------------------------------------------------------------------ Bölüm 3
-    c += [bolum_basligi(3, "Paralel Derlem ve Tümce Hizalama Analizi", 20,
-                        ["İngilizce kaynak ve Türkçe çeviri tümce eşleşmelerini inceleme",
-                         "1:1, 1:N, N:1 ve N:M hizalama kalıplarını sayısal olarak sınıflandırma",
-                         "Çeviri genişleme ve daralma oranlarını hesaplayabilme"],
-                        "Bölüm 1–2", "Çeviride eşdeğerlik ve yeniden yapılandırmanın haritası."),
+    c += [bolum_basligi(3, "Paralel Derlem Hizalama Yapısı ve NDA Yan Yana Görünüm", 20,
+                        ["Tümce hizalamalarını 1:1, 1:N, N:1, N:M, atlama (omission) ve ekleme (addition) olarak sınıflandırma",
+                         "`R_sent`, sözcük ve karakter genişleme oranlarını hesaplayıp yorumlama",
+                         "Neologism Dictionary Annotation (NDA) yan yana paralel görünümüyle İngilizce ⇄ Türkçe hizalı öğeleri inceleme"],
+                        "Bölüm 0–2", "Çevirmenler tümceleri nasıl böler, birleştirir ve yeni sözcükleri nasıl aktarır?"),
           md("""
     ### 3.1 Kuramsal Arka Plan: Çeviri Hizalaması
-    Paralel derlem çalışmalarında kaynak ve erek metinlerin tümce düzeyinde hizalanması,
-    çevirmenin sözdizimsel stratejilerini (bölme, birleştirme, atlama, ekleme) ortaya çıkarır
-    (Baker 1993, 1995; Toury 2012).
-    - **1:1 Eşleşme**: Kaynak tümce tek bir erek tümceyle karşılanmıştır (doğrudan aktarım).
-    - **1:N (Bölme / Parçalama)**: Kaynak tümce erek dilde birden fazla tümceye bölünmüştür (anlatısal sadeleştirme).
-    - **N:1 (Birleştirme)**: Birden çok kaynak tümce tek bir tümcede kaynaştırılmıştır (yoğunlaştırma).
-    - **1:0 / 0:1 (Atlama ve Ekleme)**: Çeviride tümce düzeyinde eksiltme veya serbest eklemeler.
+    Tümce hizalayıcı, İngilizce ve Türkçe tümce *gruplarını* eşleştirir. Grubun **kardinalite şekli**
+    çevirmen kararlarının somut izidir (Toury 2012: *yeterlik* vs *benimsenirlik*; Baker 1993:
+    *açıklayıcılık, sadeleştirme*):
+
+    | Tür | (İngilizce, Türkçe) | Okuma |
+    |---|---|---|
+    | 1:1 | (1, 1) | Tümce sınırı korunmuş |
+    | 1:N | (1, n≥2) | İngilizce tümce **bölünmüş** |
+    | N:1 | (n≥2, 1) | Tümceler **birleştirilmiş** |
+    | N:M | (n≥2, m≥2) | Yeniden yapılandırılmış |
+    | omission | (n, 0) | Türkçe karşılığı olmayan İngilizce tümce |
+    | addition | (0, m) | İngilizce karşılığı olmayan Türkçe tümce |
+
+    `R_sent = Türkçe tümce sayısı ÷ İngilizce tümce sayısı` (>1: Türkçe çeviri daha fazla tümce kullanır).
+
+    ### 3.2 Adım Adım Oyuncak Örnek
+    Altı hizalama grubu: şekiller (1,1), (1,1), (1,2), (2,1), (1,0), (0,1).
+    İngilizce tümceler = 1+1+1+2+1+0 = 6; Türkçe = 1+1+2+1+0+1 = 6 → `R_sent = 1.0`.
+    İki grupta yeniden yapılandırma olmasına rağmen genel oran 1.0 çıkabilir — *1'e yakın bir oran zıt yönlü hareketleri gizleyebilir*.
     """),
-          md("""
-    ### 3.2 Adım Adım Oyuncak Örnek: Hizalama Oranları
-    Kaynakta 100 tümce, erek metinde 115 tümce varsa:
-    - Tümce Genişleme Oranı: $R_{\\text{sent}} = 115 / 100 = 1.15$ (tümce sayısı %15 artmıştır, bölme eğilimi).
-    - Eğer karakter oranı $R_{\\text{char}} > 1.0$ ise erek metin fiziksel olarak daha uzundur.
+          code("""
+    toy = [(1,1),(1,1),(1,2),(2,1),(1,0),(0,1)]
+    print([alignment.alignment_type(a, b) for a, b in toy])
+    print("R_sent =", sum(b for _, b in toy) / sum(a for a, _ in toy))
     """),
-          komut_kilavuzu("Hizalama ve Paralel Derlem Komutları", [
-              ("loader.load_translation_pairs()", "Beş çeviri çiftinin PairSpec nesnelerini döndürür", "pairs = loader.load_translation_pairs()"),
-              ("pair.alignment_index()", "Hizalama eşleşmelerini sorgulamak için AlignmentIndex üretir", "idx = pair.alignment_index()"),
-              ("idx.table()", "Tüm hizalama gruplarını içeren DataFrame (grup no, şekil, tümce ID'leri)", "display(idx.table().head())"),
-              ("idx.shape_distribution()", "Hizalama şekillerinin (1:1, 1:2 vb.) frekans ve yüzdeleri", "idx.shape_distribution()"),
-              ("idx.expansion_ratios()", "Tümce, sözcük ve karakter genişleme oranlarını hesaplar", "idx.expansion_ratios()"),
+          komut_kilavuzu("Hizalama ve NDA Yan Yana Paralel Görünüm Komutları", [
+              ("alignment.alignment_type(n_en, n_tr)", "Kardinaliteyi '1:1', '1:N', 'N:1', 'N:M', 'omission', 'addition' olarak sınıflandırır", "alignment.alignment_type(1, 2)"),
+              ("AlignmentStructureAnalyzer(cache).summary(pairs)", "Tüm çeviri çiftleri için yüzde dağılımı ve R_sent özet tablosu", "ana.summary(pairs)"),
+              ("AlignmentStructureAnalyzer.cardinality_table(pair)", "Hizalama grubu başına sözcük sayısı ve tür tablosu", "ana.cardinality_table(pair)"),
+              ("show_parallel(loader, pair_or_code, ais, overlay=True)", "NDA sözlük bağlantıları, SVG çizgileri ve sözlükbirimlerle EN ⇄ TR yan yana görünüm", "show_parallel(loader, 'I_Robot', [3350, 4288, 4313])"),
+              ("AlignmentIndex.texts(ai)", "ai numaralı hizalama grubu için (eng_text, tur_text) döndürür", "idx.texts(14)"),
           ]),
           code("""
     pairs = [p for p, _, _ in loader.load_translation_pairs()]
     ana = alignment.AlignmentStructureAnalyzer(loader.cache)
     summary = ana.summary(pairs)
-    display(summary.round(2))
+    show_table(summary.round(2), page_size=20, title="Paralel Hizalama Yapısı Özeti")
     """),
           code("""
-    fig = viz.alignment_stacked(summary); plt.show()
+    fig = viz.alignment_stacked(summary); plt.show()                       # Şekil 1A
     tables = {p.tur.title[:28]: ana.cardinality_table(p) for p in pairs}
-    fig = viz.alignment_scatter(tables); plt.show()
+    fig = viz.alignment_scatter(tables); plt.show()                        # Şekil 1B
     """),
-          md("### 3.3 Hizalanmış Tümce Kartları Örneği"),
+          md("""
+    ### 3.3 Yorumlama Kılavuzu ve NDA Yan Yana Paralel Derlem Görünümü
+    - **Yüksek 1:1** → Çeviri tümce sınırlarını korur; yüksek **1:N** → İngilizce uzun tümceler Türkçede bölünmüştür.
+    - **omission / addition** çevirmen kararı olabileceği gibi **hizalayıcı/baskı farkı** da olabilir; yorumlamadan önce örnekleri inceleyin.
+    - **`show_parallel(loader, pair, ais)`** işlevi, `scripts/Neologism_Dictionary_Annotation` (NDA) aracının
+      yöntembilimini ve veri akışını içe aktarır: her sözcük iki katmanlı bir kapsül (`yüzey biçim` + `lemma·UPOS`)
+      olarak çizilir; eşlenmiş iki dilli yeni sözcükler (`initial_dictionary.pickle`) **SVG bağlantı çizgileriyle (`L#`)**
+      birleştirilir; tek dilli *Gerçekdışı Özolgular* (`single_eng` camgöbeği / `single_tur` gül kurusu) ve yüksek
+      adaylık puanlı sözcükler (`scored_alignment_rows.pickle`) renklendirilir; her `ai` grubunun altında
+      **Etiket Atamaları Özeti (Current Label Attributions)** yer alır.
+    """),
           code("""
-    # Selma Mine - Ben, Robot çevirisinden örnek bir 1:1 hizalama kartı
-    pair_sm = pairs[0]
-    idx_sm = loader.alignment_index(pair_sm)
-    sample_ai = idx_sm.table().iloc[5]["ai"]
-    eng_str, tur_str = idx_sm.texts(sample_ai)
-    print("--- İNGİLİZCE KAYNAK ---")
-    print(eng_str)
-    print("\\n--- TÜRKÇE ÇEVİRİ ---")
-    print(tur_str)
+    # NDA yan yana paralel görünüm: eşlenmiş iki dilli çiftler (L#), tek dilli özolgular ve SVG bağlantı çizgileri
+    show_parallel(loader, "I_Robot", [3350, 4288, 4313], overlay=True, hits={"brain"})
     """),
-          tuzaklar(["Hizalama oranları romanların bölümleme farklılıklarından etkilenebilir.",
-                    "1:0 veya 0:1 şekilleri her zaman metin atlama anlamına gelmez; bazen OCR veya dipnot farklılıklarını yansıtır."]),
-          alistirmalar([("Hangi çevirmen en yüksek 1:1 hizalama oranına sahiptir?",
-                         "```python\ndf_align['1:1_pct'].idxmax()\n```")]),
+          code("""
+    # Bir çeviri çiftindeki ilk atlamaları (omission) doğrudan metin üzerinde inceleyelim
+    pair = pairs[1]
+    idx = loader.alignment_index(pair)
+    tab = ana.cardinality_table(pair)
+    for ai in tab[tab["type"] == "omission"]["ai"].head(3):
+        print(ai, "| EN:", idx.texts(ai)[0][:120])
+    """),
+          tuzaklar(["Yüzdeler *hizalama grupları* üzerinden, `R_sent` ise *tümceler* üzerinden hesaplanır — ikisi farklı sorulara yanıt verir.",
+                    "Çok kısa metinler (*The Light*) yüzdelerde dalgalanmaya yol açabilir."]),
+          alistirmalar([("Hangi çeviri çifti en yüksek N:M yeniden yapılandırma oranına sahiptir?",
+                         "```python\nsummary.loc[summary['N:M_pct'].idxmax(), ['pair','N:M_pct']]\n```")]),
           akademik_not("""
-          **Çeviri Normları ve Sentaktik Yeniden Yapılanma (Toury 2012):**
-          Türkçe ile İngilizce arasındaki tipolojik sözdizim farkı (SVO'ya karşı SOV, bağıntı tümcelerine
-          karşı eylemsi yapıları), İngilizce uzun ve karmaşık periyotların Türkçede bölünmesini (1:N)
-          özendirir. Zühtü Bayar'ın 1:N bölme oranlarının yüksekliği, kaynak odaklı yeterlik (*adequacy*)
-          yerine erek odaklı benimsenirlik (*acceptability*) normunu benimsediğini somutlaştırır.
+          **Çeviri Normları ve Sentaktik Yeniden Yapılanma (Toury 2012; Baker 1993):**
+          Toury, kaynak odaklı *yeterlik (adequacy)* ile erek odaklı *benimsenirlik (acceptability)*
+          arasındaki gerilimi tanımlar. $R_{\\text{sent}}$ oranı ve 1:N bölme yüzdeleri, çevirmenin
+          İngilizce karmaşık tümceleri Türkçe tümce normlarına nasıl uyarladığını somutlaştırır.
           """),
           ]
 
     # ------------------------------------------------------------------ Bölüm 4
-    c += [bolum_basligi(4, "Sözcük Türü (POS) Karşılaştırmalı Analizi", 20,
-                        ["Evrensel Sözcük Türü (UPOS) dağılımlarını hesaplama",
-                         "Sözcüksel yoğunluk (lexical density) ve ad/eylem oranını ölçme",
-                         "Çeviri ile yerli metinler arasındaki sözdizimsel farkları bootstrap güven aralıklarıyla test etme"],
-                        "Bölüm 1–3", "Metnin dilbilgisel omurgasını ortaya çıkarma."),
+    c += [bolum_basligi(4, "Sözcük Türü (POS) Karşılaştırmalı Analizi", 25,
+                        ["Evrensel Sözcük Türü (UPOS) profillerini, sözcüksel yoğunluğu ve ad/eylem oranlarını hesaplama",
+                         "Bir çeviri çifti içinde İngilizce kaynak ile Türkçe çeviriyi karşılaştırma",
+                         "Çeviri ve yerli Türkçe metinler arasındaki farkları bootstrap güven aralıklarıyla test etme"],
+                        "Bölüm 0–2", "Çevirmenler kendi telif romanlarını çevirdikleri kitaplardan farklı mı yazarlar?"),
           md("""
     ### 4.1 Kuramsal Temel: Sözcük Türleri ve Biçem
-    Sözcük türü dağılımları metnin türsel ve biçemsel kimliğini belirler (Biber 1988, 1993):
-    - **Sözcüksel Yoğunluk (Lexical Density)**: İçerik sözcüklerinin (AD, EYLEM, SIFAT, BELİRTEÇ) toplam sözcüklere oranı.
-    - **Ad / Eylem Oranı (Noun / Verb Ratio)**: Metnin adlaşmış (kavramsal/statik) mı yoksa eylemsel (anlatısal/dinamik) mi olduğunu gösterir.
+    UPOS (Evrensel Sözcük Türleri, Nivre vd. 2016) diller arası karşılaştırılabilir bir etiket kümesi sunar.
+    İki klasik gösterge: **sözcüksel yoğunluk (lexical density)** = içerik sözcükleri ÷ akan sözcükler
+    (Ure 1971; Halliday 1985) ve **ad/eylem oranı (noun/verb ratio)** (Biber 1988).
+    Tablolarımızda sözcüksel yoğunluk = (NOUN+VERB+ADJ+ADV) ÷ noktalama dışı sözcükler × 100 olarak hesaplanır.
+    İngilizce ve Türkçe *tipolojik* olarak farklılaştığından İngilizce↔Türkçe farkları kalite değil **yapısal profil**
+    farkıdır. Tez için asıl anlamlı karşılaştırma Türkçe içindeki **çeviri ↔ yerli** karşılaştırmasıdır (Simeoni 1998).
+
+    ### 4.2 Adım Adım Oyuncak Örnek
+    Cümle: “The cat saw the dog .” → etiketler DET NOUN VERB DET NOUN PUNCT. Noktalama dışı sözcük = 5;
+    içerik sözcükleri = NOUN, VERB, NOUN = 3 → sözcüksel yoğunluk %60; ad/eylem oranı = 2.
     """),
           komut_kilavuzu("Sözcük Türü (POS) Analiz Komutları", [
-              ("pos.PosComparativeAnalyzer()", "Karşılaştırmalı POS çözümleyicisini başlatır", "P = pos.PosComparativeAnalyzer()"),
-              ("P.distribution(text)", "Tek bir metnin UPOS dağılımını (frekans ve yüzde) döndürür", "P.distribution(text)"),
-              ("P.lexical_density(text)", "İçerik sözcükleri / toplam sözcük oranını hesaplar", "P.lexical_density(text)"),
-              ("P.noun_verb_ratio(text)", "Ad frekansı / Eylem frekansı oranını döndürür", "P.noun_verb_ratio(text)"),
-              ("P.group_comparison(g1, g2, labels)", "İki grup arasında bootstrap güven aralıklı fark testi", "P.group_comparison(trans, indig, ('Çeviri', 'Yerli'))"),
+              ("PosComparativeAnalyzer().profile_table(texts)", "Her metin için UPOS % sütunları ve yoğunluk metrikleri", "P.profile_table(loader.load_all())"),
+              ("PosComparativeAnalyzer().pair_comparison(en, tr)", "Paralel çeviri çifti için doğrudan UPOS karşılaştırması", "P.pair_comparison(en, tr)"),
+              ("PosComparativeAnalyzer().group_comparison(g1, g2, labels)", "Alt derlemler arası ortalama farkların bootstrap güven aralıkları", "P.group_comparison(trans, indig, ('translation', 'indigenous'))"),
           ]),
           code("""
     P = pos.PosComparativeAnalyzer()
-    turkish_texts = list(loader.load_all_turkish())
-    pos_rows = []
-    for t in turkish_texts:
-        dens = P.lexical_density(t)
-        nv = P.noun_verb_ratio(t)
-        pos_rows.append({
-            "code": t.record.code,
-            "title": t.record.title,
-            "type": t.record.corpus_type,
-            "author": t.record.creator,
-            "lexical_density": dens,
-            "noun_verb_ratio": nv,
-        })
-        t.evict()
-    df_pos = pd.DataFrame(pos_rows)
-    display(df_pos.sort_values(["type", "lexical_density"], ascending=[True, False]).round(3))
+    profile = P.profile_table(loader.load_all())
+    show_table(profile.round(1), page_size=20, title="13 Metnin UPOS Profil Tablosu")
+    fig = viz.pos_heatmap(profile, pos.UPOS_ORDER); plt.show()             # Şekil 2A
     """),
-          md("### 4.2 Çeviri ve Yerli Metinlerin Grup Karşılaştırması (Bootstrap CIs)"),
+          md("""
+    ### 4.3 Tek Bir Çeviri Çifti Karşılaştırması (Şekil 2B)
+    Kodları Bölüm 2'de listelenen herhangi bir çeviri çiftiyle değiştirebilirsiniz (`IR-IA ⇄ BR-SM`, `ASD-PKD ⇄ KT-OK`, …).
+    """),
           code("""
-    trans = [t for t in turkish_texts if t.record.corpus_type == "translation"]
-    indig = [t for t in turkish_texts if t.record.corpus_type == "indigenous"]
-    grp_res = P.group_comparison(trans, indig, ("translation", "indigenous"), n_bootstrap=1000)
-    display(grp_res.round(3))
+    en, tr = loader.load_text("IR-IA"), loader.load_text("BR-SM")
+    print(loader.registry.display(en)); print(loader.registry.display(tr))
+    cmp_df = P.pair_comparison(en, tr)
+    show_table(cmp_df.round(1), page_size=20, title="Çift UPOS Karşılaştırması: I, Robot ⇄ Ben, Robot")
+    fig = viz.pos_pair(cmp_df, f"{en.record.title} → {tr.record.title}"); plt.show()
+    en.evict(); tr.evict()
     """),
-          tuzaklar(["İngilizce ve Türkçe için farklı etiketleyiciler (ClearNLP ve VNLP) kullanıldığından ham etiketler yerine Evrensel POS (UPOS) standartlarına odaklanılmalıdır.",
-                    "Küçük metin sayılarında (n=3–5) bootstrap aralıkları geniştir; 'kesin kanıtlar' yerine 'uyumludur / işaret eder' dilini tercih edin."]),
-          alistirmalar([("Hangi yerli roman en yüksek ad/eylem oranına sahiptir?",
-                         "```python\ndf_pos[df_pos['type']=='indigenous'].nlargest(1,'noun_verb_ratio')\n```")]),
+          md("""
+    ### 4.4 Çeviri ve Yerli Türkçe Metinlerin Grup Karşılaştırması (Şekil 2C)
+    **Metinler** üzerinden %95 bootstrap güven aralıklı UPOS ortalama farkları, ayrıca birleştirilmiş
+    sayımlar üzerinden $\\chi^2$ ve Cramér V (etki büyüklüğü).
+    """),
+          code("""
+    trans = [loader.load_text(c) for c in ["BR-SM", "A-ZB", "YG-ZB", "KS-ZB", "KT-OK"]]
+    indig = list(loader.load_indigenous())
+    print("Çeviriler:", ", ".join(loader.registry.display(t) for t in trans))
+    print("Yerli Romanlar:", ", ".join(loader.registry.display(t) for t in indig))
+    grp = P.group_comparison(trans, indig, ("translation", "indigenous"))
+    show_table(grp.round(2), page_size=20, title="Çeviri vs Yerli Türkçe UPOS (Bootstrap %95 GA)")
+    print(grp.attrs)
+    fig = viz.pos_group(grp, ("translation", "indigenous")); plt.show()
+    """),
+          code("""
+    # Aynı soruyu yalnızca içerik sözcükleriyle (işlevsel sözcükler gizlenmiş) inceleyelim
+    grp_c = P.group_comparison(trans, indig, ("translation", "indigenous"), content_only=True)
+    show_table(grp_c.round(2), page_size=20, title="Yalnızca İçerik Sözcükleri UPOS Karşılaştırması")
+    """),
+          tuzaklar(["İngilizce ve Türkçe için farklı etiketleyiciler kullanıldığından etiket *envanterleri* karşılaştırılabilir olsa da etiketleme *doğruluğu* birebir aynı değildir.",
+                    "n=3–5 metinle hesaplanan bootstrap güven aralıkları geniştir — 'kesin kanıtlar' yerine 'uyumludur / işaret eder' dilini kullanın.",
+                    "Bir kitap içindeki sözcükler bağımsız değildir: p-değerleri yerine Cramér V etki büyüklüğünü raporlayın."]),
+          alistirmalar([("Yalnızca *yerli* metinler için sözcüksel yoğunluk ortalamasını hesaplayınız.",
+                         "```python\nprofile[profile['type']=='indigenous']['lexical_density'].mean()\n```")]),
           akademik_not("""
-          **Çeviri Evrenselleri ve Çevirmen Habitusunun İzleri (Baker 1993; Simeoni 1998):**
-          Çeviri kuramında *basitleştirme (simplification)* ve *açıklayıcılık (explicitation)* hipotezleri,
-          çeviri dilinin yerli dilden daha düşük sözcüksel yoğunluğa sahip olabileceğini öngörür.
-          Öte yandan çevirmenin aynı dönemde kaleme aldığı yerli yapıtlarla çevirileri arasındaki
-          sözdizimsel tutarlılık, çeviri sürecinde içselleştirilen eyleyici yatkınlığının (*translating habitus*)
-          özgün yazarlığa doğrudan transfer edildiğine ampirik kanıt oluşturur.
+          **Çevirmen Habitusu ve Çeviri Evrenselleri (Simeoni 1998; Toury 2012):**
+          Çeviri Türkçenin aynı yazarın telif romanlarına kıyasla daha adcil (nominal) veya farklı yoğunlukta
+          olması kaynak metin baskısıyla (*aktarım / interference*, Toury 2012) uyumludur; ancak aynı
+          yazar-çevirmenin hem çeviri hem telif yapıtlarını birlikte incelemek, tür farkı ile **habitus**
+          etkisini ayrıştırmamıza olanak tanır.
           """),
           ]
 
@@ -401,8 +475,7 @@ def chapters() -> list[Cell]:
     `DependencyVisualizer`, spaCy'nin **displaCy** çizim motorunu harici model gerektirmeksizin (`manual=True`)
     çalıştırır. İngilizce etiketler ClearNLP tarzındadır (`dobj, prep, pobj`), Türkçe etiketler ise
     Evrensel Bağımlılıklar (UD) biçimindedir (`obj, case, nmod:poss`).
-    """),
-          md("""
+
     ### 5.2 Adım Adım Oyuncak Örnek: 4 Sözcüklü Bir Bağımlılık Ağacı
     Cümle: *“Selma robotu gördü .”*
     - Sözcükler: `[1: Selma, 2: robotu, 3: gördü, 4: .]`
@@ -421,26 +494,38 @@ def chapters() -> list[Cell]:
     dv = depviz.DependencyVisualizer(loader)
     en = loader.load_text("IR-IA")
     print(loader.registry.display(en))
-    sid_en = dv.sid_of(en, (1, 4, 4))            # Asimov'un ünlü 'Üç Robot Yasası' tümcesi
-    display(dv.table(en, sid_en))
-    display(HTML(style.CSS + "<div class='ct'>" + dv.html(en, sid_en) + "</div>"))
+    sid = dv.sid_of(en, (1, 4, 4))            # Asimov'un ünlü 'Üç Robot Yasası' tümcesi
+    display(dv.table(en, sid))
+    """),
+          code("""
+    display(HTML(style.CSS + "<div class='ct'>" + dv.html(en, sid) + "</div>"))
     """),
           code("""
     tr = loader.load_text("BR-SM")
     print(loader.registry.display(tr))
-    sid_tr = dv.sid_of(tr, (1, 2, 3))            # Selma Mine'nin Türkçe çevirisi
+    sid_tr = dv.sid_of(tr, (1, 2, 3))         # Selma Mine'nin Türkçe çevirisi
     display(dv.table(tr, sid_tr))
     display(HTML(style.CSS + "<div class='ct'>" + dv.html(tr, sid_tr) + "</div>"))
     """),
-          md("### 5.3 İki Dilli Hizalanmış Çift Ağaç Görünümü"),
+          md("""
+    ### 5.3 İki Dilli Hizalanmış Çift Ağaç Görünümü
+    `alignment_html(code, ai)` işlevi, `ai` hizalama grubundaki tüm İngilizce tümcelerin ağaçlarını,
+    ardından Türkçe karşılıklarının ağaçlarını alt alta çizer.
+    """),
           code("""
     display(HTML(style.CSS + dv.alignment_html("BR-SM", 4)))
+    """),
+          code("""
+    # UD-normalize etiketler yerine ham etiketler ve yalnızca içerik sözcükleri vurgulanmış görünüm
+    display(HTML(style.CSS + "<div class='ct'>" + dv.html(en, sid, normalize_labels=False,
+                                                       dim_function_words=True) + "</div>"))
     for t in (en, tr): t.evict()
     """),
           tuzaklar(["İşlev sözcükleri ağaç bütünlüğünü korumak için silinmez, yalnızca rengi soluklaştırılır (*dimmed*).",
-                    "Ayrıştırıcı çıktıları istatistiksel modellerce tahmin edilmiştir; uzun ve karmaşık edebi tümcelerde etiket hataları görülebilir."]),
-          alistirmalar([("Zühtü Bayar'ın *Sahte Uygarlık* romanının ilk tümcesinin kök (root) sözcüğünü bulunuz.",
-                         "```python\nt=loader.load_text('SU-ZB'); s=dv.sid_of(t,(1,1,1)); "
+                    "Ayrıştırıcı çıktıları istatistiksel modellerce tahmin edilmiştir; uzun ve karmaşık edebi tümcelerde etiket hataları görülebilir.",
+                    "Çok uzun tümceler yatay kaydırma gerektirir; sıkıştırmak için `compact=True` kullanabilirsiniz."]),
+          alistirmalar([("*Karanlığı Taramak* çevirisinin ilk tümcesinin bağımlılık ağacını çizdiriniz ve kök (root) sözcüğünü bulunuz.",
+                         "```python\nt=loader.load_text('KT-OK'); s=dv.sid_of(t,(1,1,1)); "
                          "tab=dv.table(t,s); tab[tab['deprel']=='root']\n```")]),
           akademik_not("""
           **Çeviride Yapısal Kaymalar ve Bağımlılık Sözdizimi (Catford 1965; Tesnière 1959):**

@@ -46,11 +46,14 @@ def quick_search(loader: CorpusLoader, terms: "str | list[str]", category: str =
                     filter_function_words=filter_function_words, mode=mode, punct=punct)  # type: ignore[arg-type]
     result = CorpusSearchEngine().search(q, texts)
     conc = Concordancer().run(result, texts, span=span)
+    conc.meta["view"] = view
+    conc.meta["max_lines"] = max_lines
+    conc.meta["loader"] = loader
     try:
-        from IPython.display import display
+        from .table_view import show_table
 
-        display(result.summary())
-    except ImportError:  # pragma: no cover
+        show_table(result.summary(), page_size=20, title="Search Hit Summary")
+    except Exception:  # pragma: no cover
         print(result.summary().to_string())
     show(conc, view=view, loader=loader, max_lines=max_lines)
     return conc
@@ -83,7 +86,7 @@ class CorpusExplorerUI:
         self.left = w.BoundedIntText(value=5, min=0, max=20, description="Left")
         self.right = w.BoundedIntText(value=5, min=0, max=20, description="Right")
         self.custom = w.Checkbox(value=False, description="Use custom Left/Right")
-        self.view = w.ToggleButtons(options=["kwic", "chips", "cards", "console"],
+        self.view = w.ToggleButtons(options=["kwic", "chips", "cards", "parallel", "table", "console"],
                                     description="View")
         self.pos = w.SelectMultiple(options=["NOUN", "VERB", "ADJ", "ADV", "PROPN"],
                                     description="UPOS", rows=5)
@@ -117,22 +120,25 @@ class CorpusExplorerUI:
             result = CorpusSearchEngine().search(self._query(), texts)
             span = (self.left.value, self.right.value) if self.custom.value else self.span.value
             conc = Concordancer().run(result, texts, span=span)
-            from IPython.display import display
+            from .table_view import show_table
 
-            display(result.summary())
+            show_table(result.summary(), page_size=20, title="Search Hit Summary")
             show(conc, self.view.value, self.loader, 30)
 
     def _collocates(self) -> None:
         with self.out:
             self.out.clear_output()
             q = self._query()
+            from .table_view import show_table
+
             for t in self._texts():
                 view = TokenView(t, q.field, q.filter_function_words, q.mode)
                 table = collocates(view, q.terms, self.left.value, self.right.value)
-                from IPython.display import display
-
-                print(f"— {t.record.title} ({self.loader.registry.display(t.record)})")
-                display(table.head(10).round(2))
+                show_table(
+                    table.round(3),
+                    page_size=20,
+                    title=f"Collocates — {t.record.title} ({self.loader.registry.display(t.record)})",
+                )
                 t.evict()
 
     def show(self) -> None:

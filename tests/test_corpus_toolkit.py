@@ -302,6 +302,27 @@ def test_tracked_notebook_is_clean():
                 assert cell.get("execution_count") is None, f"Cell {i} in {nb_name} has execution_count set!"
 
 
+def test_notebook_markdown_integrity():
+    """Markdown cells must be flush-left (no code-block rendering) and free of control chars (broken LaTeX)."""
+    import json
+    import re
+    from pathlib import Path
+
+    for nb_name in ("Corpus_Analysis.ipynb", "Corpus_Analysis_tr.ipynb"):
+        nb_path = Path(__file__).resolve().parents[1] / nb_name
+        if not nb_path.exists():
+            pytest.skip(f"{nb_name} not yet generated")
+        for i, cell in enumerate(json.loads(nb_path.read_text(encoding="utf-8"))["cells"]):
+            if cell["cell_type"] != "markdown":
+                continue
+            src = "".join(cell["source"])
+            assert not any(ord(c) < 32 and c not in "\n" for c in src), f"{nb_name} cell {i}: control char"
+            first = next((ln for ln in src.splitlines() if ln.strip()), "")
+            assert not first.startswith("    "), f"{nb_name} cell {i}: indented first line"
+            prose = re.sub(r"`[^`]*`", "", src)  # `$` inside code spans (regex anchors) is not math
+            assert prose.count("$") % 2 == 0, f"{nb_name} cell {i}: unbalanced $"
+
+
 # -------------------------------------------------------- specialized punct tests
 def test_punctuation_helpers():
     # Passim-style stripping (collapse)
@@ -463,4 +484,88 @@ def test_diversity_with_punct_and_caching(turkish_mini_text, tmp_path):
     assert d_keep.iloc[0]["N"] == 11
     assert d_strip.iloc[0]["N"] == 9
     assert d_split.iloc[0]["N"] == 13
+
+
+def test_concordance_result_repr_and_html(turkish_mini_text):
+    eng = CorpusSearchEngine()
+    q = SearchQuery(["robot"], field="tok", punct="split")
+    res = eng.search(q, [turkish_mini_text])
+    conc = Concordancer().run(res, [turkish_mini_text], span=(2, 2))
+    assert repr(conc).startswith("<ConcordanceResult: 1 line(s)")
+    assert repr(conc.lines[0]).startswith("<KwicLine")
+    html = conc._repr_html_()
+    assert "<table" in html
+    assert "robot-bilim" in html
+    conc.meta["view"] = "table"
+    tbl_html = conc._repr_html_()
+    assert "ct-tbl-wrap" in tbl_html and 'data-page-size="1"' in tbl_html
+
+
+def test_table_view_pagination_sorting_resizing():
+    from corpus_toolkit.table_view import (
+        disable_interactive_tables,
+        enable_interactive_tables,
+        table_html,
+    )
+
+    df = pd.DataFrame({
+        "title": [f"Book_{i}" for i in range(45)],
+        "tokens": [1000 * i for i in range(45)],
+        "ratio": [round(i * 0.1234, 4) for i in range(45)],
+    })
+    html = table_html(df, page_size=20, title="Unit Test Grid")
+    assert 'data-page-size="20"' in html
+    assert "Rows 1–20 of 45 (Page 1/3)" in html
+    assert "ct-col-resizer" in html
+    assert "_ctTblSort(" in html
+    assert "_ctTblStartResize(" in html
+    assert 'data-type="num"' in html
+    assert 'data-type="str"' in html
+
+    enable_interactive_tables(page_size=20)
+    try:
+        assert "ct-tbl-wrap" in df._repr_html_()
+    finally:
+        disable_interactive_tables()
+
+
+def test_parallel_view_nda_overlay():
+    from corpus_toolkit.loader import CorpusLoader
+    from corpus_toolkit.parallel_view import NdaOverlay, parallel_html
+
+    loader = CorpusLoader(cache_policy="keep", verbose=False)
+    ov = NdaOverlay.load(loader, "I_Robot")
+    assert "NDA overlay:" in ov.status
+    assert len(ov.tokens) > 1000
+    assert len(ov.legend) >= 60
+
+    html = parallel_html(loader, "BR-SM", [3350, 4288, 4313], overlay=True, hits={"brain"})
+    assert "nda-table-stage" in html
+    assert "nda-link-svg" in html
+    assert "data-link-first=" in html
+    assert "nda-summary-footer" in html
+    assert "single-tr" in html
+    assert "hit" in html
+
+
+def test_bilingual_notebook_parity():
+    import sys
+    from pathlib import Path
+
+    tools_dir = Path(__file__).resolve().parents[1] / "tools"
+    if str(tools_dir) not in sys.path:
+        sys.path.insert(0, str(tools_dir))
+    import nb_part_a
+    import nb_part_a_tr
+    import nb_part_b
+    import nb_part_b_tr
+    import nb_part_c
+    import nb_part_c_tr
+
+    en_cells = nb_part_a.chapters() + nb_part_b.chapters() + nb_part_c.chapters()
+    tr_cells = nb_part_a_tr.chapters() + nb_part_b_tr.chapters() + nb_part_c_tr.chapters()
+    assert len(en_cells) == len(tr_cells)
+    assert [c[0] for c in en_cells] == [c[0] for c in tr_cells]
+
+
 
