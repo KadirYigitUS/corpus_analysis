@@ -4,7 +4,7 @@ import argparse
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -19,7 +19,7 @@ from .pos import PosComparativeAnalyzer
 from .render import console_view
 from .search import CorpusSearchEngine, SearchQuery
 from .tfidf import TfidfAnalyzer
-from .tokenview import TokenView
+from .tokenview import PunctMode, TokenView
 
 pd.set_option("display.width", 200)
 pd.set_option("display.max_columns", 40)
@@ -32,6 +32,9 @@ def _add_scope(p: argparse.ArgumentParser) -> None:
     p.add_argument("--field", default="lem", choices=["lem", "tok"], help="lemma or token")
     p.add_argument("--content", action="store_true", help="hide function words (content view)")
     p.add_argument("--mode", default="drop", choices=["drop", "mask"])
+    p.add_argument("--punct", default="drop", choices=["keep", "drop", "strip", "split"],
+                   help="punctuation handling: drop (default), keep (with punct), strip (collapse in-token), split (retokenize in-token)")
+    p.add_argument("--with-punct", action="store_true", help="alias for --punct keep")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -66,6 +69,8 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--top", type=int, default=15)
     c.add_argument("--field", default="lem", choices=["lem", "tok"])
     c.add_argument("--content", action="store_true")
+    c.add_argument("--punct", default="drop", choices=["keep", "drop", "strip", "split"])
+    c.add_argument("--with-punct", action="store_true")
 
     sub.add_parser("pos", help="POS profile of every text")
     sub.add_parser("align", help="alignment structure per translation pair")
@@ -79,9 +84,13 @@ def build_parser() -> argparse.ArgumentParser:
     t.add_argument("--lang", default="tr", choices=["en", "tr"])
     t.add_argument("--top", type=int, default=10)
     t.add_argument("--chunks", type=int, default=1)
+    t.add_argument("--punct", default="drop", choices=["keep", "drop", "strip", "split"])
+    t.add_argument("--with-punct", action="store_true")
 
     r = sub.add_parser("report", help="write the standard report to data/corpus_analysis/reports")
     r.add_argument("--name", default="standard")
+    r.add_argument("--punct", default="drop", choices=["keep", "drop", "strip", "split"])
+    r.add_argument("--with-punct", action="store_true")
 
     ca = sub.add_parser("cache", help="cache info / clear")
     ca.add_argument("action", choices=["info", "clear"])
@@ -102,22 +111,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(loader.cache.info())
         return 0
     loader = CorpusLoader(cache_policy=args.cache_policy, verbose=False)
+    raw_punct = "keep" if getattr(args, "with_punct", False) else getattr(args, "punct", "drop")
+    punct: PunctMode = cast(PunctMode, raw_punct if raw_punct in ("keep", "drop", "strip", "split") else "drop")
     if args.cmd == "inventory":
         print(loader.registry.inventory().to_string())
     elif args.cmd == "search":
         texts = _scope_texts(loader, args)
         q = SearchQuery(args.terms, args.field, args.match, pos=set(args.pos or []) or None,
                         collocate=args.collocate, filter_function_words=args.content,
-                        mode=args.mode)
+                        mode=args.mode, punct=punct)
         res = CorpusSearchEngine().search(q, texts)
         print(res.summary().to_string(index=False))
         print(console_view(Concordancer().run(res, texts, args.span), args.max))
     elif args.cmd == "diversity":
         texts = _scope_texts(loader, args)
-        print(diversity_for(loader, texts, args.field, args.content).round(3).T.to_string())
+        print(diversity_for(loader, texts, args.field, args.content, punct=punct).round(3).T.to_string())
     elif args.cmd == "collocate":
         text = loader.load_text(args.text)
-        tab = collocates(TokenView(text, args.field, args.content), args.node, args.left,
+        tab = collocates(TokenView(text, args.field, args.content, punct=punct), args.node, args.left,
                          args.right, True, args.min_freq, args.sort)
         print(f"node={args.node} f={tab.attrs.get('f_node')} N={tab.attrs.get('N')} "
               f"R1={tab.attrs.get('R1')}")
@@ -139,12 +150,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"SVG written to {args.svg}")
     elif args.cmd == "tfidf":
         selection = loader.load_all_english() if args.lang == "en" else loader.load_all_turkish()
-        tf_res = TfidfAnalyzer().fit(selection, "lem", True, n_chunks=args.chunks)
+        tf_res = TfidfAnalyzer().fit(selection, "lem", True, punct=punct, n_chunks=args.chunks)
         for d in tf_res.doc_ids:
             top = tf_res.top_terms(d, args.top)
             print(f"{d}: " + ", ".join(f"{t}({w:.3f})" for t, w in zip(top.term, top.tfidf)))
     elif args.cmd == "report":
-        print(f"report written: {standard_report(loader, args.name)}")
+        print(f"report written: {standard_report(loader, args.name, punct=punct)}")
     return 0
 
 

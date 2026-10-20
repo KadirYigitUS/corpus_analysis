@@ -36,13 +36,14 @@ def quick_search(loader: CorpusLoader, terms: "str | list[str]", category: str =
                  author: str | None = None, field: str = "lem", match: str = "exact",
                  pos: set[str] | None = None, collocate: list[str] | None = None,
                  filter_function_words: bool = False, mode: str = "drop",
+                 punct: str = "drop",
                  span: "int | tuple[int, int] | str" = "collocation", view: str = "kwic",
                  max_lines: int = 25, case_sensitive: bool = False) -> Any:
     """One call = search + concordance + display.  Returns the :class:`ConcordanceResult`."""
     texts = _select_texts(loader, category, author)
     q = SearchQuery([terms] if isinstance(terms, str) else list(terms), field,  # type: ignore[arg-type]
                     match, case_sensitive, pos, collocate,  # type: ignore[arg-type]
-                    filter_function_words=filter_function_words, mode=mode)  # type: ignore[arg-type]
+                    filter_function_words=filter_function_words, mode=mode, punct=punct)  # type: ignore[arg-type]
     result = CorpusSearchEngine().search(q, texts)
     conc = Concordancer().run(result, texts, span=span)
     try:
@@ -74,6 +75,9 @@ class CorpusExplorerUI:
         self.match = w.Dropdown(options=["exact", "glob", "regex"], description="Match")
         self.fw = w.Checkbox(value=False, description="Hide function words (content view)")
         self.mode = w.Dropdown(options=["drop", "mask"], description="Span mode")
+        self.punct = w.Dropdown(options=[("drop (standard)", "drop"), ("keep (with punct)", "keep"),
+                                         ("strip (collapse)", "strip"), ("split (retokenize)", "split")],
+                                value="drop", description="Punct")
         self.span = w.Dropdown(options=[*SPAN_PRESETS, "sentence"], value="collocation",
                                description="Span")
         self.left = w.BoundedIntText(value=5, min=0, max=20, description="Left")
@@ -91,7 +95,7 @@ class CorpusExplorerUI:
         run.on_click(lambda _: self._run())
         coll.on_click(lambda _: self._collocates())
         top = w.HBox([w.VBox([self.category, self.author, self.terms, self.field, self.match]),
-                      w.VBox([self.fw, self.mode, self.span, self.custom, self.left, self.right]),
+                      w.VBox([self.fw, self.mode, self.punct, self.span, self.custom, self.left, self.right]),
                       w.VBox([self.pos, self.colloc, self.view])])
         self.panel = w.VBox([top, w.HBox([run, coll]), self.out])
 
@@ -101,7 +105,7 @@ class CorpusExplorerUI:
                            pos=set(self.pos.value) or None,
                            collocate=[c.strip() for c in self.colloc.value.split(",") if c.strip()]
                            or None, filter_function_words=self.fw.value,
-                           mode=self.mode.value)  # type: ignore[arg-type]
+                           mode=self.mode.value, punct=self.punct.value)  # type: ignore[arg-type]
 
     def _texts(self) -> list[Any]:
         return _select_texts(self.loader, self.category.value, self.author.value or None)

@@ -104,9 +104,35 @@ def chapters() -> list[Cell]:
                      "per10k": 1e4 * s["hits"].sum() / s["running_words"].sum()})
     display(pd.DataFrame(rows))
     """),
+          md("""
+    **Searching with/without punctuation & in-token punctuation handling (Passim methodology):**
+    VNLP-tokenized Turkish texts retain punctuation inside tokens (e.g. `Türkiye'nin`, `Fred'`, `robot-bilim`, `1882'de`),
+    and this feature is also retained in lemmatized texts (`fred'`, `ay'da`, `1882'`). Four punctuation modes are supported:
+    - `punct='drop'` (default): removes standalone punctuation; retains in-token punctuation.
+    - `punct='keep'`: retains standalone punctuation, allowing direct searches for `?`, `!`, `,`, etc.
+    - `punct='strip'`: collapses in-token punctuation without splitting (`Türkiye'nin` → `Türkiyenin`, `Fred'` → `Fred`).
+    - `punct='split'`: decomposes composite tokens into sub-tokens (`Türkiye'nin` → `['türkiye', 'nin']`, `robot-bilim` → `['robot', 'bilim']`).
+    Both `strip` and `split` work seamlessly on surface tokens (`tok`) and lemmatized fields (`lem`).
+    """),
+          code("""
+    # 1. Search with punctuation ('keep'): find question marks
+    r_punct = engine.search(search.SearchQuery(["?"], field="tok", punct="keep"), turkish)
+    print("Question marks found in Turkish corpus:", len(r_punct), "hits")
+
+    # 2. In-token punctuation: 'strip' (collapse) vs 'split' (decompose) on tokens
+    r_strip = engine.search(search.SearchQuery(["Türkiyenin"], field="tok", punct="strip"), turkish)
+    r_split = engine.search(search.SearchQuery(["Türkiye"], field="tok", punct="split"), turkish)
+    print(f"Türkiyenin (strip): {len(r_strip)} hits;  Türkiye (split): {len(r_split)} hits")
+
+    # 3. Lemmatized field with in-token punctuation splitting:
+    r_lem_sp = engine.search(search.SearchQuery(["bilim"], field="lem", punct="split"), turkish)
+    print(f"Lemma 'bilim' (split, finds inside robot-bilim): {len(r_lem_sp)} hits")
+    """),
           pitfalls(["Hit counts do not change between `drop` and `mask`; **spans** do (Chapters 7, 10).",
                     "`per10k` divides by running words **of the chosen view** — a content view has a "
                     "smaller denominator, so per10k goes *up* even though hits stay equal.",
+                    "In Turkish VNLP, searching for `Fred` in default `punct='drop'` mode misses `Fred'` unless "
+                    "`punct='strip'` or `punct='split'` is enabled.",
                     "Regex runs on *folded* forms (lower-case) unless `case_sensitive=True`."]),
           exercises([("How often does the Turkish lemma `makine` appear *near* `robot` (±5) in "
                       "Selma Mine's indigenous novel?",
@@ -375,6 +401,20 @@ def chapters() -> list[Cell]:
     cmp = pd.DataFrame({"MATTR_100 (tokens)": div_tok["MATTR_100"],
                         "MATTR_100 (lemmas)": div_raw.loc[div_tok.index, "MATTR_100"]})
     display(cmp.round(3))
+    """),
+          code("""
+    # Punctuation mode comparison: drop (standard) vs strip (collapse) vs split (retokenize)
+    t_samples = [loader.load_text("BR-SM"), loader.load_text("KT-OK")]
+    div_p_drop = analysis.diversity_for(loader, t_samples, field="tok", punct="drop")
+    div_p_strip = analysis.diversity_for(loader, t_samples, field="tok", punct="strip")
+    div_p_split = analysis.diversity_for(loader, t_samples, field="tok", punct="split")
+    p_comp = pd.DataFrame({
+        "N (drop)": div_p_drop["N"], "V (drop)": div_p_drop["V"],
+        "N (strip)": div_p_strip["N"], "V (strip)": div_p_strip["V"],
+        "N (split)": div_p_split["N"], "V (split)": div_p_split["V"],
+    })
+    display(p_comp)
+    for s in t_samples: s.evict()
     """),
           md("#### 9.5 Figures: radar, MATTR trajectory, Zipf"),
           code("""

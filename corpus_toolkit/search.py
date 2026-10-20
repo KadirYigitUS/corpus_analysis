@@ -29,8 +29,8 @@ import numpy as np
 import pandas as pd
 
 from .lazy import LazyCorpusText
-from .textutil import fold
-from .tokenview import Field, Mode, TokenView
+from .textutil import fold, split_in_token_punct, strip_in_token_punct
+from .tokenview import Field, Mode, PunctMode, TokenView
 
 Match = Literal["exact", "glob", "regex"]
 
@@ -49,17 +49,24 @@ class SearchQuery:
     sentence_clamped: bool = True
     filter_function_words: bool = False
     mode: Mode = "drop"
+    punct: PunctMode | bool = "drop"
 
     def __post_init__(self) -> None:
         if isinstance(self.terms, str):  # forgiving: a bare string is one term
             self.terms = [self.terms]
         if self.match not in ("exact", "glob", "regex"):
             raise ValueError("match must be 'exact', 'glob' or 'regex'")
+        if isinstance(self.punct, bool):
+            self.punct = "keep" if self.punct else "drop"
+        if self.punct not in ("keep", "drop", "strip", "split"):
+            raise ValueError("punct must be 'keep', 'drop', 'strip', or 'split'")
 
     def describe(self) -> str:
         parts = [f"terms={self.terms}", f"field={'lemma' if self.field == 'lem' else 'token'}",
                  f"match={self.match}", f"view={'content' if self.filter_function_words else 'raw'}"
                  + (f"/{self.mode}" if self.filter_function_words else "")]
+        if self.punct != "drop":
+            parts.append(f"punct={self.punct}")
         if self.pos:
             parts.append(f"UPOS∈{sorted(self.pos)}")
         if self.collocate:
@@ -69,10 +76,20 @@ class SearchQuery:
 
 
 def _pattern_mask(forms_unique: np.ndarray, terms: list[str], match: Match, language: str,
-                  case_sensitive: bool) -> np.ndarray:
+                  case_sensitive: bool, punct: str = "drop") -> np.ndarray:
     """Boolean mask over *unique* forms matching any term (cheap: |types| ≪ |tokens|)."""
     if match == "exact":
-        wanted = {t if case_sensitive else fold(t, language) for t in terms}
+        if punct == "strip":
+            wanted = {strip_in_token_punct(t if case_sensitive else fold(t, language)) for t in terms}
+            wanted.discard("")
+        elif punct == "split":
+            wanted = set()
+            for t in terms:
+                target = t if case_sensitive else fold(t, language)
+                for part in split_in_token_punct(target):
+                    wanted.add(part)
+        else:
+            wanted = {t if case_sensitive else fold(t, language) for t in terms}
         return np.isin(forms_unique, list(wanted))
     flags = 0 if case_sensitive else re.IGNORECASE
     pats = []
@@ -89,7 +106,8 @@ def find_nodes(view: TokenView, query: SearchQuery) -> np.ndarray:
     """Positions (in ``view``) of every hit of ``query``."""
     lang = view.text.record.language
     uniq, inv = np.unique(view.forms.astype(str), return_inverse=True)
-    good = _pattern_mask(uniq, query.terms, query.match, lang, query.case_sensitive)
+    good = _pattern_mask(uniq, query.terms, query.match, lang, query.case_sensitive,
+                         punct=str(query.punct))
     mask = good[inv] & view.eligible
     if query.pos:
         tags = view.text.tokens["pos"].to_numpy()[view.rows].astype(str)
@@ -138,7 +156,7 @@ class CorpusSearchEngine:
         frames, totals = [], []
         for text in texts:
             view = TokenView(text, query.field, query.filter_function_words, query.mode,
-                             case_fold=not query.case_sensitive)
+                             case_fold=not query.case_sensitive, punct=query.punct)
             pos = find_nodes(view, query)
             rec = text.record
             rows = view.rows[pos]
@@ -155,6 +173,7 @@ class CorpusSearchEngine:
                 "ti": tab["ti"].to_numpy()[rows] + 1,
                 "token": tab["tok"].to_numpy()[rows].astype(str),
                 "lemma": tab["lem"].to_numpy()[rows].astype(str),
+                "form": view.forms[pos].astype(str),
                 "upos": tab["pos"].to_numpy()[rows].astype(str),
             }))
             n = len(view)

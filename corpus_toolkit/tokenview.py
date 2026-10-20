@@ -22,10 +22,11 @@ import pandas as pd
 
 from .filters import CONTENT, PUNCT
 from .lazy import LazyCorpusText
-from .textutil import fold
+from .textutil import fold, split_in_token_punct, strip_in_token_punct
 
 Field = Literal["tok", "lem"]
 Mode = Literal["drop", "mask"]
+PunctMode = Literal["keep", "drop", "strip", "split"]
 
 
 @dataclass
@@ -37,6 +38,7 @@ class TokenView:
     filter_function_words: bool = False
     mode: Mode = "drop"
     case_fold: bool = True
+    punct: PunctMode | bool = "drop"
     rows: np.ndarray = dc_field(init=False, repr=False)  # token-table row of each position
     forms: np.ndarray = dc_field(init=False, repr=False)  # analysed string at each position
     eligible: np.ndarray = dc_field(init=False, repr=False)  # may be node/collocate/type?
@@ -47,13 +49,23 @@ class TokenView:
             raise ValueError("field must be 'tok' or 'lem'")
         if self.mode not in ("drop", "mask"):
             raise ValueError("mode must be 'drop' or 'mask'")
+        if isinstance(self.punct, bool):
+            self.punct = "keep" if self.punct else "drop"
+        if self.punct not in ("keep", "drop", "strip", "split"):
+            raise ValueError("punct must be 'keep', 'drop', 'strip', or 'split'")
         tab = self.text.tokens
         fcl = tab["fcl"].to_numpy()
-        non_punct = fcl != PUNCT
-        if self.filter_function_words and self.mode == "drop":
-            keep = fcl == CONTENT
+        if self.punct == "keep":
+            if self.filter_function_words and self.mode == "drop":
+                keep = fcl == CONTENT
+            else:
+                keep = np.ones(len(fcl), dtype=bool)
         else:
-            keep = non_punct
+            non_punct = fcl != PUNCT
+            if self.filter_function_words and self.mode == "drop":
+                keep = fcl == CONTENT
+            else:
+                keep = non_punct
         self.rows = np.flatnonzero(keep)
         if self.filter_function_words and self.mode == "mask":
             self.eligible = fcl[self.rows] == CONTENT
@@ -64,13 +76,53 @@ class TokenView:
         lang = self.text.record.language
         folded = np.asarray([fold(str(c), lang) if self.case_fold else str(c) for c in cats],
                             dtype=object)
-        self.forms = folded[col.cat.codes.to_numpy()[self.rows]]
-        self.sid = tab["sid"].to_numpy()[self.rows]
+        base_forms = folded[col.cat.codes.to_numpy()[self.rows]]
+        base_sid = tab["sid"].to_numpy()[self.rows]
+
+        if self.punct in ("keep", "drop"):
+            self.forms = base_forms
+            self.sid = base_sid
+        elif self.punct == "strip":
+            new_forms: list[str] = []
+            valid_idx: list[int] = []
+            for i, f in enumerate(base_forms):
+                s = strip_in_token_punct(str(f))
+                if s:
+                    new_forms.append(s)
+                    valid_idx.append(i)
+            self.forms = np.asarray(new_forms, dtype=object)
+            self.rows = self.rows[valid_idx]
+            self.eligible = self.eligible[valid_idx]
+            self.sid = base_sid[valid_idx]
+        elif self.punct == "split":
+            new_forms_list: list[str] = []
+            new_rows: list[int] = []
+            new_elig: list[bool] = []
+            new_sid: list[int] = []
+            for i, f in enumerate(base_forms):
+                parts = split_in_token_punct(str(f))
+                if not parts:
+                    continue
+                r_val = int(self.rows[i])
+                e_val = bool(self.eligible[i])
+                s_val = int(base_sid[i])
+                for p in parts:
+                    new_forms_list.append(p)
+                    new_rows.append(r_val)
+                    new_elig.append(e_val)
+                    new_sid.append(s_val)
+            self.forms = np.asarray(new_forms_list, dtype=object)
+            self.rows = np.asarray(new_rows, dtype=np.int64)
+            self.eligible = np.asarray(new_elig, dtype=bool)
+            self.sid = np.asarray(new_sid, dtype=np.int64)
 
     # ----------------------------------------------------------------- stats
     @property
     def label(self) -> str:
-        return ("content" if self.filter_function_words else "raw") + f"/{self.field}"
+        base = ("content" if self.filter_function_words else "raw") + f"/{self.field}"
+        if self.punct != "drop":
+            base += f"+punct_{self.punct}"
+        return base
 
     def analysed(self) -> np.ndarray:
         """Forms of the *eligible* positions (the 'running words' of this view)."""
@@ -106,6 +158,17 @@ class TokenView:
     def occurrences(self, nodes: "list[str] | tuple[str, ...]") -> np.ndarray:
         """Positions of eligible tokens whose analysed form is one of ``nodes`` (folded)."""
         lang = self.text.record.language
-        wanted = {fold(n, lang) if self.case_fold else n for n in nodes}
+        wanted: set[str] = set()
+        for n in nodes:
+            w = fold(n, lang) if self.case_fold else n
+            if self.punct == "strip":
+                s = strip_in_token_punct(w)
+                if s:
+                    wanted.add(s)
+            elif self.punct == "split":
+                for part in split_in_token_punct(w):
+                    wanted.add(part)
+            else:
+                wanted.add(w)
         mask = np.isin(self.forms, list(wanted)) & self.eligible
         return np.flatnonzero(mask)

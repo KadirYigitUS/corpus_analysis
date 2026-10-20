@@ -35,8 +35,8 @@ Every user-facing message prints **full author names and book titles**; short co
 | area | what you get |
 |---|---|
 | **Loading** | 8 lazy loaders (English / Turkish / pairs / indigenous / all / author-related / author-Turkish / single text); compact token tables; `evict()` |
-| **Views** | tokens **or** lemmas · raw **or** content (function words hidden, rules from `passim_analysis`) · `drop` **or** `mask` spans |
-| **Search** | token, lemma, glob, regex, UPOS filter, context-word (collocate) constraint |
+| **Views** | tokens **or** lemmas · raw **or** content (function words hidden, rules from `passim_analysis`) · `drop` **or** `mask` spans · 4 punctuation modes (`drop`, `keep`, `strip`, `split`) |
+| **Search** | token, lemma, glob, regex, UPOS filter, context-word (collocate) constraint, with/without punctuation, in-token strip & split |
 | **KWIC** | spans `phrase/collocation/extended/discourse/sentence/N/L5R2`, 3 notebook views + console, sorting by L1…R3, bilingual sentence cards |
 | **Statistics** | per10k, Juilland D, Pearson/Spearman/cosine, BH-FDR, MI/MI²/MI³/T/G²/Log-Dice, TF-IDF, 14+ lexical-diversity metrics |
 | **Parallel corpus** | alignment shapes (1:1 … omission/addition), `R_sent`, word/char ratios |
@@ -106,11 +106,14 @@ text.tokens.head(); text.memory_mb(); text.evict()        # compact table, RAM u
 for t in loader.load_all().iter_evicting(): ...           # memory-safe loop
 ```
 
-### 2 · Views (the three switches)
+### 2 · Views (field, function words, span mode, and punctuation)
 ```python
-TokenView(text, field="lem")                                         # raw lemmas
-TokenView(text, field="tok", filter_function_words=True)             # content tokens (drop)
-TokenView(text, field="lem", filter_function_words=True, mode="mask")# keep sequence, mask function words
+TokenView(text, field="lem")                                          # raw lemmas (default punct='drop')
+TokenView(text, field="tok", filter_function_words=True)              # content tokens (drop function words)
+TokenView(text, field="lem", filter_function_words=True, mode="mask") # keep sequence, mask function words
+TokenView(text, field="tok", punct="keep")                            # keep standalone punctuation (e.g. '?', '.')
+TokenView(text, field="tok", punct="strip")                           # collapse in-token punctuation (Türkiye'nin -> Türkiyenin)
+TokenView(text, field="lem", punct="split")                           # split composite lemmas (robot-bilim -> ['robot', 'bilim'])
 ```
 
 ### 3 · Search
@@ -119,12 +122,15 @@ engine = search.CorpusSearchEngine()
 q = search.SearchQuery(["robot"], field="lem", pos={"NOUN"})
 res = engine.search(q, list(loader.load_all_turkish()))
 res.summary()                      # hits, running words, per10k
-res.hits.head()                    # code, title, ch/p/s/tok coordinates, token, lemma, UPOS
+res.hits.head()                    # code, title, ch/p/s/tok coordinates, token, lemma, form, UPOS
 
 search.SearchQuery(["gel*"], "lem", match="glob")                          # wildcard
 search.SearchQuery([r"^robot(lar)?$"], "tok", match="regex")               # regex
 search.SearchQuery(["robot"], "lem", collocate=["insan"], collocate_span=(10, 10))   # needs 'insan' within ±10
 search.SearchQuery(["robot"], "lem", filter_function_words=True, mode="drop")        # content view
+search.SearchQuery(["?"], "tok", punct="keep")                             # search punctuation directly
+search.SearchQuery(["Türkiye'nin"], "tok", punct="strip")                  # in-token strip (matches Türkiyenin)
+search.SearchQuery(["bilim"], "lem", punct="split")                        # in-token split (matches inside robot-bilim)
 ```
 
 ### 4 · KWIC concordance
@@ -210,6 +216,24 @@ Run commands with `python -m corpus_toolkit <command>` (or the `corpus-toolkit` 
 When searching or computing collocations on content words (`--content` / `filter_function_words=True`):
 - **`drop`** (default for topical collocations): Function words (determiners, pronouns, adpositions, conjunctions, particles, interjections) are completely eliminated from the token sequence. A span of $\pm 5$ words covers **5 content words**, regardless of intervening function words.
 - **`mask`** (default for structural analysis): Function words remain in their original sequence positions to preserve running text distance, but are masked so they can never match as a node or candidate collocate. A span of $\pm 5$ covers **5 running words**, but ignores any function words within that window.
+
+### Punctuation Handling: `drop` vs `keep` vs `strip` vs `split`
+In Turkish VNLP tokenization and lemmatization, in-token punctuation is preserved within compound words and inflections (e.g. `Türkiye'nin`, `Fred'`, `robot-bilim`, `sn'lik`, `ay'da`, `1882'de`, `1882'`). Four explicit modes are available across CLI and API:
+- **`--punct drop`** (default): Standalone punctuation tokens (`PUNCT`, `SYM`) are excluded; in-token punctuation is retained as-is (`Türkiye'nin`, `robot-bilim`).
+- **`--punct keep`** (or `--with-punct`): Standalone punctuation is retained in the view. Allows searching directly for punctuation marks:
+  ```bash
+  python -m corpus_toolkit search "?" --punct keep --category "All Turkish texts"
+  ```
+- **`--punct strip`**: Standalone punctuation is dropped, and in-token punctuation characters are collapsed/stripped without splitting (Passim `remove_punctuations` style). Both surface tokens and lemmas are stripped (`Türkiye'nin` → `Türkiyenin`, `Fred'` → `Fred`, `robot-bilim` → `robotbilim`):
+  ```bash
+  python -m corpus_toolkit search "Türkiyenin" --punct strip
+  python -m corpus_toolkit diversity --punct strip
+  ```
+- **`--punct split`**: Standalone punctuation is dropped, and composite tokens are decomposed into constituent word tokens (Passim `retokenizer` style). Sub-tokens share the original token's sentence ID and coordinate mapping (`Türkiye'nin` → `['Türkiye', 'nin']`, `robot-bilim` → `['robot', 'bilim']`):
+  ```bash
+  python -m corpus_toolkit search "bilim" --field lem --punct split
+  python -m corpus_toolkit diversity --punct split
+  ```
 
 ### Cache Policy: `ask` vs `keep` vs `clear`
 - In interactive Python or Jupyter notebook sessions, `CORPUS_CACHE_POLICY` defaults to **`ask`**, prompting the user at kernel startup to choose whether to keep or clear cached Parquet files. If run headlessly (e.g. CI or `nbconvert` with no stdin), it falls back safely to **`keep`**.

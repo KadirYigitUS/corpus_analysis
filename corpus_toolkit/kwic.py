@@ -188,15 +188,21 @@ class Concordancer:
         resolved = resolve_span(span)
         clamp = True if resolved == SENTENCE_SPAN else sentence_clamped
         lines: list[KwicLine] = []
+        label = ""
         for text in texts:
             positions = result.positions(text.record.code)
             if len(positions):
                 view = TokenView(text, q.field, q.filter_function_words, q.mode,
-                                 case_fold=not q.case_sensitive)
+                                 case_fold=not q.case_sensitive, punct=q.punct)
+                label = view.label
                 lines.extend(build_concordance(text, view, positions, resolved, clamp,
                                                max_lines_per_text))
             if evict:
                 text.evict()
-        label = ("content" if q.filter_function_words else "raw") + f"/{q.field}"
+        if not label:
+            base = ("content" if q.filter_function_words else "raw") + f"/{q.field}"
+            if q.punct != "drop":
+                base += f"+punct_{q.punct}"
+            label = base
         return ConcordanceResult(lines, resolved, label, q.describe(), clamp,
                                  total_hits=len(result))

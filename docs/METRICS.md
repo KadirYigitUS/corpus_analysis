@@ -7,10 +7,20 @@ Turkish `I/İ` aware), `V_m` number of types with frequency `m`, `V₁` hapax le
 | name | definition |
 |---|---|
 | field `tok` / `lem` | surface form / lemma |
-| `raw` | all non-punctuation tokens |
+| `raw` | all non-punctuation tokens (under `punct='drop'`) |
 | `content` | only NOUN, VERB, ADJ, ADV, PROPN, NUM, X (function words hidden). Turkish also hides tokens whose morphological head (`morph.split('+')[1]`) ∈ {Postp, Conj, Det, Pron, Ques, Interj, Punc}. English uses UPOS only. Source: `passim_analysis/services/upos_filter_service.py` |
 | `drop` / `mask` | function words removed from the sequence / kept in the sequence but ineligible as node, collocate or type |
-| punctuation | UPOS PUNCT, SYM — never counted in any denominator |
+| `punct` | 4 punctuation regimes (`drop`, `keep`, `strip`, `split`); see below |
+
+### Punctuation Handling Regimes (Passim-Aligned Methodology)
+Turkish texts processed with VNLP retain punctuation within words (e.g. `Türkiye'nin`, `Fred'`, `robot-bilim`, `1882'de`), and this retention is also present in lemmatized datasets (e.g. `fred'`, `ay'da`, `1882'`, `adı-her-neyse`). The toolkit provides 4 explicit options for `TokenView`, search, KWIC, collocations, and diversity:
+
+| `punct` mode | Standalone Punctuation | In-Token Punctuation | Example Form (`field='tok'`) | Example Form (`field='lem'`) | Use Case |
+|---|---|---|---|---|---|
+| `drop` (default) | Excluded (`fcl != PUNCT`) | Preserved as-is | `türkiye'nin`, `robot-bilim` | `türkiye'nin`, `robot-bilim` | Standard corpus analysis without punctuation inflation |
+| `keep` | Included (`fcl == PUNCT` kept) | Preserved as-is | `türkiye'nin`, `?`, `.` | `türkiye'nin`, `?`, `.` | Studying punctuation syntax, dialogue marks, rhetorical questions |
+| `strip` | Excluded | Collapsed / stripped (Passim `remove_punctuations`) | `türkiyenin`, `robotbilim`, `fred` | `türkiyenin`, `robotbilim`, `fred` | Search and vocabulary counts matching unpunctuated variants without word splitting |
+| `split` | Excluded | Retokenized / decomposed (Passim `retokenizer`) | `['türkiye', 'nin']`, `['robot', 'bilim']` | `['türkiye', 'nin']`, `['robot', 'bilim']` | Stem matching, sub-component keyword retrieval (`robot`, `bilim`), decompounded lexical density |
 
 The function-word share is **measured**, not assumed (see Chapter 4: ≈ 45–53 % English, ≈ 18–24 % Turkish).
 

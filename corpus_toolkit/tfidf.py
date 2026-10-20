@@ -26,7 +26,7 @@ from scipy import sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from .lazy import LazyCorpusText
-from .tokenview import Field, Mode, TokenView
+from .tokenview import Field, Mode, PunctMode, TokenView
 
 
 @dataclass
@@ -58,14 +58,17 @@ class TfidfResult:
 
 class TfidfAnalyzer:
     def fit(self, texts: Iterable[LazyCorpusText], field: Field = "lem",
-            filter_function_words: bool = True, mode: Mode = "drop", n_chunks: int = 1,
+            filter_function_words: bool = True, mode: Mode = "drop",
+            punct: PunctMode | bool = "drop", n_chunks: int = 1,
             min_df: int = 1, exclude_pos: set[str] | None = None) -> TfidfResult:
         """Fit per-document TF-IDF; ``exclude_pos={'PROPN'}`` removes character names."""
         docs: list[list[str]] = []
         ids: list[str] = []
         labels: list[str] = []
+        v_label = ("content" if filter_function_words else "raw") + f"/{field}"
         for text in texts:
-            view = TokenView(text, field, filter_function_words, mode)
+            view = TokenView(text, field, filter_function_words, mode, punct=punct)
+            v_label = view.label
             positions = np.flatnonzero(view.eligible)
             forms = view.forms[positions].astype(str)
             if exclude_pos:
@@ -82,7 +85,7 @@ class TfidfAnalyzer:
                               norm="l2", min_df=min_df)
         matrix = vec.fit_transform(docs)
         return TfidfResult(matrix.tocsr(), np.asarray(vec.get_feature_names_out()), ids, labels,
-                           ("content" if filter_function_words else "raw") + f"/{field}")
+                           v_label)
 
 
 def tfidf_manual(docs: list[list[str]]) -> pd.DataFrame:

@@ -38,3 +38,54 @@ def loose_key(text: str) -> str:
 def is_wordlike(token: str) -> bool:
     """True when ``token`` contains at least one letter/digit (i.e. is not punctuation)."""
     return bool(_WORD_RE.search(token))
+
+
+_ALNUM_CHUNK_RE = re.compile(r"[^\W_]+", re.UNICODE)
+
+
+def strip_in_token_punct(token: str) -> str:
+    """Remove in-token punctuation by collapsing constituent characters (Passim style).
+
+    In Turkish NLP (VNLP), tokens like ``Türkiye'nin``, ``Fred'``, ``robot-bilim`` retain
+    punctuation inside the token or lemma.  Stripping punctuation collapses them into
+    single alphanumeric units without splitting.
+
+    Examples:
+        >>> strip_in_token_punct("Türkiye'nin")
+        'Türkiyenin'
+        >>> strip_in_token_punct("Fred'")
+        'Fred'
+        >>> strip_in_token_punct("robot-bilim")
+        'robotbilim'
+        >>> strip_in_token_punct("sn'lik")
+        'snlik'
+        >>> strip_in_token_punct("1882'")
+        '1882'
+        >>> strip_in_token_punct("-")
+        ''
+    """
+    return "".join(ch for ch in token if ch.isalnum())
+
+
+def split_in_token_punct(token: str) -> list[str]:
+    """Decompose a composite token on punctuation into constituent word tokens (Passim retokenizer style).
+
+    Uses the Passim regex ``re.findall(r"[^\\W_]+", token)`` to decompose composite words
+    (hyphens, slashes, apostrophes) into separate sub-tokens, discarding standalone
+    punctuation.
+
+    Examples:
+        >>> split_in_token_punct("Türkiye'nin")
+        ['Türkiye', 'nin']
+        >>> split_in_token_punct("Fred'")
+        ['Fred']
+        >>> split_in_token_punct("robot-bilim")
+        ['robot', 'bilim']
+        >>> split_in_token_punct("sn'lik")
+        ['sn', 'lik']
+        >>> split_in_token_punct("1882'")
+        ['1882']
+        >>> split_in_token_punct("-")
+        []
+    """
+    return [part for part in _ALNUM_CHUNK_RE.findall(token) if part.isalnum()]

@@ -47,14 +47,22 @@ Every statistical metric implemented in `corpus_toolkit` has been audited agains
 ### D. TF-IDF Keyness
 - **Manual vs Scikit-Learn:** Sublinear TF ($1 + \ln(\text{count})$), smooth IDF ($\ln((1+N)/(1+\text{DF})) + 1$), and L2 vector normalization match `sklearn.feature_extraction.text.TfidfVectorizer(sublinear_tf=True)` to numerical precision (`np.allclose == True`).
 
+### E. Punctuation Handling & VNLP Turkish Retokenization (Passim Methodology)
+- **Problem Statement:** Turkish VNLP tokenization and lemmatization preserves intra-token punctuation in compounds and inflected forms (e.g. `Türkiye'nin`, `Fred'`, `robot-bilim`, `ay'da`, `1882'de`, `1882'`). Standard punctuation removal that operates solely on UPOS tags (`fcl != PUNCT`) retains these internal punctuation marks.
+- **Passim-Derived Solutions:**
+  - **`strip` Mode (Collapse):** Strips all internal non-alphanumeric punctuation marks using Passim's `remove_punctuations` convention (`"".join(ch for ch in text if ch.isalnum())`). `Türkiye'nin` collapses to `Türkiyenin`, `Fred'` to `Fred`, `robot-bilim` to `robotbilim`, and `1882'` to `1882`. Available across surface tokens and lemmatized fields.
+  - **`split` Mode (Retokenize / Decompose):** Decomposes composite tokens on punctuation into constituent word tokens using Passim's retokenizer regex `[^\W_]+` (`[part for part in re.findall(r"[^\W_]+", token) if part.isalnum()]`). `Türkiye'nin` decomposes to `['türkiye', 'nin']`, `robot-bilim` to `['robot', 'bilim']`.
+  - **`keep` Mode (With Punctuation):** Retains standalone punctuation tokens in the view, enabling direct queries on question marks (`?`), exclamation marks, and dialogue marks.
+- **Verification:** Unit tests `test_punctuation_helpers`, `test_turkish_tokenview_punct_modes`, `test_search_punct_modes`, `test_concordance_with_punct`, and `test_diversity_with_punct_and_caching` assert correct behavior across token and lemma fields.
+
 ---
 
 ## 3. Quality Gates Status
 
 ```bash
-# 1. Unit & Integration Test Suite (36/36 passed)
+# 1. Unit & Integration Test Suite (41/41 passed)
 python -m pytest -q
-# Output: 36 passed in 6.89s
+# Output: 41 passed in 18.97s
 
 # 2. Strict Linting & Formatting (Clean)
 python -m ruff check .

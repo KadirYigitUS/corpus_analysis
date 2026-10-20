@@ -13,7 +13,7 @@ from .cache import file_signature
 from .diversity import diversity_metrics, mattr_series, rank_frequency
 from .lazy import LazyCorpusText
 from .loader import CorpusLoader
-from .tokenview import Field, Mode, TokenView
+from .tokenview import Field, Mode, PunctMode, TokenView
 
 
 def _label(text: LazyCorpusText) -> str:
@@ -22,15 +22,18 @@ def _label(text: LazyCorpusText) -> str:
 
 
 def diversity_for(loader: CorpusLoader, texts: Iterable[LazyCorpusText], field: Field = "lem",
-                  filter_function_words: bool = False, mode: Mode = "drop") -> pd.DataFrame:
+                  filter_function_words: bool = False, mode: Mode = "drop",
+                  punct: PunctMode | bool = "drop") -> pd.DataFrame:
     """Lexical-diversity table (rows = texts, columns = metrics), cached per text."""
     rows: dict[str, dict[str, float]] = {}
+    p_norm = ("keep" if punct else "drop") if isinstance(punct, bool) else punct
     for t in texts:
         key = loader.cache.key("div", t.record.code, file_signature(t.record.pickle_path),
-                               field, filter_function_words, mode)
+                               field, filter_function_words, mode, p_norm)
         res = loader.cache.load_json(key)
         if res is None:
-            res = diversity_metrics(TokenView(t, field, filter_function_words, mode).analysed())
+            res = diversity_metrics(TokenView(t, field, filter_function_words, mode,
+                                              punct=p_norm).analysed())
             loader.cache.save_json(key, res)
         rows[_label(t)] = res
         t.evict()
@@ -38,27 +41,30 @@ def diversity_for(loader: CorpusLoader, texts: Iterable[LazyCorpusText], field: 
 
 
 def mattr_trajectories_for(texts: Iterable[LazyCorpusText], window: int = 100,
-                           field: Field = "lem", filter_function_words: bool = False
-                           ) -> dict[str, np.ndarray]:
+                           field: Field = "lem", filter_function_words: bool = False,
+                           punct: PunctMode | bool = "drop") -> dict[str, np.ndarray]:
     out: dict[str, np.ndarray] = {}
     for t in texts:
         out[t.record.code] = mattr_series(
-            TokenView(t, field, filter_function_words).analysed(), window)
+            TokenView(t, field, filter_function_words, punct=punct).analysed(), window)
         t.evict()
     return out
 
 
 def zipf_for(texts: Iterable[LazyCorpusText], field: Field = "lem",
-             filter_function_words: bool = False) -> dict[str, pd.DataFrame]:
+             filter_function_words: bool = False,
+             punct: PunctMode | bool = "drop") -> dict[str, pd.DataFrame]:
     out: dict[str, pd.DataFrame] = {}
     for t in texts:
-        out[t.record.code] = rank_frequency(TokenView(t, field, filter_function_words).analysed())
+        out[t.record.code] = rank_frequency(
+            TokenView(t, field, filter_function_words, punct=punct).analysed())
         t.evict()
     return out
 
 
 def standard_report(loader: CorpusLoader, run_name: str = "standard", field: Field = "lem",
-                    filter_function_words: bool = False) -> "object":
+                    filter_function_words: bool = False,
+                    punct: PunctMode | bool = "drop") -> "object":
     """Inventory + alignment + POS + diversity report with figures (the CLI ``report`` command)."""
     from . import viz
     from .alignment import AlignmentStructureAnalyzer
@@ -67,7 +73,8 @@ def standard_report(loader: CorpusLoader, run_name: str = "standard", field: Fie
 
     viz.use_agg_if_headless()
     rep = CorpusReporter(loader.config, loader.registry, run_name)
-    rep.note(field=field, function_words=("hidden" if filter_function_words else "kept"))
+    rep.note(field=field, function_words=("hidden" if filter_function_words else "kept"),
+             punct=str(punct))
     rep.add_section("1. Inventory", "Every text with full author-translator and book names.")
     rep.add_table("inventory", loader.registry.inventory())
 
@@ -86,7 +93,7 @@ def standard_report(loader: CorpusLoader, run_name: str = "standard", field: Fie
     rep.add_figure("pos_heatmap", viz.pos_heatmap(prof, UPOS_ORDER))
     rep.add_summary(top_bottom_summary(prof, "lexical_density", "title", "%"))
 
-    div = diversity_for(loader, allsel, field, filter_function_words)
+    div = diversity_for(loader, allsel, field, filter_function_words, punct=punct)
     rep.add_section("4. Lexical diversity")
     rep.add_table("diversity", div.round(3), index=True)
     rep.add_figure("diversity_radar", viz.diversity_radar(div))

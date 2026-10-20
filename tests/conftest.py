@@ -47,6 +47,40 @@ def mini_text(tmp_path: Path) -> LazyCorpusText:
 
 
 @pytest.fixture()
+def turkish_mini_text(tmp_path: Path) -> LazyCorpusText:
+    """Two Turkish sentences containing VNLP in-token and in-lemma punctuation."""
+    rows = [
+        {
+            "ch_no": 1, "p_no": 1, "s_no": 1,
+            "sentence": "Türkiye'nin robot-bilim uzmanı Fred' geldi .",
+            "tokens": str(["Türkiye'nin", "robot-bilim", "uzmanı", "Fred'", "geldi", "."]),
+            "lemma": str(["türkiye'nin", "robot-bilim", "uzman", "fred'", "gel", "."]),
+            "pos": str(["PROPN", "NOUN", "NOUN", "PROPN", "VERB", "PUNCT"]),
+            "morph": str(["" for _ in range(6)]),
+            "ner": str(["B-LOC", "O", "O", "B-PER", "O", "O"]),
+            "dep": str([(5, "nmod"), (3, "nmod"), (4, "nmod"), (5, "nsubj"), (0, "root"), (5, "punct")]),
+        },
+        {
+            "ch_no": 1, "p_no": 1, "s_no": 2,
+            "sentence": "Ay'da 1882'de ne gördü ?",
+            "tokens": str(["Ay'da", "1882'de", "ne", "gördü", "?"]),
+            "lemma": str(["ay'da", "1882'", "ne", "gör", "?"]),
+            "pos": str(["PROPN", "NUM", "PRON", "VERB", "PUNCT"]),
+            "morph": str(["" for _ in range(5)]),
+            "ner": str(["B-LOC", "B-DATE", "O", "O", "O"]),
+            "dep": str([(4, "obl"), (4, "obl"), (4, "obj"), (0, "root"), (4, "punct")]),
+        },
+    ]
+    path = tmp_path / "T-TR.pickle.xz"
+    with lzma.open(path, "wb") as fh:
+        pickle.dump(pd.DataFrame(rows), fh)
+    rec = TextRecord(code="T-TR", language="tr", corpus_type=SOURCE, title="Robot Kitabı",
+                     creator="Zühtü Bayar", year=1980, focal_code="ZB",
+                     focal_name="Zühtü Bayar", pickle_path=path)
+    return LazyCorpusText(rec, CorpusCacheManager(tmp_path / "cache_tr"))
+
+
+@pytest.fixture()
 def real_config() -> CorpusPathConfig:
     cfg = CorpusPathConfig.from_env()
     if not cfg.translation_tsv.is_file():

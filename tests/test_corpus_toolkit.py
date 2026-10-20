@@ -25,7 +25,13 @@ from corpus_toolkit.stats import (
     per10k,
     spearman,
 )
-from corpus_toolkit.textutil import fold, loose_key, turkish_lower
+from corpus_toolkit.textutil import (
+    fold,
+    loose_key,
+    split_in_token_punct,
+    strip_in_token_punct,
+    turkish_lower,
+)
 from corpus_toolkit.tfidf import tfidf_manual
 
 
@@ -293,4 +299,139 @@ def test_tracked_notebook_is_clean():
                 f"copyrighted text to git."
             )
             assert cell.get("execution_count") is None, f"Cell {i} has execution_count set!"
+
+
+# -------------------------------------------------------- specialized punct tests
+def test_punctuation_helpers():
+    # Passim-style stripping (collapse)
+    assert strip_in_token_punct("Türkiye'nin") == "Türkiyenin"
+    assert strip_in_token_punct("Fred'") == "Fred"
+    assert strip_in_token_punct("robot-bilim") == "robotbilim"
+    assert strip_in_token_punct("sn'lik") == "snlik"
+    assert strip_in_token_punct("00000001'dir") == "00000001dir"
+    assert strip_in_token_punct("1882'") == "1882"
+    assert strip_in_token_punct("ay'da") == "ayda"
+    assert strip_in_token_punct("-") == ""
+    assert strip_in_token_punct("'") == ""
+
+    # Passim-style splitting (retokenization / decomposition)
+    assert split_in_token_punct("Türkiye'nin") == ["Türkiye", "nin"]
+    assert split_in_token_punct("Fred'") == ["Fred"]
+    assert split_in_token_punct("robot-bilim") == ["robot", "bilim"]
+    assert split_in_token_punct("sn'lik") == ["sn", "lik"]
+    assert split_in_token_punct("00000001'dir") == ["00000001", "dir"]
+    assert split_in_token_punct("1882'") == ["1882"]
+    assert split_in_token_punct("ay'da") == ["ay", "da"]
+    assert split_in_token_punct("-") == []
+    assert split_in_token_punct("'") == []
+
+
+def test_turkish_tokenview_punct_modes(turkish_mini_text):
+    # 1. Surface tokens: 'drop' (default)
+    v_drop = TokenView(turkish_mini_text, field="tok", punct="drop")
+    assert len(v_drop) == 9
+    assert "türkiye'nin" in v_drop.forms
+    assert "robot-bilim" in v_drop.forms
+    assert "fred'" in v_drop.forms
+    assert "." not in v_drop.forms
+
+    # 2. Surface tokens: 'keep' (with punctuation)
+    v_keep = TokenView(turkish_mini_text, field="tok", punct="keep")
+    assert len(v_keep) == 11
+    assert "." in v_keep.forms and "?" in v_keep.forms
+
+    # 3. Surface tokens: 'strip' (in-token collapsed)
+    v_strip = TokenView(turkish_mini_text, field="tok", punct="strip")
+    assert len(v_strip) == 9
+    assert "türkiyenin" in v_strip.forms
+    assert "robotbilim" in v_strip.forms
+    assert "fred" in v_strip.forms
+    assert "türkiye'nin" not in v_strip.forms
+
+    # 4. Surface tokens: 'split' (in-token decomposed)
+    v_split = TokenView(turkish_mini_text, field="tok", punct="split")
+    assert len(v_split) == 13
+    assert "türkiye" in v_split.forms and "nin" in v_split.forms
+    assert "robot" in v_split.forms and "bilim" in v_split.forms
+    assert "fred" in v_split.forms
+
+    # 5. Lemmatized field: 'strip'
+    v_lem_strip = TokenView(turkish_mini_text, field="lem", punct="strip")
+    assert len(v_lem_strip) == 9
+    assert "türkiyenin" in v_lem_strip.forms
+    assert "robotbilim" in v_lem_strip.forms
+    assert "uzman" in v_lem_strip.forms
+    assert "fred" in v_lem_strip.forms
+    assert "1882" in v_lem_strip.forms
+
+    # 6. Lemmatized field: 'split'
+    v_lem_split = TokenView(turkish_mini_text, field="lem", punct="split")
+    assert len(v_lem_split) == 12
+    assert "türkiye" in v_lem_split.forms and "nin" in v_lem_split.forms
+    assert "robot" in v_lem_split.forms and "bilim" in v_lem_split.forms
+    assert "uzman" in v_lem_split.forms
+    assert "fred" in v_lem_split.forms
+
+
+def test_search_punct_modes(turkish_mini_text):
+    eng = CorpusSearchEngine()
+
+    # Search with punct='keep': find punctuation
+    q_punct = SearchQuery(["?"], field="tok", punct="keep")
+    res_punct = eng.search(q_punct, [turkish_mini_text])
+    assert len(res_punct) == 1
+    assert res_punct.hits["token"].iloc[0] == "?"
+
+    # Search with punct='strip': query with or without apostrophe
+    q_strip1 = SearchQuery(["Türkiye'nin"], field="tok", punct="strip")
+    q_strip2 = SearchQuery(["Türkiyenin"], field="tok", punct="strip")
+    res_s1 = eng.search(q_strip1, [turkish_mini_text])
+    res_s2 = eng.search(q_strip2, [turkish_mini_text])
+    assert len(res_s1) == 1 and len(res_s2) == 1
+    assert res_s1.hits["form"].iloc[0] == "türkiyenin"
+    assert res_s1.hits["token"].iloc[0] == "Türkiye'nin"
+
+    # Search with punct='split': query constituent parts of composite words
+    q_sp_r = SearchQuery(["robot"], field="tok", punct="split")
+    q_sp_b = SearchQuery(["bilim"], field="tok", punct="split")
+    res_r = eng.search(q_sp_r, [turkish_mini_text])
+    res_b = eng.search(q_sp_b, [turkish_mini_text])
+    assert len(res_r) == 1 and res_r.hits["token"].iloc[0] == "robot-bilim"
+    assert len(res_b) == 1 and res_b.hits["token"].iloc[0] == "robot-bilim"
+
+    # Search on lemmas with punct='strip' and 'split'
+    q_lem_fred = SearchQuery(["fred"], field="lem", punct="strip")
+    res_f = eng.search(q_lem_fred, [turkish_mini_text])
+    assert len(res_f) == 1 and res_f.hits["lemma"].iloc[0] == "fred'"
+
+    q_lem_part = SearchQuery(["nin"], field="lem", punct="split")
+    res_nin = eng.search(q_lem_part, [turkish_mini_text])
+    assert len(res_nin) == 1 and res_nin.hits["lemma"].iloc[0] == "türkiye'nin"
+
+
+def test_concordance_with_punct(turkish_mini_text):
+    eng = CorpusSearchEngine()
+    q_split = SearchQuery(["robot"], field="tok", punct="split")
+    res = eng.search(q_split, [turkish_mini_text])
+    conc = Concordancer().run(res, [turkish_mini_text], span=(2, 2))
+    assert len(conc) == 1
+    line = conc.lines[0]
+    assert line.node[0] == "robot-bilim"
+
+
+def test_diversity_with_punct_and_caching(turkish_mini_text, tmp_path):
+    from corpus_toolkit.analysis import diversity_for
+    from corpus_toolkit.loader import CorpusLoader
+
+    loader = CorpusLoader(cache_policy="keep", verbose=False)
+    d_drop = diversity_for(loader, [turkish_mini_text], field="tok", punct="drop")
+    d_keep = diversity_for(loader, [turkish_mini_text], field="tok", punct="keep")
+    d_strip = diversity_for(loader, [turkish_mini_text], field="tok", punct="strip")
+    d_split = diversity_for(loader, [turkish_mini_text], field="tok", punct="split")
+
+    # Lengths (N) reflect the distinct tokenization views
+    assert d_drop.iloc[0]["N"] == 9
+    assert d_keep.iloc[0]["N"] == 11
+    assert d_strip.iloc[0]["N"] == 9
+    assert d_split.iloc[0]["N"] == 13
 

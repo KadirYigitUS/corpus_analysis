@@ -26,7 +26,7 @@ import pandas as pd
 from .lazy import LazyCorpusText
 from .search import SearchQuery, find_nodes
 from .stats import benjamini_hochberg, chunk_counts, cosine, juilland_d, pearson, spearman
-from .tokenview import Field, Mode, TokenView
+from .tokenview import Field, Mode, PunctMode, TokenView
 
 
 @dataclass
@@ -88,7 +88,8 @@ class BatchKwicResult:
 class BatchKwicAnalyzer:
     def analyze(self, terms: "list[str] | dict[str, list[str]]",
                 texts: Iterable[LazyCorpusText], field: Field = "lem", match: str = "exact",
-                filter_function_words: bool = False, mode: Mode = "drop", n_chunks: int = 10,
+                filter_function_words: bool = False, mode: Mode = "drop",
+                punct: PunctMode | bool = "drop", n_chunks: int = 10,
                 case_sensitive: bool = False) -> BatchKwicResult:
         groups = terms if isinstance(terms, dict) else {t: [t] for t in terms}
         labels = list(groups)
@@ -101,14 +102,15 @@ class BatchKwicAnalyzer:
             code = text.record.code
             codes.append(code)
             view = TokenView(text, field, filter_function_words, mode,
-                             case_fold=not case_sensitive)
+                             case_fold=not case_sensitive, punct=punct)
             n_run = len(view)
             words[code] = n_run
             n_pos = len(view.forms)
             elig_chunk = chunk_counts(np.flatnonzero(view.eligible), n_pos, n_chunks)
             for lab in labels:
                 q = SearchQuery(groups[lab], field, match, case_sensitive,  # type: ignore[arg-type]
-                                filter_function_words=filter_function_words, mode=mode)
+                                filter_function_words=filter_function_words, mode=mode,
+                                punct=punct)
                 pos = find_nodes(view, q)
                 counts[lab][code] = len(pos)
                 rates[lab][code] = 1e4 * len(pos) / n_run if n_run else np.nan
