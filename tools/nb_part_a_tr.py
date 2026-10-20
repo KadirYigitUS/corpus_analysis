@@ -409,7 +409,7 @@ def chapters() -> list[Cell]:
           code("""
     P = pos.PosComparativeAnalyzer()
     profile = P.profile_table(loader.load_all())
-    show_table(profile.round(1), page_size=20, title="13 Metnin UPOS Profil Tablosu")
+    show_table(profile.round(1), page_size=50, title="13 Metnin UPOS Profil Tablosu")
     fig = viz.pos_heatmap(profile, pos.UPOS_ORDER); plt.show()             # Şekil 2A
     """),
           md("""
@@ -432,8 +432,8 @@ def chapters() -> list[Cell]:
           code("""
     trans = [loader.load_text(c) for c in ["BR-SM", "A-ZB", "YG-ZB", "KS-ZB", "KT-OK"]]
     indig = list(loader.load_indigenous())
-    print("Çeviriler:", ", ".join(loader.registry.display(t) for t in trans))
-    print("Yerli Romanlar:", ", ".join(loader.registry.display(t) for t in indig))
+    print("Çeviriler:\\n", "\\n".join(loader.registry.display(t) for t in trans))
+    print("Yerli Romanlar:\\n", "\\n".join(loader.registry.display(t) for t in indig))
     grp = P.group_comparison(trans, indig, ("translation", "indigenous"))
     show_table(grp.round(2), page_size=20, title="Çeviri vs Yerli Türkçe UPOS (Bootstrap %95 GA)")
     print(grp.attrs)

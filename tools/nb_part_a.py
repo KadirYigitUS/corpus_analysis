@@ -425,7 +425,7 @@ def chapters() -> list[Cell]:
           code("""
     P = pos.PosComparativeAnalyzer()
     profile = P.profile_table(loader.load_all())
-    show_table(profile.round(1), page_size=20, title="UPOS Profile Across All 13 Texts")
+    show_table(profile.round(1), page_size=50, title="UPOS Profile Across All 13 Texts")
     fig = viz.pos_heatmap(profile, pos.UPOS_ORDER); plt.show()             # Figure 2A
     """),
           md("""
@@ -449,8 +449,8 @@ def chapters() -> list[Cell]:
           code("""
     trans = [loader.load_text(c) for c in ["BR-SM", "A-ZB", "YG-ZB", "KS-ZB", "KT-OK"]]
     indig = list(loader.load_indigenous())
-    print("Translations:", ", ".join(loader.registry.display(t) for t in trans))
-    print("Indigenous:", ", ".join(loader.registry.display(t) for t in indig))
+    print("Translations:\\n", "\\n".join(loader.registry.display(t) for t in trans))
+    print("Indigenous:\\n", "\\n".join(loader.registry.display(t) for t in indig))
     grp = P.group_comparison(trans, indig, ("translation", "indigenous"))
     show_table(grp.round(2), page_size=20, title="Translated vs Indigenous UPOS (Bootstrap 95% CI)")
     print(grp.attrs)
