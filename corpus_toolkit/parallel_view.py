@@ -41,6 +41,7 @@ import importlib.util
 import pickle
 import re
 import sys
+import types
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -340,6 +341,10 @@ class NdaOverlay:
         nda_root = cfg.thesis_root / "scripts" / "Neologism_Dictionary_Annotation"
         added = [str(p) for p in (nda_root, cfg.thesis_root) if str(p) not in sys.path]
         sys.path[:0] = added
+        orig_app = sys.modules.get("app")
+        app_pkg = types.ModuleType("app")
+        app_pkg.__path__ = [str(nda_root / "app")]
+        sys.modules["app"] = app_pkg
         entries: list[Any] = []
         scored_rows: dict[int, Any] = {}
         try:
@@ -357,6 +362,10 @@ class NdaOverlay:
             _NDA_OVERLAY_CACHE[pair_id] = ov
             return ov
         finally:
+            if orig_app is not None:
+                sys.modules["app"] = orig_app
+            else:
+                sys.modules.pop("app", None)
             for p in added:
                 if p in sys.path:
                     sys.path.remove(p)

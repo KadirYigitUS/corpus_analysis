@@ -1,6 +1,7 @@
 """CLI entrypoint to launch Corpus Analysis SPA server."""
 
 from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
@@ -10,7 +11,7 @@ current_dir = Path(__file__).resolve().parent
 if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
 
-from SPA.app import create_app
+from SPA.app import create_app  # noqa: E402
 
 
 def main() -> None:
