@@ -1,0 +1,19 @@
+<!-- Settings, Paths & Registry Configurator Modal -->
+<div id="config-editor-modal" class="modal-overlay">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div class="modal-title">Settings, Storage Paths & Corpus Registry</div>
+      <button class="drawer-close" id="btn-close-settings">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+        All paths are hot-reloaded and verified against disk existence. Edits are atomically saved to <code>spa_paths.yaml</code>.
+      </div>
+      <div id="paths-editor-fields"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" id="btn-close-settings-footer" onclick="window.configEditorModal.close();">Cancel</button>
+      <button class="btn btn-sm btn-primary" id="btn-save-settings">Save & Validate Paths</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,44 @@
+<!-- Tab 1: Corpus Inventory, Source Tables & Schema Inspector -->
+<div id="tab_01" class="tab-pane active">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Corpus Texts</div>
+      <div class="kpi-value" id="t1-total-texts">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Running Tokens</div>
+      <div class="kpi-value" id="t1-total-tokens">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Sentences</div>
+      <div class="kpi-value" id="t1-total-sentences">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Distinct Author-Translators</div>
+      <div class="kpi-value" id="t1-author-count">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Process Memory (RSS)</div>
+      <div class="kpi-value" id="t1-rss-mb" style="color:var(--accent-teal);">-</div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <h3 style="font-size:14px; font-weight:700; color:var(--text-primary);">Corpus Inventory & Source Tables</h3>
+    <button class="btn btn-sm btn-primary" onclick="if(window.corpusInfoModal) window.corpusInfoModal.open();">Open Visual Dossiers</button>
+  </div>
+
+  <div id="t1-inventory-grid"></div>
+
+  <div id="t1-schema-pane" class="kpi-card" style="margin-top:16px; display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div>
+        <span style="font-size:13px; font-weight:700; color:var(--accent-blue);">Schema Inspection: </span>
+        <b id="t1-schema-text-code" style="color:var(--text-primary);"></b>
+        <span class="chip" id="t1-schema-tok-count" style="margin-left:8px;"></span>
+      </div>
+      <button class="btn btn-sm" onclick="document.getElementById('t1-schema-pane').style.display='none';">Close Schema</button>
+    </div>
+    <div id="t1-schema-columns-grid"></div>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<!-- Tab 8: Lexical Diversity & Richness Laboratory -->
+<div id="tab_08" class="tab-pane">
+  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Select Text:</span>
+      <select id="t8-select-text" class="form-select">
+        <option value="BR-SM">BR-SM (Selma MİNE - Ben, Robot)</option>
+        <option value="A-ZB">A-ZB (Zühtü BAYAR - Aygır)</option>
+        <option value="OBI-SM">OBI-SM (Selma MİNE - OBI)</option>
+        <option value="SU-ZB">SU-ZB (Zühtü BAYAR - Sahte Ufuklar)</option>
+        <option value="SCS-OK">SCS-OK (Özlem KURDOĞLU - Son Çıkış)</option>
+      </select>
+      <button class="btn btn-sm" id="t8-btn-view-mattr">View MATTR Curve</button>
+    </div>
+    <button class="btn btn-sm btn-primary" id="t8-btn-refresh-diversity">Refresh Diversity Table</button>
+  </div>
+
+  <div id="t8-mattr-pane" class="kpi-card" style="display:none; margin-bottom:12px;"></div>
+
+  <!-- 22-Column LancsBox-X Diversity Table -->
+  <div id="t8-diversity-grid"></div>
+</div>

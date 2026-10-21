@@ -1,0 +1,48 @@
+<!-- Tab 2: Translation Alignment & Length-Delta Explorer -->
+<div id="tab_02" class="tab-pane">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Aligned Sentence Pairs</div>
+      <div class="kpi-value" id="t2-kpi-total">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Sentence Ratio (R_sent)</div>
+      <div class="kpi-value" id="t2-kpi-ratio">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">1:1 Alignments %</div>
+      <div class="kpi-value" id="t2-kpi-one-to-one">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Token Expansion (TR / EN)</div>
+      <div class="kpi-value" id="t2-kpi-expansion">-</div>
+    </div>
+  </div>
+
+  <!-- 8-Group NER Pill Filter Bar -->
+  <div id="t2-ner-filter-bar" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; align-items:center;">
+    <span style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">NER Filter:</span>
+    <button class="chip ner-pill-btn chip-active" data-ner="ALL">ALL</button>
+    <button class="chip ner-pill-btn" data-ner="PER">PERSON</button>
+    <button class="chip ner-pill-btn" data-ner="ORG">ORG</button>
+    <button class="chip ner-pill-btn" data-ner="LOC">LOC</button>
+    <button class="chip ner-pill-btn" data-ner="MISC">MISC</button>
+    <button class="chip ner-pill-btn" data-ner="FAC">FAC</button>
+    <button class="chip ner-pill-btn" data-ner="PROD">PRODUCT</button>
+    <button class="chip ner-pill-btn" data-ner="NUM">NUM</button>
+    <button class="chip ner-pill-btn" data-ner="LAW">LAW</button>
+  </div>
+
+  <div style="display:flex; gap:14px;">
+    <!-- Chapter Sidebar -->
+    <div style="width:170px; flex-shrink:0;">
+      <div style="font-size:11.5px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:8px;">Chapters</div>
+      <div id="t2-chapter-sidebar" style="display:flex; flex-direction:column; gap:4px; max-height:480px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- Main Alignment Table -->
+    <div style="flex:1; overflow-x:auto;">
+      <div id="t2-alignment-grid"></div>
+    </div>
+  </div>
+</div>

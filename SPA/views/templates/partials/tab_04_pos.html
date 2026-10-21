@@ -1,0 +1,28 @@
+<!-- Tab 4: Comparative POS & Morphosyntactic Profiler -->
+<div id="tab_04" class="tab-pane">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 style="font-size:14px; font-weight:700;">17-Tag UPOS Profiles & Scalar Descriptors</h3>
+    <button class="btn btn-sm" onclick="window.tab04.loadPosProfiles();">Refresh Profiles</button>
+  </div>
+
+  <div id="t4-pos-profiles-grid"></div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+    <!-- Pair Delta Divergence -->
+    <div class="kpi-card">
+      <div style="font-weight:700; font-size:13px; color:var(--accent-blue); margin-bottom:10px;">
+        Figure 2B: Translation Pair Divergence (Δpp)
+      </div>
+      <div id="t4-pair-delta-container"></div>
+    </div>
+
+    <!-- Group Comparison with Bootstrap CIs -->
+    <div class="kpi-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-weight:700; font-size:13px; color:var(--accent-teal);">Figure 2C: Group Comparison (Trans TR vs Indig TR)</span>
+        <div id="t4-group-comp-stats"></div>
+      </div>
+      <div id="t4-group-comp-list"></div>
+    </div>
+  </div>
+</div>

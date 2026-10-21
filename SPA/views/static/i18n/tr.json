@@ -1,0 +1,42 @@
+{
+  "brand": "Türkçe Bilimkurgu Derlem Analizi İstasyonu",
+  "scope": {
+    "all": "Tüm Metinler (13 Metin)",
+    "all_en": "Tüm İngilizce Kaynaklar",
+    "all_tr": "Tüm Türkçe Metinler",
+    "trans_en": "Çeviri İngilizce Kaynaklar",
+    "trans_tr": "Çeviri Türkçe Metinler",
+    "indig_tr": "Yerli Türkçe Romanlar",
+    "pairs": "Hizalanmış Çiftler",
+    "single": "Tekil Metin"
+  },
+  "matrix": {
+    "field": "Birim",
+    "filter": "İşlev Sözcüğü Filtresi",
+    "mode": "Mod",
+    "punct": "Noktalama Rejimi"
+  },
+  "tabs": {
+    "tab_01": "1. Derlem Envanteri & Şema",
+    "tab_02": "2. Hizalama & Uzunluk Delta",
+    "tab_03": "3. NDA Paralel & Sözlük",
+    "tab_04": "4. Karşılaştırmalı POS Profili",
+    "tab_05": "5. Sözdizimsel Bağıntı (UD)",
+    "tab_06": "6. Derlem Arama & KWIC",
+    "tab_07": "7. Toplu KWIC & Dağılım",
+    "tab_08": "8. Sözcüksel Zenginlik",
+    "tab_09": "9. Eşdizimlilik & GraphColl",
+    "tab_10": "10. TF-IDF & Raporlama",
+    "tab_11": "11. Bütünleşik Gezgin"
+  },
+  "buttons": {
+    "corpus_info": "Derlem Bilgisi & Kaynaklar",
+    "settings": "Ayarlar & Dizinler",
+    "help": "Yardım & Formüller",
+    "evict_cache": "Önbelleği Temizle",
+    "export": "Dışa Aktar",
+    "search": "Ara",
+    "close": "Kapat",
+    "save": "Kaydet"
+  }
+}

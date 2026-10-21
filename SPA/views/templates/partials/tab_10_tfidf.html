@@ -1,0 +1,19 @@
+<!-- Tab 10: Sublinear TF-IDF Keyness & Research Reporter -->
+<div id="tab_10" class="tab-pane">
+  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Top K:</span>
+      <input type="number" id="t10-input-topk" class="form-input" value="15" min="5" max="50" style="width:60px;" />
+      <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+        <input type="checkbox" id="t10-check-exclude-propn" checked /> Exclude PROPN (Proper Nouns)
+      </label>
+      <button class="btn btn-sm btn-primary" id="t10-btn-run-tfidf">Extract Keyness Profiles</button>
+    </div>
+    <button class="btn btn-sm btn-primary" id="t10-btn-download-bundle" style="background:#059669; border-color:#047857;">
+      📦 Download Research Bundle (.zip)
+    </button>
+  </div>
+
+  <!-- Keyness Small-Multiples Grid -->
+  <div id="t10-keywords-container"></div>
+</div>

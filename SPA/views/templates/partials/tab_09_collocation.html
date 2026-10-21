@@ -1,0 +1,37 @@
+<!-- Tab 9: Union-Slot Collocation & GraphColl Studio -->
+<div id="tab_09" class="tab-pane">
+  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+    <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Node:</span>
+    <input type="text" id="t9-input-node" class="form-input" value="robot" style="width:120px;" />
+    <select id="t9-select-text" class="form-select">
+      <option value="BR-SM">BR-SM (Selma MİNE)</option>
+      <option value="IR-IA">IR-IA (Isaac Asimov)</option>
+      <option value="OBI-SM">OBI-SM (Selma MİNE)</option>
+      <option value="SU-ZB">SU-ZB (Zühtü BAYAR)</option>
+    </select>
+    <select id="t9-select-metric" class="form-select">
+      <option value="LogDice">LogDice</option>
+      <option value="MI">MI</option>
+      <option value="G2">Signed G2</option>
+      <option value="T">T-Score</option>
+      <option value="MI2">MI²</option>
+      <option value="MI3">MI³</option>
+    </select>
+    <span style="font-size:11.5px; color:var(--text-secondary);">Min Freq:</span>
+    <input type="number" id="t9-input-min-freq" class="form-input" value="3" min="1" max="20" style="width:50px;" />
+    <button class="btn btn-sm btn-primary" id="t9-btn-run-colloc">Run Collocation</button>
+  </div>
+
+  <div id="t9-stats-header" style="display:flex; gap:8px; margin-bottom:12px;"></div>
+
+  <div style="display:grid; grid-template-columns:1fr 380px; gap:16px;">
+    <!-- Collocation Table -->
+    <div id="t9-collocation-grid"></div>
+
+    <!-- GraphColl Radial Stage -->
+    <div class="kpi-card" style="display:flex; flex-direction:column; align-items:center;">
+      <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">GraphColl Radial Network</div>
+      <div id="t9-graphcoll-stage"></div>
+    </div>
+  </div>
+</div>

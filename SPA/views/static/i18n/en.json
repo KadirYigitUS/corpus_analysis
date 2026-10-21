@@ -1,0 +1,42 @@
+{
+  "brand": "Turkish SF Corpus Analysis Workstation",
+  "scope": {
+    "all": "All Texts (13 Texts)",
+    "all_en": "All English Sources",
+    "all_tr": "All Turkish Texts",
+    "trans_en": "Translated English Sources",
+    "trans_tr": "Translated Turkish Texts",
+    "indig_tr": "Indigenous Turkish Novels",
+    "pairs": "Aligned Pairs",
+    "single": "Single Text"
+  },
+  "matrix": {
+    "field": "Field",
+    "filter": "Function Word Filter",
+    "mode": "Mode",
+    "punct": "Punctuation Regime"
+  },
+  "tabs": {
+    "tab_01": "1. Corpus Inventory & Schema",
+    "tab_02": "2. Alignment & Length-Delta",
+    "tab_03": "3. NDA Parallel & Dictionary",
+    "tab_04": "4. Comparative POS Profile",
+    "tab_05": "5. Syntactic Dependency (UD)",
+    "tab_06": "6. Corpus Search & KWIC",
+    "tab_07": "7. Batch KWIC & Dispersion",
+    "tab_08": "8. Lexical Richness",
+    "tab_09": "9. Collocation & GraphColl",
+    "tab_10": "10. TF-IDF & Reporter",
+    "tab_11": "11. Unified Explorer"
+  },
+  "buttons": {
+    "corpus_info": "Corpus Info & Sources",
+    "settings": "Settings & Paths",
+    "help": "Help & Formulas",
+    "evict_cache": "Evict Cache",
+    "export": "Export",
+    "search": "Search",
+    "close": "Close",
+    "save": "Save"
+  }
+}

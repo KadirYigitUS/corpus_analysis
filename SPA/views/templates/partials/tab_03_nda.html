@@ -1,0 +1,48 @@
+<!-- Tab 3: NDA Parallel Corpora & Tripartite Dictionary -->
+<div id="tab_03" class="tab-pane">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-surface); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Parallel Text Pair:</span>
+      <select id="t3-select-pair" class="form-select">
+        <option value="IR-IA_BR-SM">IR-IA ⇄ BR-SM (Selma MİNE)</option>
+        <option value="TL-PA_A-ZB">TL-PA ⇄ A-ZB (Zühtü BAYAR)</option>
+        <option value="TLP-ML_YG-ZB">TLP-ML ⇄ YG-ZB (Zühtü BAYAR)</option>
+        <option value="TSP-JL_KS-ZB">TSP-JL ⇄ KS-ZB (Zühtü BAYAR)</option>
+        <option value="ASD-PKD_KT-OK">ASD-PKD ⇄ KT-OK (Özlem KURDOĞLU)</option>
+      </select>
+      <button class="btn btn-sm" id="btn-redraw-svg-links">Redraw Links</button>
+    </div>
+    <button class="btn btn-sm btn-primary" id="btn-toggle-nda-dict">Toggle Tripartite Dictionary</button>
+  </div>
+
+  <!-- Legend Bar -->
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:11.5px; align-items:center;">
+    <span style="font-weight:600; color:var(--text-muted);">Visual Sets:</span>
+    <span class="chip" style="background:var(--nda-linked-bg); color:var(--nda-linked-text); border:1px solid var(--nda-linked-border);">Linked Bilingual Pair (L#)</span>
+    <span class="chip" style="background:var(--nda-single-en-bg); color:var(--nda-single-en-text); border:1px solid var(--nda-single-en-border);">Single English</span>
+    <span class="chip" style="background:var(--nda-single-tr-bg); color:var(--nda-single-tr-text); border:1px solid var(--nda-single-tr-border);">Single Turkish</span>
+    <span class="chip" style="background:var(--nda-cand-bg); color:var(--nda-cand-text); border:1px solid var(--nda-cand-border);">Candidate Irrealia</span>
+  </div>
+
+  <!-- Parallel HTML Stage -->
+  <div id="t3-nda-stage" style="position:relative; min-height:400px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; overflow-x:auto;">
+    <svg class="nda-link-svg" style="position:absolute; top:0; left:0; pointer-events:none; z-index:10;"></svg>
+    <div style="color:var(--text-muted); padding:20px;">Loading aligned parallel corpora...</div>
+  </div>
+
+  <!-- Slide-in Tripartite Dictionary Drawer -->
+  <div id="t3-dict-drawer" class="slide-drawer">
+    <div class="drawer-header">
+      <span class="drawer-title">Tripartite Neologism Dictionary</span>
+      <button class="drawer-close" onclick="document.getElementById('t3-dict-drawer').classList.remove('open');">×</button>
+    </div>
+    <div class="drawer-body">
+      <h4 style="color:var(--accent-blue); font-size:12px; margin-bottom:6px;">Linked Bilingual Pairs</h4>
+      <div id="t3-dict-linked-list"></div>
+      <h4 style="color:var(--accent-teal); font-size:12px; margin:12px 0 6px 0;">English-Only Irrealia</h4>
+      <div id="t3-dict-en-list"></div>
+      <h4 style="color:var(--accent-rose); font-size:12px; margin:12px 0 6px 0;">Turkish-Only Irrealia</h4>
+      <div id="t3-dict-tr-list"></div>
+    </div>
+  </div>
+</div>

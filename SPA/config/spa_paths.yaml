@@ -1,0 +1,25 @@
+# Corpus Analysis SPA Central Path Configuration Registry
+# All paths can be overridden at runtime via Settings Modal or /api/v1/config/paths
+# Relative paths are resolved against thesis_root unless absolute.
+
+paths:
+  thesis_root: "/home/ben/Documents/thesis"
+  translation_tsv: "corpus/SF_Novels/txt_translation_book_locations.tsv"
+  indigenous_tsv: "corpus/SF_Novels/txt_indigenous_book_locations.tsv"
+  aligned_root: "data/alignment"
+  indigenous_root: "data/indigenous"
+  nda_cache_dir: "data/Neologism_Dictionary_Annotation_Cache"
+  passim_output_dir: "data/passim_analysis"
+  cache_dir: "data/corpus_analysis/.cache"
+  reports_dir: "data/corpus_analysis/reports"
+  tables_dir: "data/corpus_analysis/tables"
+  figures_dir: "data/corpus_analysis/figures"
+  book_images_dir: "scripts/corpus_analysis/SPA/views/static/img/books"
+  author_images_dir: "scripts/corpus_analysis/SPA/views/static/img/authors"
+
+server:
+  host: "127.0.0.1"
+  port: 5000
+  debug: false
+  max_memory_mb: 1500
+  cache_policy: "keep"

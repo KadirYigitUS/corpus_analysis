@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turkish SF Corpus Analysis Workstation (SPA)</title>
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/datagrid.css">
+  <link rel="stylesheet" href="/static/css/drawer.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Global Header -->
+    <header class="global-header">
+      <div class="header-brand">
+        <span class="brand-title" id="txt-brand-title">Turkish SF Corpus Analysis</span>
+        <span class="brand-badge">SPA v2.1</span>
+      </div>
+      <div class="header-controls">
+        <select id="global-scope-select" class="form-select">
+          <option value="all">All Texts (13 Subcorpus)</option>
+          <option value="all_en">All English Sources</option>
+          <option value="all_tr">All Turkish Texts</option>
+          <option value="trans_en">Translated EN Sources</option>
+          <option value="trans_tr">Translated TR Texts</option>
+          <option value="indig_tr">Indigenous TR Novels</option>
+        </select>
+        <button class="btn btn-sm" id="btn-open-corpus-info">📖 Corpus Info & Sources</button>
+        <button class="btn btn-sm" id="btn-open-settings">⚙️ Settings</button>
+        <button class="btn btn-sm btn-primary" id="btn-open-help">💡 Help & Formulas</button>
+        <button class="btn btn-sm" id="btn-lang-toggle">TR / EN</button>
+      </div>
+    </header>
+
+    <!-- 32-Combination TokenView Matrix Bar -->
+    <div class="matrix-bar">
+      <div class="matrix-group">
+        <span class="matrix-label">Field:</span>
+        <select id="matrix-field" class="form-select" style="padding:2px 6px;">
+          <option value="tok">tok (Surface)</option>
+          <option value="lem">lem (Clean Lemma)</option>
+        </select>
+      </div>
+      <div class="matrix-group">
+        <span class="matrix-label">Function Words:</span>
+        <select id="matrix-filter" class="form-select" style="padding:2px 6px;">
+          <option value="false">Include All</option>
+          <option value="true">Content Only (Filter)</option>
+        </select>
+      </div>
+      <div class="matrix-group">
+        <span class="matrix-label">Mode:</span>
+        <select id="matrix-mode" class="form-select" style="padding:2px 6px;">
+          <option value="drop">Drop</option>
+          <option value="mask">Mask</option>
+        </select>
+      </div>
+      <div class="matrix-group">
+        <span class="matrix-label">Punctuation:</span>
+        <select id="matrix-punct" class="form-select" style="padding:2px 6px;">
+          <option value="drop">Drop</option>
+          <option value="keep">Keep</option>
+          <option value="strip">Strip</option>
+          <option value="split">Split</option>
+        </select>
+      </div>
+      <div class="matrix-group" style="margin-left:auto;">
+        <span class="chip" id="hdr-rss-gauge" style="font-family:var(--font-mono);">RSS: - MB</span>
+      </div>
+    </div>
+
+    <!-- 11 Workstation Tab Navigation Bar -->
+    <nav class="tab-nav-bar" id="main-tab-nav">
+      <button class="tab-btn active" data-tab="tab_01">1. Inventory</button>
+      <button class="tab-btn" data-tab="tab_02">2. Alignment</button>
+      <button class="tab-btn" data-tab="tab_03">3. NDA Parallel</button>
+      <button class="tab-btn" data-tab="tab_04">4. POS Profile</button>
+      <button class="tab-btn" data-tab="tab_05">5. Dependency</button>
+      <button class="tab-btn" data-tab="tab_06">6. Search & KWIC</button>
+      <button class="tab-btn" data-tab="tab_07">7. Dispersion</button>
+      <button class="tab-btn" data-tab="tab_08">8. Richness</button>
+      <button class="tab-btn" data-tab="tab_09">9. Collocation</button>
+      <button class="tab-btn" data-tab="tab_10">10. TF-IDF</button>
+      <button class="tab-btn" data-tab="tab_11">11. Explorer</button>
+    </nav>
+
+    <!-- Tab Content Panes -->
+    <main class="tab-content-area">
+      {% include "partials/tab_01_inventory.html" %}
+      {% include "partials/tab_02_alignment.html" %}
+      {% include "partials/tab_03_nda.html" %}
+      {% include "partials/tab_04_pos.html" %}
+      {% include "partials/tab_05_syntax.html" %}
+      {% include "partials/tab_06_search.html" %}
+      {% include "partials/tab_07_dispersion.html" %}
+      {% include "partials/tab_08_diversity.html" %}
+      {% include "partials/tab_09_collocation.html" %}
+      {% include "partials/tab_10_tfidf.html" %}
+      {% include "partials/tab_11_explorer.html" %}
+    </main>
+
+    <!-- Modals and Drawer -->
+    {% include "partials/corpus_info_modal.html" %}
+    {% include "partials/config_editor_modal.html" %}
+    {% include "partials/help_docs_drawer.html" %}
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/app_state.js"></script>
+  <script src="/static/js/table_grid.js"></script>
+  <script src="/static/js/svg_connector.js"></script>
+  <script src="/static/js/corpus_info_modal.js"></script>
+  <script src="/static/js/config_editor_modal.js"></script>
+  <script src="/static/js/help_docs_drawer.js"></script>
+  <script src="/static/js/tab_01.js"></script>
+  <script src="/static/js/tab_02.js"></script>
+  <script src="/static/js/tab_03.js"></script>
+  <script src="/static/js/tab_04.js"></script>
+  <script src="/static/js/tab_05.js"></script>
+  <script src="/static/js/tab_06.js"></script>
+  <script src="/static/js/tab_07.js"></script>
+  <script src="/static/js/tab_08.js"></script>
+  <script src="/static/js/tab_09.js"></script>
+  <script src="/static/js/tab_10.js"></script>
+  <script src="/static/js/tab_11.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Initialize Modals & Drawer
+      window.corpusInfoModal.init();
+      window.configEditorModal.init();
+      window.helpDocsDrawer.init();
+
+      // 2. Tab Switching Logic
+      const tabNav = document.getElementById('main-tab-nav');
+      tabNav.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        const targetTab = btn.getAttribute('data-tab');
+
+        tabNav.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        const pane = document.getElementById(targetTab);
+        if (pane) pane.classList.add('active');
+
+        // Lazy initialize tab controller on first activation
+        const tabNum = targetTab.replace('tab_', '');
+        const controller = window['tab' + tabNum];
+        if (controller && controller.init && !controller._initialized) {
+          controller.init();
+          controller._initialized = true;
+        }
+      });
+
+      // 3. Matrix Bar & Scope Selectors Wiring
+      const updateMatrix = () => {
+        window.appState.setViewParams({
+          field: document.getElementById('matrix-field').value,
+          filter_function_words: document.getElementById('matrix-filter').value === 'true',
+          mode: document.getElementById('matrix-mode').value,
+          punct: document.getElementById('matrix-punct').value
+        });
+      };
+      ['matrix-field', 'matrix-filter', 'matrix-mode', 'matrix-punct'].forEach(id => {
+        document.getElementById(id).addEventListener('change', updateMatrix);
+      });
+
+      document.getElementById('global-scope-select').addEventListener('change', (e) => {
+        window.appState.setScope({ scope: e.target.value });
+      });
+
+      // 4. Initial Tab 1 Activation & Telemetry Polling
+      if (window.tab01) {
+        await window.tab01.init();
+        window.tab01._initialized = true;
+      }
+      await window.appState.refreshTelemetry();
+      const gauge = document.getElementById('hdr-rss-gauge');
+      if (gauge && window.appState.state.telemetry) {
+        gauge.innerText = `RSS: ${window.appState.state.telemetry.rss_mb || 0} MB`;
+      }
+    });
+  </script>
+</body>
+</html>

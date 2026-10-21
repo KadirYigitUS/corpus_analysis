@@ -1,0 +1,71 @@
+/* Interactive DataGrid: Sorting, Resizing, and Pagination */
+.datagrid-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 10px;
+}
+.datagrid-toolbar {
+  padding: 8px 12px;
+  background: #1e293b;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.datagrid-table-wrapper {
+  overflow-x: auto;
+  max-height: 520px;
+}
+.datagrid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.datagrid-table th {
+  background: #182234;
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.datagrid-table th:hover { color: var(--text-primary); }
+.datagrid-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.datagrid-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+.datagrid-pagination {
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+.pagination-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.sort-icon {
+  font-size: 10px;
+  margin-left: 4px;
+  color: var(--accent-blue);
+}
