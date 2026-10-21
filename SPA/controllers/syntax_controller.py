@@ -31,13 +31,21 @@ def create_syntax_blueprint(
         delta = pos_service.get_pair_delta_pp(pair_code, content_only=content_only)
         return jsonify(delta), 200
 
+    @syntax_bp.route("/pos/author-summary", methods=["GET"])
+    def get_author_summary():
+        content_only = request.args.get("content_only", "false").lower() == "true"
+        rows = pos_service.get_author_summary_table(content_only=content_only)
+        return jsonify({"items": rows}), 200
+
     @syntax_bp.route("/pos/group-comparison", methods=["POST"])
     def get_group_comparison():
         data = request.get_json() or {}
         comp = pos_service.get_group_comparison_figure2c(
-            group_a_scope=data.get("group_a", "trans_tr"),
-            group_b_scope=data.get("group_b", "indig_tr"),
-            n_bootstrap=int(data.get("n_bootstrap", 1500)),
+            group_a_scope=str(data.get("group_a", "trans_tr")),
+            group_b_scope=str(data.get("group_b", "indig_tr")),
+            comparison_key=str(data.get("comparison_key", "ALL")),
+            content_only=bool(data.get("content_only", False)),
+            n_bootstrap=int(data.get("n_bootstrap", 800)),
         )
         return jsonify(comp), 200
 

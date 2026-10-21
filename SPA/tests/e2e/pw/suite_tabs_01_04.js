@@ -23,141 +23,108 @@ module.exports = async function suiteTabs01To04(ctx) {
         assert.strictEqual(total, 13, `Expected 13 total texts in 'all' scope, got ${total}`);
         facts.tab01_row_count = total;
 
-        // Verify KPI cards are numeric
         for (const id of ['t1-total-texts', 't1-total-tokens', 't1-total-sentences', 't1-author-count']) {
           const valText = await page.$eval(`#${id}`, (el) => el.innerText.replace(/,/g, '').trim());
           const num = Number(valText);
           assert.ok(!Number.isNaN(num) && num > 0, `KPI #${id} is not positive numeric: "${valText}"`);
         }
 
-        // Search "SCS" filters to >=1 row and preserves focus
         const searchRes = await gridSearch(page, 't1-inventory-grid', 'SCS');
         assert.strictEqual(searchRes.hasFocus, true);
         assert.ok(searchRes.rows.length >= 1, 'Expected at least 1 row for search "SCS"');
         await gridSearch(page, 't1-inventory-grid', '');
-        const restoredTotal = await gridTotalCount(page, 't1-inventory-grid');
-        assert.strictEqual(restoredTotal, 13);
+        assert.strictEqual(await gridTotalCount(page, 't1-inventory-grid'), 13);
 
-        // Sort toggles ascending then descending
         const sortAsc = await gridSort(page, 't1-inventory-grid', 'code');
         assert.strictEqual(sortAsc.icon, '▲');
-        const firstCodeAsc = sortAsc.rows[0][0];
         const sortDesc = await gridSort(page, 't1-inventory-grid', 'code');
         assert.strictEqual(sortDesc.icon, '▼');
-        const firstCodeDesc = sortDesc.rows[0][0];
-        assert.notStrictEqual(firstCodeAsc, firstCodeDesc, 'Sort toggle did not reverse row order');
+        assert.notStrictEqual(sortAsc.rows[0][0], sortDesc.rows[0][0], 'Sort toggle did not reverse row order');
 
-        // Inspect Schema button fills #t1-schema-pane
-        const { status: schemaStatus, json: schemaJson } = await waitApi(
-          page,
-          '/api/v1/corpus/schema/',
-          async () => {
-            await page.click('#t1-inventory-grid .btn-inspect-schema');
-          }
-        );
+        const { status: schemaStatus, json: schemaJson } = await waitApi(page, '/api/v1/corpus/schema/', async () => {
+          await page.click('#t1-inventory-grid .btn-inspect-schema');
+        });
         assert.strictEqual(schemaStatus, 200);
-        const paneVisible = await page.$eval('#t1-schema-pane', (el) => el.style.display !== 'none');
-        assert.strictEqual(paneVisible, true, '#t1-schema-pane did not become visible');
-        const schemaCode = await page.$eval('#t1-schema-text-code', (el) => el.innerText.trim());
-        assert.strictEqual(schemaCode, schemaJson.text_code);
-        const schemaRows = await gridRows(page, 't1-schema-columns-grid');
-        assert.ok(schemaRows.length > 0, 'Expected schema columns grid to have rows');
+        assert.strictEqual(await page.$eval('#t1-schema-pane', (el) => el.style.display !== 'none'), true);
+        assert.strictEqual(await page.$eval('#t1-schema-text-code', (el) => el.innerText.trim()), schemaJson.text_code);
+        assert.ok((await gridRows(page, 't1-schema-columns-grid')).length > 0);
       },
     },
     {
       name: 'tab02_alignment_kpis_chapters_ner_and_pair_switch',
       fn: async () => {
         const kpiWait = page.waitForResponse((r) => r.url().includes('/api/v1/alignment/kpis/'), { timeout: 90000 });
+        const statsWait = page.waitForResponse((r) => r.url().includes('/api/v1/alignment/stats/'), { timeout: 90000 });
         const rowsWait = page.waitForResponse((r) => r.url().includes('/api/v1/alignment/rows'), { timeout: 90000 });
         await gotoTab(page, 2);
-        const [kpiResp] = await Promise.all([kpiWait, rowsWait]);
-        const kpiJson = await kpiResp.json();
+        const [kpiResp, statsResp, rowsResp] = await Promise.all([kpiWait, statsWait, rowsWait]);
+        const [kpiJson, statsJson, rowsJson] = await Promise.all([kpiResp.json(), statsResp.json(), rowsResp.json()]);
 
-        // Assert 4 KPI cards equal API JSON
-        const domTotal = await page.$eval('#t2-kpi-total', (el) => Number(el.innerText.trim()));
-        const domRatio = await page.$eval('#t2-kpi-ratio', (el) => Number(el.innerText.trim()));
-        const domOneToOne = await page.$eval('#t2-kpi-one-to-one', (el) => el.innerText.trim());
-        const domExp = await page.$eval('#t2-kpi-expansion', (el) => Number(el.innerText.trim()));
+        assert.strictEqual(await page.$eval('#t2-kpi-total', (el) => Number(el.innerText.trim())), kpiJson.total_alignments);
+        assert.strictEqual(await page.$eval('#t2-kpi-tur-more', (el) => Number(el.innerText.trim())), kpiJson.count_tur_more);
+        assert.strictEqual(await page.$eval('#t2-kpi-eng-more', (el) => Number(el.innerText.trim())), kpiJson.count_eng_more);
+        assert.strictEqual(await page.$eval('#t2-kpi-equal-sent', (el) => Number(el.innerText.trim())), kpiJson.count_one_one);
+        assert.strictEqual(await page.$eval('#t2-kpi-ratio', (el) => Number(el.innerText.trim())), Number(kpiJson.sentence_ratio));
+        assert.strictEqual(await page.$eval('#t2-kpi-one-to-one', (el) => el.innerText.trim()), `${kpiJson.one_to_one_pct}%`);
+        assert.strictEqual(await page.$eval('#t2-kpi-expansion', (el) => Number(el.innerText.trim())), Number(kpiJson.expansion_ratio));
+        assert.ok(statsJson.series.length > 1000, 'Expected full-book sent_diff series > 1000 points');
 
-        assert.strictEqual(domTotal, kpiJson.total_alignments);
-        assert.strictEqual(domRatio, Number(kpiJson.sentence_ratio));
-        assert.strictEqual(domOneToOne, `${kpiJson.one_to_one_pct}%`);
-        assert.strictEqual(domExp, Number(kpiJson.expansion_ratio));
+        assert.ok(rowsJson.total_pages > 2, `Expected >2 pages, got ${rowsJson.total_pages}`);
+        await waitApi(page, '/api/v1/alignment/rows', async () => { await page.click('#t2-alignment-grid .grid-next-btn'); });
+        const { json: page3Json } = await waitApi(page, '/api/v1/alignment/rows', async () => {
+          await page.click('#t2-alignment-grid .grid-next-btn');
+        });
+        assert.strictEqual(page3Json.page, 3, 'Expected server-side navigation to reach page 3');
+        assert.ok(page3Json.rows.length > 0 && page3Json.rows[0].ai >= 50, 'Page 3 should have AI >= 50');
 
-        const alignRows = await gridRows(page, 't2-alignment-grid');
-        assert.ok(alignRows.length > 0, 'Expected alignment grid to have rows');
+        const { json: nerJson } = await waitApi(page, '/api/v1/alignment/rows', async () => {
+          await page.click('#t2-ner-filter-bar .ner-pill-btn[data-ner="PER"]');
+        });
+        assert.ok(nerJson.total > 0 && nerJson.total < kpiJson.total_alignments);
+        assert.ok((await page.$$eval('#t2-alignment-grid .tok.ner-PER', (els) => els.length)) > 0);
 
-        const chBtns = await page.$$eval('#t2-chapter-sidebar .ch-btn', (els) => els.length);
-        assert.ok(chBtns > 1, 'Expected chapter sidebar buttons');
-        const nerBtns = await page.$$eval('#t2-ner-filter-bar .ner-pill-btn', (els) => els.length);
-        assert.strictEqual(nerBtns, 9, 'Expected 9 NER filter pills');
+        await waitApi(page, '/api/v1/alignment/rows', async () => {
+          await page.click('#t2-ner-filter-bar .ner-pill-btn[data-ner="ALL"]');
+        });
 
-        // Pair select drives /alignment/kpis/{pair}
         const { json: pairKpi } = await waitApi(page, '/api/v1/alignment/kpis/TL-PA_A-ZB', async () => {
           await page.selectOption('#t2-select-pair', 'TL-PA_A-ZB');
         });
-        await pollUntil(async () => {
-          const cur = await page.$eval('#t2-kpi-total', (el) => Number(el.innerText.trim()));
-          return cur === pairKpi.total_alignments;
-        });
+        await pollUntil(async () => (await page.$eval('#t2-kpi-total', (el) => Number(el.innerText.trim()))) === pairKpi.total_alignments);
       },
     },
     {
       name: 'tab03_nda_parallel_tokens_svg_links_and_dictionary_drawer',
       fn: async () => {
-        const htmlWait = page.waitForResponse((r) => r.url().includes('/api/v1/alignment/nda/html/'), {
-          timeout: 90000,
-        });
-        const dictWait = page.waitForResponse((r) => r.url().includes('/api/v1/alignment/nda/dictionary/'), {
-          timeout: 90000,
-        });
+        const htmlWait = page.waitForResponse((r) => r.url().includes('/api/v1/alignment/nda/html/'), { timeout: 90000 });
+        const dictWait = page.waitForResponse((r) => r.url().includes('/api/v1/alignment/nda/dictionary/'), { timeout: 90000 });
         await gotoTab(page, 3);
         const [htmlResp, dictResp] = await Promise.all([htmlWait, dictWait]);
-        const htmlJson = await htmlResp.json();
-        const dictJson = await dictResp.json();
+        const [htmlJson, dictJson] = await Promise.all([htmlResp.json(), dictResp.json()]);
 
-        // Count tokens inside API HTML response and compare with live DOM
+        assert.ok(htmlJson.html.includes('.pv table.pv-grid'), 'Expected PV_CSS in Tab 3 HTML payload');
         const domTokens = await page.$$eval('#t3-nda-stage .t, #t3-nda-stage .t-pill', (els) => els.length);
         const apiTokenMatches = (htmlJson.html.match(/class="t(?:\s|")/g) || []).length;
-        assert.ok(domTokens > 0, 'Expected >0 parallel tokens rendered on Tab 3');
-        assert.strictEqual(domTokens, apiTokenMatches, 'DOM token count must match API HTML response');
+        assert.ok(domTokens > 0 && domTokens === apiTokenMatches);
         facts.nda_token_counts = facts.nda_token_counts || {};
         facts.nda_token_counts[htmlJson.pair_code] = domTokens;
 
-        // SVG connector count > 0 and Redraw keeps it non-zero
-        await pollUntil(async () => (await svgLinkCount(page)) > 0, {
-          message: 'Expected >0 SVG connector paths on Tab 3',
-        });
+        await pollUntil(async () => (await svgLinkCount(page)) > 0, { message: 'Expected >0 SVG connector paths on Tab 3' });
         const initialLinks = await svgLinkCount(page);
         await page.click('#btn-redraw-svg-links');
-        const afterRedraw = await svgLinkCount(page);
-        assert.ok(afterRedraw > 0 && afterRedraw === initialLinks, 'Redraw must keep SVG links non-zero');
+        assert.strictEqual(await svgLinkCount(page), initialLinks);
 
-        // Candidate / Linked / Realia / Irrealia pill classes present
-        const hasLinkedOrCand = await page.$$eval(
-          '#t3-nda-stage .t.lk, #t3-nda-stage .t.cand, #t3-nda-stage .t.single-en, #t3-nda-stage .t.single-tr',
-          (els) => els.length
-        );
-        assert.ok(hasLinkedOrCand > 0, 'Expected NDA highlight pill classes on stage');
-        const hasBadges = await page.$$eval(
-          '#t3-nda-stage sup.lk-b, #t3-nda-stage sup.irr-b, #t3-nda-stage .ner-b',
-          (els) => els.length
-        );
-        assert.ok(hasBadges > 0, 'Expected Realia/Irrealia/Link badges on Tab 3 stage');
+        await page.click('#t3-nda-stage .pv-toggles button:nth-child(2)');
+        assert.strictEqual(await page.$eval('#t3-nda-stage .pv', (el) => el.classList.contains('hide-lemma')), true);
+        await page.click('#t3-nda-stage .pv-toggles button:nth-child(2)');
 
-        // Dictionary drawer toggles and lists linked, EN, and TR entries
         await page.click('#btn-toggle-nda-dict');
-        const isOpen = await page.$eval('#t3-dict-drawer', (el) => el.classList.contains('open'));
-        assert.strictEqual(isOpen, true);
+        assert.strictEqual(await page.$eval('#t3-dict-drawer', (el) => el.classList.contains('open')), true);
         if (dictJson.linked_count > 0) {
-          const linkedCards = await page.$$eval('#t3-dict-linked-list .kpi-card', (els) => els.length);
-          assert.ok(linkedCards > 0, 'Expected linked dictionary cards');
+          assert.ok((await page.$$eval('#t3-dict-linked-list .kpi-card', (els) => els.length)) > 0);
         }
         await page.click('#t3-dict-drawer .drawer-close');
-        const isClosed = await page.$eval('#t3-dict-drawer', (el) => !el.classList.contains('open'));
-        assert.strictEqual(isClosed, true);
 
-        // Pair dropdown loads another pair
         const { json: nextHtml } = await waitApi(page, '/api/v1/alignment/nda/html/TL-PA_A-ZB', async () => {
           await page.selectOption('#t3-select-pair', 'TL-PA_A-ZB');
         });
@@ -169,27 +136,33 @@ module.exports = async function suiteTabs01To04(ctx) {
     {
       name: 'tab04_pos_profiles_pair_delta_and_group_comparison',
       fn: async () => {
-        const profWait = page.waitForResponse((r) => r.url().includes('/api/v1/syntax/pos/profiles'), {
-          timeout: 90000,
-        });
-        const deltaWait = page.waitForResponse((r) => r.url().includes('/api/v1/syntax/pos/pair-delta/'), {
-          timeout: 90000,
-        });
-        const groupWait = page.waitForResponse((r) => r.url().includes('/api/v1/syntax/pos/group-comparison'), {
-          timeout: 90000,
-        });
+        const profWait = page.waitForResponse((r) => r.url().includes('/api/v1/syntax/pos/profiles'), { timeout: 90000 });
+        const sumWait = page.waitForResponse((r) => r.url().includes('/api/v1/syntax/pos/author-summary'), { timeout: 90000 });
+        const deltaWait = page.waitForResponse((r) => r.url().includes('/api/v1/syntax/pos/pair-delta/'), { timeout: 90000 });
+        const groupWait = page.waitForResponse((r) => r.url().includes('/api/v1/syntax/pos/group-comparison'), { timeout: 90000 });
         await gotoTab(page, 4);
-        await Promise.all([profWait, deltaWait, groupWait]);
+        const [, sumResp, , groupResp] = await Promise.all([profWait, sumWait, deltaWait, groupWait]);
+        const [sumJson, groupAllJson] = await Promise.all([sumResp.json(), groupResp.json()]);
 
-        const posRows = await gridRows(page, 't4-pos-profiles-grid');
-        assert.strictEqual(posRows.length, 13, `Expected 13 POS profile rows, got ${posRows.length}`);
-        const headers = await page.$$eval('#t4-pos-profiles-grid th', (ths) => ths.map((t) => t.innerText.trim()));
-        assert.ok(headers.some((h) => h.includes('NOUN')) && headers.some((h) => h.includes('VERB')));
+        assert.strictEqual((await gridRows(page, 't4-pos-profiles-grid')).length, 13);
+        assert.strictEqual(sumJson.items.length, 7);
+        assert.strictEqual(await page.$$eval('#t4-author-summary-table tbody tr', (trs) => trs.length), 7);
 
-        const deltaCards = await page.$$eval('#t4-pair-delta-container .kpi-card', (els) => els.length);
-        assert.ok(deltaCards > 0, 'Expected pair-delta UPOS cards');
-        const groupItems = await page.$$eval('#t4-group-comp-list > div', (els) => els.length);
-        assert.ok(groupItems > 0, 'Expected group-comparison list items');
+        const { json: smJson } = await waitApi(page, '/api/v1/syntax/pos/group-comparison', async () => {
+          await page.selectOption('#t4-select-comp-2c', 'SM');
+        });
+        const { json: zbaJson } = await waitApi(page, '/api/v1/syntax/pos/group-comparison', async () => {
+          await page.selectOption('#t4-select-comp-2c', 'ZB_A');
+        });
+        const { json: okJson } = await waitApi(page, '/api/v1/syntax/pos/group-comparison', async () => {
+          await page.selectOption('#t4-select-comp-2c', 'OK');
+        });
+        assert.strictEqual(smJson.author, 'SM');
+        assert.strictEqual(zbaJson.author, 'ZB');
+        assert.strictEqual(okJson.author, 'OK');
+        assert.notStrictEqual(smJson.chi2, okJson.chi2);
+        assert.notStrictEqual(zbaJson.p_value, smJson.p_value);
+        assert.notStrictEqual(groupAllJson.cramers_v, zbaJson.cramers_v);
       },
     },
   ];

@@ -72,6 +72,13 @@ class CorpusRepository:
             return [self._loader.load_text(scope_dto.text_code)]
         return list(self._loader.load_all())
 
+    def get_text_by_code(self, code: str) -> LazyCorpusText | None:
+        """Load a single LazyCorpusText by code, returning None if not found."""
+        try:
+            return self._loader.load_text(code)
+        except Exception:
+            return None
+
     def get_token_view(
         self, text: LazyCorpusText, params: TokenViewParamsDTO
     ) -> TokenView:

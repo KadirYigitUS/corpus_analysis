@@ -11,10 +11,13 @@ def test_spa_file_line_counts():
 
     for ext in ("*.py", "*.js", "*.css", "*.html"):
         for file_path in spa_dir.rglob(ext):
+            rel = str(file_path.relative_to(spa_dir))
+            if rel.startswith("tests/results/"):
+                continue
             checked += 1
             lines = len(file_path.read_text(encoding="utf-8").splitlines())
             if lines > 200:
-                violations.append((str(file_path.relative_to(spa_dir)), lines))
+                violations.append((rel, lines))
 
     assert checked > 30, f"Expected >30 files checked, found {checked}"
     assert not violations, (

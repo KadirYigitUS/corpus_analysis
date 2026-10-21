@@ -1,8 +1,8 @@
 <!-- Tab 3: NDA Parallel Corpora & Tripartite Dictionary -->
 <div id="tab_03" class="tab-pane">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:var(--bg-surface); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
-    <div style="display:flex; gap:8px; align-items:center;">
-      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Parallel Text Pair:</span>
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; background:var(--bg-surface); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Pair:</span>
       <select id="t3-select-pair" class="form-select">
         <option value="IR-IA_BR-SM">IR-IA ⇄ BR-SM (Selma MİNE)</option>
         <option value="TL-PA_A-ZB">TL-PA ⇄ A-ZB (Zühtü BAYAR)</option>
@@ -10,23 +10,26 @@
         <option value="TSP-JL_KS-ZB">TSP-JL ⇄ KS-ZB (Zühtü BAYAR)</option>
         <option value="ASD-PKD_KT-OK">ASD-PKD ⇄ KT-OK (Özlem KURDOĞLU)</option>
       </select>
+      <span style="font-size:11.5px; color:var(--text-muted);">Mode:</span>
+      <select id="t3-select-mode" class="form-select">
+        <option value="linked" selected>Linked Irrealia First</option>
+        <option value="all">All Sequential Alignments</option>
+      </select>
+      <input type="text" id="t3-input-ais" class="form-input" placeholder="AI list (e.g. 12,15,20)" style="width:135px;" title="Custom Alignment IDs">
+      <input type="text" id="t3-input-hits" class="form-input" placeholder="Highlight term (e.g. robot)" style="width:145px;" title="Query hit highlight">
+      <button class="btn btn-sm" id="t3-btn-apply">Apply</button>
       <button class="btn btn-sm" id="btn-redraw-svg-links">Redraw Links</button>
     </div>
-    <button class="btn btn-sm btn-primary" id="btn-toggle-nda-dict">Toggle Tripartite Dictionary</button>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button class="btn btn-sm" id="t3-prev-page">Prev</button>
+      <span id="t3-page-info" style="font-size:11.5px; color:var(--text-secondary); min-width:85px; text-align:center;">Page 1 / 1</span>
+      <button class="btn btn-sm" id="t3-next-page">Next</button>
+      <button class="btn btn-sm btn-primary" id="btn-toggle-nda-dict">Toggle Tripartite Dictionary</button>
+    </div>
   </div>
 
-  <!-- Legend Bar -->
-  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:11.5px; align-items:center;">
-    <span style="font-weight:600; color:var(--text-muted);">Visual Sets:</span>
-    <span class="chip" style="background:var(--nda-linked-bg); color:var(--nda-linked-text); border:1px solid var(--nda-linked-border);">Linked Bilingual Pair (L#)</span>
-    <span class="chip" style="background:var(--nda-single-en-bg); color:var(--nda-single-en-text); border:1px solid var(--nda-single-en-border);">Single English</span>
-    <span class="chip" style="background:var(--nda-single-tr-bg); color:var(--nda-single-tr-text); border:1px solid var(--nda-single-tr-border);">Single Turkish</span>
-    <span class="chip" style="background:var(--nda-cand-bg); color:var(--nda-cand-text); border:1px solid var(--nda-cand-border);">Candidate Irrealia</span>
-  </div>
-
-  <!-- Parallel HTML Stage -->
-  <div id="t3-nda-stage" style="position:relative; min-height:400px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; overflow-x:auto;">
-    <svg class="nda-link-svg" style="position:absolute; top:0; left:0; pointer-events:none; z-index:10;"></svg>
+  <!-- Parallel HTML Stage (Corpus_Analysis_tr.ipynb show_parallel view) -->
+  <div id="t3-nda-stage" style="position:relative; min-height:420px; overflow-x:auto;">
     <div style="color:var(--text-muted); padding:20px;">Loading aligned parallel corpora...</div>
   </div>
 

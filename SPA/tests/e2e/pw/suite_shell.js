@@ -153,9 +153,8 @@ module.exports = async function suiteShell(ctx) {
         });
         await page.click('#btn-save-settings');
         await pollUntil(async () => interceptedSave);
+        await pollUntil(async () => page.$eval('#config-editor-modal', (el) => !el.classList.contains('active')));
         await page.unroute('**/api/v1/config/paths');
-        const cfgClosed = await page.$eval('#config-editor-modal', (el) => !el.classList.contains('active'));
-        assert.strictEqual(cfgClosed, true);
 
         // 3. Help Drawer + Overlay Close
         const { status: helpStatus } = await waitApi(page, '/api/v1/help/formulas', async () => {

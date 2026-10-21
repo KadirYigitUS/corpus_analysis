@@ -1,27 +1,60 @@
 <!-- Tab 4: Comparative POS & Morphosyntactic Profiler -->
 <div id="tab_04" class="tab-pane">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-    <h3 style="font-size:14px; font-weight:700;">17-Tag UPOS Profiles & Scalar Descriptors</h3>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h3 style="font-size:14px; font-weight:700;">17-Tag UPOS Profiles &amp; Scalar Descriptors</h3>
     <button class="btn btn-sm" onclick="window.tab04.loadPosProfiles();">Refresh Profiles</button>
   </div>
 
   <div id="t4-pos-profiles-grid"></div>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
-    <!-- Pair Delta Divergence -->
+  <!-- Per-Author-Translator & Pair Comparison Summary Matrix (SM, ZB, OK) -->
+  <div class="kpi-card" style="margin-top:14px; padding:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+      <span style="font-weight:700; font-size:13px; color:var(--accent-blue);">
+        Per-Author-Translator &amp; Pair Comparison Matrix (Translated TR vs Indigenous TR — SM, ZB, OK)
+      </span>
+      <span style="font-size:11px; color:var(--text-muted);">
+        Click any row or use Figure 2C selector to inspect per-UPOS Mann–Whitney U &amp; BH-FDR q-values
+      </span>
+    </div>
+    <div id="t4-author-summary-table" style="overflow-x:auto;"></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px;">
+    <!-- Figure 2B: Pair Delta Divergence (EN vs TR) -->
     <div class="kpi-card">
-      <div style="font-weight:700; font-size:13px; color:var(--accent-blue); margin-bottom:10px;">
-        Figure 2B: Translation Pair Divergence (Δpp)
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+        <span style="font-weight:700; font-size:13px; color:var(--accent-blue);">
+          Figure 2B: Translation Pair Divergence (Δpp TR−EN)
+        </span>
+        <select id="t4-select-pair-2b" class="form-select">
+          <option value="IR-IA_BR-SM">IR-IA ⇄ BR-SM (SM)</option>
+          <option value="TL-PA_A-ZB">TL-PA ⇄ A-ZB (ZB)</option>
+          <option value="TLP-ML_YG-ZB">TLP-ML ⇄ YG-ZB (ZB)</option>
+          <option value="TSP-JL_KS-ZB">TSP-JL ⇄ KS-ZB (ZB)</option>
+          <option value="ASD-PKD_KT-OK">ASD-PKD ⇄ KT-OK (OK)</option>
+        </select>
       </div>
       <div id="t4-pair-delta-container"></div>
     </div>
 
-    <!-- Group Comparison with Bootstrap CIs -->
+    <!-- Figure 2C: Group / Author-Translator / Pair Comparison with Chunk Bootstrap CIs & p-values -->
     <div class="kpi-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <span style="font-weight:700; font-size:13px; color:var(--accent-teal);">Figure 2C: Group Comparison (Trans TR vs Indig TR)</span>
-        <div id="t4-group-comp-stats"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px; flex-wrap:wrap;">
+        <span style="font-weight:700; font-size:13px; color:var(--accent-teal);">
+          Figure 2C: Group Comparison (Trans TR vs Indig TR)
+        </span>
+        <select id="t4-select-comp-2c" class="form-select">
+          <option value="ALL">All Authors Pooled (5 Trans vs 3 Indig)</option>
+          <option value="SM">SM (Selma MİNE): BR-SM ⇄ O-SM</option>
+          <option value="ZB">ZB (Zühtü BAYAR Pooled): A-ZB+YG-ZB+KS-ZB ⇄ SU-ZB</option>
+          <option value="ZB_A">ZB Pair 1: A-ZB (Aydınlık) ⇄ SU-ZB</option>
+          <option value="ZB_YG">ZB Pair 2: YG-ZB (Yalnız Gezegen) ⇄ SU-ZB</option>
+          <option value="ZB_KS">ZB Pair 3: KS-ZB (Kızıl Veba) ⇄ SU-ZB</option>
+          <option value="OK">OK (Özlem KURDOĞLU): KT-OK ⇄ SCS-OK</option>
+        </select>
       </div>
+      <div id="t4-group-comp-stats" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
       <div id="t4-group-comp-list"></div>
     </div>
   </div>

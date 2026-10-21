@@ -22,6 +22,27 @@ class SafeNdaUnpickler(_NdaSafeUnpickler):
         return super().find_class(module, name)
 
 
+def ensure_nda_app_modules(nda_root: Path, thesis_root: Path) -> None:
+    """Ensure thesis_root, nda_root, and app.models package attributes exist in sys.modules."""
+    import sys
+    import types
+    for p in (str(thesis_root), str(nda_root)):
+        if p not in sys.path:
+            sys.path.insert(0, p)
+    if "app" not in sys.modules or not hasattr(sys.modules["app"], "__path__"):
+        pkg = types.ModuleType("app")
+        pkg.__path__ = [str(nda_root / "app")]
+        sys.modules["app"] = pkg
+    if "app.models" not in sys.modules:
+        mpkg = types.ModuleType("app.models")
+        mpkg.__path__ = [str(nda_root / "app" / "models")]
+        sys.modules["app.models"] = mpkg
+    sys.modules["app"].models = sys.modules["app.models"]  # type: ignore[attr-defined]
+    for k, mod in list(sys.modules.items()):
+        if k.startswith("app.models.") and mod is not None:
+            setattr(sys.modules["app.models"], k.split(".")[-1], mod)
+
+
 class NdaCacheRepository:
     """Safe retrieval of Neologism Dictionary Annotation pickled caches."""
 
@@ -32,18 +53,22 @@ class NdaCacheRepository:
     ) -> None:
         self._loader = loader
         self._path_config = path_config
-        self._cache_dir = (
+        raw_dir = (
             Path(path_config.nda_cache_dir)
             if path_config and path_config.nda_cache_dir
             else loader.config.thesis_root
             / "data"
             / "Neologism_Dictionary_Annotation_Cache"
         )
+        self._cache_dir = (
+            raw_dir if raw_dir.is_absolute() else loader.config.thesis_root / raw_dir
+        )
         self._nda_root = (
             loader.config.thesis_root
             / "scripts"
             / "Neologism_Dictionary_Annotation"
         )
+        ensure_nda_app_modules(self._nda_root, loader.config.thesis_root)
 
     def _resolve_pair_id(self, pair_code: str) -> str:
         """Resolve composite codes (e.g. 'IR-IA_BR-SM') to canonical NDA cache folder ('I_Robot')."""
@@ -55,6 +80,7 @@ class NdaCacheRepository:
 
     def get_overlay_for_pair(self, pair_code: str) -> NdaOverlay:
         """Load NdaOverlay for a specific translation pair code."""
+        ensure_nda_app_modules(self._nda_root, self._loader.config.thesis_root)
         return NdaOverlay.load(self._loader, self._resolve_pair_id(pair_code))
 
     def get_tripartite_dictionary(
@@ -66,27 +92,10 @@ class NdaCacheRepository:
         if not dict_file.is_file():
             return {"linked": [], "single_eng": [], "single_tur": []}
 
-        import sys
-        import types
-
-        added = [str(self._nda_root)] if str(self._nda_root) not in sys.path else []
-        sys.path[:0] = added
-        orig_app = sys.modules.get("app")
-        app_pkg = types.ModuleType("app")
-        app_pkg.__path__ = [str(self._nda_root / "app")]
-        sys.modules["app"] = app_pkg
-        try:
-            with open(dict_file, "rb") as fh:
-                unpickler = SafeNdaUnpickler(fh, self._nda_root)
-                dict_model = unpickler.load()
-        finally:
-            if orig_app is not None:
-                sys.modules["app"] = orig_app
-            else:
-                sys.modules.pop("app", None)
-            for p in added:
-                if p in sys.path:
-                    sys.path.remove(p)
+        ensure_nda_app_modules(self._nda_root, self._loader.config.thesis_root)
+        with open(dict_file, "rb") as fh:
+            unpickler = SafeNdaUnpickler(fh, self._nda_root)
+            dict_model = unpickler.load()
 
         entries = getattr(dict_model, "entries", {})
         linked: list[dict[str, Any]] = []

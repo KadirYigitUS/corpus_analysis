@@ -4,6 +4,12 @@
 class Tab03Controller {
   constructor() {
     this.currentPair = 'IR-IA_BR-SM';
+    this.mode = 'linked';
+    this.page = 1;
+    this.totalPages = 1;
+    this.maxRows = 15;
+    this.customAis = '';
+    this.hits = '';
     this.connector = new SvgConnectorEngine('t3-nda-stage');
   }
 
@@ -18,10 +24,27 @@ class Tab03Controller {
     const stage = document.getElementById('t3-nda-stage');
     if (!stage) return;
     try {
-      const resp = await fetch(`/api/v1/alignment/nda/html/${this.currentPair}?max_rows=15`);
+      const params = new URLSearchParams({
+        max_rows: String(this.maxRows),
+        mode: this.mode,
+        page: String(this.page),
+      });
+      if (this.customAis.trim()) params.set('ais', this.customAis.trim());
+      if (this.hits.trim()) params.set('hits', this.hits.trim());
+      const resp = await fetch(`/api/v1/alignment/nda/html/${this.currentPair}?${params.toString()}`);
       if (resp.ok) {
         const data = await resp.json();
+        this.page = data.page || 1;
+        this.totalPages = data.total_pages || 1;
         stage.innerHTML = data.html;
+        const pageInfo = document.getElementById('t3-page-info');
+        if (pageInfo) {
+          pageInfo.innerText = `Page ${this.page} / ${this.totalPages}`;
+        }
+        const prevBtn = document.getElementById('t3-prev-page');
+        const nextBtn = document.getElementById('t3-next-page');
+        if (prevBtn) prevBtn.disabled = this.page <= 1;
+        if (nextBtn) nextBtn.disabled = this.page >= this.totalPages;
         setTimeout(() => this.connector.drawLinks(), 50);
       }
     } catch (err) {
@@ -47,28 +70,28 @@ class Tab03Controller {
     const trList = document.getElementById('t3-dict-tr-list');
 
     if (linkedList) {
-      linkedList.innerHTML = (entries.linked || []).slice(0, 50).map(e => `
+      linkedList.innerHTML = (entries.linked || []).slice(0, 50).map((e) => `
         <div class="kpi-card" style="padding:6px 10px; margin-bottom:6px; font-size:11.5px;">
           <b style="color:var(--accent-blue);">${e.eng}</b> ⇄ <b style="color:var(--accent-teal);">${e.tur}</b>
-          ${e.tags.map(t => `<span class="chip" style="margin-left:4px;">${t}</span>`).join('')}
+          ${(e.tags || []).map((t) => `<span class="chip" style="margin-left:4px;">${t}</span>`).join('')}
         </div>
       `).join('');
     }
 
     if (enList) {
-      enList.innerHTML = (entries.single_eng || []).slice(0, 50).map(e => `
+      enList.innerHTML = (entries.single_eng || []).slice(0, 50).map((e) => `
         <div class="kpi-card" style="padding:6px 10px; margin-bottom:6px; font-size:11.5px;">
           <b style="color:var(--accent-teal);">${e.eng}</b>
-          ${e.tags.map(t => `<span class="chip" style="margin-left:4px;">${t}</span>`).join('')}
+          ${(e.tags || []).map((t) => `<span class="chip" style="margin-left:4px;">${t}</span>`).join('')}
         </div>
       `).join('');
     }
 
     if (trList) {
-      trList.innerHTML = (entries.single_tur || []).slice(0, 50).map(e => `
+      trList.innerHTML = (entries.single_tur || []).slice(0, 50).map((e) => `
         <div class="kpi-card" style="padding:6px 10px; margin-bottom:6px; font-size:11.5px;">
           <b style="color:var(--accent-rose);">${e.tur}</b>
-          ${e.tags.map(t => `<span class="chip" style="margin-left:4px;">${t}</span>`).join('')}
+          ${(e.tags || []).map((t) => `<span class="chip" style="margin-left:4px;">${t}</span>`).join('')}
         </div>
       `).join('');
     }
@@ -79,8 +102,49 @@ class Tab03Controller {
     if (pairSelect) {
       pairSelect.addEventListener('change', async (e) => {
         this.currentPair = e.target.value;
+        this.page = 1;
         await this.loadParallelView();
         await this.loadDictionaryDrawer();
+      });
+    }
+
+    const modeSelect = document.getElementById('t3-select-mode');
+    if (modeSelect) {
+      modeSelect.addEventListener('change', (e) => {
+        this.mode = e.target.value;
+        this.page = 1;
+        this.loadParallelView();
+      });
+    }
+
+    const applyBtn = document.getElementById('t3-btn-apply');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        const aisInput = document.getElementById('t3-input-ais');
+        const hitsInput = document.getElementById('t3-input-hits');
+        this.customAis = aisInput ? aisInput.value : '';
+        this.hits = hitsInput ? hitsInput.value : '';
+        this.page = 1;
+        this.loadParallelView();
+      });
+    }
+
+    const prevBtn = document.getElementById('t3-prev-page');
+    const nextBtn = document.getElementById('t3-next-page');
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (this.page > 1) {
+          this.page--;
+          this.loadParallelView();
+        }
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (this.page < this.totalPages) {
+          this.page++;
+          this.loadParallelView();
+        }
       });
     }
 
@@ -100,6 +164,5 @@ class Tab03Controller {
     }
   }
 }
-
 
 window.tab03 = new Tab03Controller();

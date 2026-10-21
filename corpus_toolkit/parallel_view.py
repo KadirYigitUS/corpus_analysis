@@ -263,6 +263,15 @@ class _NdaSafeUnpickler(pickle.Unpickler):
 
     def find_class(self, module: str, name: str) -> Any:
         if module.startswith("app."):
+            if "app" not in sys.modules or not hasattr(sys.modules["app"], "__path__"):
+                pkg = types.ModuleType("app")
+                pkg.__path__ = [str(self._nda_root / "app")]
+                sys.modules["app"] = pkg
+            if "app.models" not in sys.modules:
+                mpkg = types.ModuleType("app.models")
+                mpkg.__path__ = [str(self._nda_root / "app" / "models")]
+                sys.modules["app.models"] = mpkg
+            sys.modules["app"].models = sys.modules["app.models"]  # type: ignore[attr-defined]
             rel = Path(*module.split(".")).with_suffix(".py")
             mod_path = self._nda_root / rel
             if mod_path.is_file() and module not in sys.modules:
@@ -278,6 +287,8 @@ class _NdaSafeUnpickler(pickle.Unpickler):
                 finally:
                     if added and str(self._nda_root) in sys.path:
                         sys.path.remove(str(self._nda_root))
+            if module in sys.modules and module.startswith("app.models."):
+                setattr(sys.modules["app.models"], module.split(".")[-1], sys.modules[module])
         return super().find_class(module, name)
 
 
@@ -342,9 +353,10 @@ class NdaOverlay:
         added = [str(p) for p in (nda_root, cfg.thesis_root) if str(p) not in sys.path]
         sys.path[:0] = added
         orig_app = sys.modules.get("app")
-        app_pkg = types.ModuleType("app")
-        app_pkg.__path__ = [str(nda_root / "app")]
-        sys.modules["app"] = app_pkg
+        if orig_app is None or not hasattr(orig_app, "__path__"):
+            app_pkg = types.ModuleType("app")
+            app_pkg.__path__ = [str(nda_root / "app")]
+            sys.modules["app"] = app_pkg
         entries: list[Any] = []
         scored_rows: dict[int, Any] = {}
         try:
@@ -362,10 +374,6 @@ class NdaOverlay:
             _NDA_OVERLAY_CACHE[pair_id] = ov
             return ov
         finally:
-            if orig_app is not None:
-                sys.modules["app"] = orig_app
-            else:
-                sys.modules.pop("app", None)
             for p in added:
                 if p in sys.path:
                     sys.path.remove(p)

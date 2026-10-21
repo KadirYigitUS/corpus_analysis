@@ -19,6 +19,8 @@ from SPA.repositories.corpus_repository import CorpusRepository
 from SPA.repositories.export_repository import ExportRepository
 from SPA.repositories.nda_cache_repository import NdaCacheRepository
 from SPA.services.alignment_delta_service import AlignmentDeltaService
+from SPA.services.alignment_ner_service import AlignmentNerService
+from SPA.services.alignment_stats_service import AlignmentStatsService
 from SPA.services.batch_dispersion_service import BatchDispersionService
 from SPA.services.collocation_service import CollocationService
 from SPA.services.config_metadata_service import ConfigMetadataService
@@ -56,7 +58,9 @@ def create_app(data_root: str | None = None) -> Flask:
     # 2. Services
     config_svc = ConfigMetadataService(config_repo)
     inv_svc = InventoryMemoryService(corpus_repo)
-    delta_svc = AlignmentDeltaService(corpus_repo)
+    stats_svc = AlignmentStatsService(corpus_repo)
+    ner_svc = AlignmentNerService(corpus_repo, nda_repo)
+    delta_svc = AlignmentDeltaService(corpus_repo, stats_service=stats_svc, ner_service=ner_svc)
     nda_svc = NdaParallelService(corpus_repo, nda_repo)
     pos_svc = PosService(corpus_repo)
     dep_svc = DepvizService(corpus_repo)
@@ -70,7 +74,7 @@ def create_app(data_root: str | None = None) -> Flask:
     # 3. Blueprints
     app.register_blueprint(create_config_blueprint(config_svc))
     app.register_blueprint(create_corpus_blueprint(inv_svc))
-    app.register_blueprint(create_alignment_blueprint(delta_svc, nda_svc))
+    app.register_blueprint(create_alignment_blueprint(delta_svc, nda_svc, stats_svc))
     app.register_blueprint(create_syntax_blueprint(pos_svc, dep_svc))
     app.register_blueprint(create_concordance_blueprint(search_svc, disp_svc))
     app.register_blueprint(create_lexicon_blueprint(div_svc, colloc_svc, tfidf_svc))
