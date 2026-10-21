@@ -501,6 +501,8 @@ def _resolve_pair(loader: Any, pair_or_code: Any) -> Any:
     if hasattr(pair_or_code, "pair_id") and hasattr(pair_or_code, "eng"):
         return pair_or_code
     key = str(pair_or_code).strip()
+    aliases = {"TSP-JL": "SP-JL", "TSP-JL_KS-ZB": "SP-JL_KS-ZB"}
+    key = aliases.get(key, key)
     if key in loader.registry.pairs:
         return loader.registry.pairs[key]
     for pid, p in loader.registry.pairs.items():
@@ -509,9 +511,10 @@ def _resolve_pair(loader: Any, pair_or_code: Any) -> Any:
         if f"{p.eng.code}_{p.tur.code}".lower() == key.lower():
             return p
     if "_" in key:
-        first = key.split("_")[0]
-        if first in loader.registry.texts:
-            return loader.registry.pair_for(first)
+        for part in key.split("_"):
+            part_norm = aliases.get(part, part)
+            if part_norm in loader.registry.texts:
+                return loader.registry.pair_for(part_norm)
     return loader.registry.pair_for(key)
 
 

@@ -28,13 +28,16 @@ class AlignmentStatsService:
             return None
         if not pair_code:
             return pairs[0]
+        parts = {pair_code, *pair_code.split("_")}
+        if "TSP-JL" in parts:
+            parts.add("SP-JL")
         for spec, eng, tur in pairs:
-            if pair_code in (
+            if parts & {
                 spec.pair_id,
                 f"{spec.eng.code}_{spec.tur.code}",
                 spec.tur.code,
                 spec.eng.code,
-            ):
+            }:
                 return spec, eng, tur
         return None
 

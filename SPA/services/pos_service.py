@@ -39,13 +39,16 @@ class PosService:
         """Compute Figure 2B translation-pair divergence (Turkish - English in pp)."""
         pairs = self._repo.loader.load_translation_pairs().items
         pair = None
+        parts = {pair_code, *pair_code.split("_")}
+        if "TSP-JL" in parts:
+            parts.add("SP-JL")
         for spec, eng, tur in pairs:
-            if pair_code in (
+            if parts & {
                 spec.pair_id,
                 f"{spec.eng.code}_{spec.tur.code}",
                 spec.tur.code,
                 spec.eng.code,
-            ):
+            }:
                 pair = (spec, eng, tur)
                 break
         if not pair:

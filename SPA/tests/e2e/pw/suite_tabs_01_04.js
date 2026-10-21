@@ -91,6 +91,12 @@ module.exports = async function suiteTabs01To04(ctx) {
           await page.selectOption('#t2-select-pair', 'TL-PA_A-ZB');
         });
         await pollUntil(async () => (await page.$eval('#t2-kpi-total', (el) => Number(el.innerText.trim()))) === pairKpi.total_alignments);
+
+        const { json: tspRows } = await waitApi(page, '/api/v1/alignment/rows', async () => {
+          await page.selectOption('#t2-select-pair', 'TSP-JL_KS-ZB');
+        });
+        assert.strictEqual(tspRows.total, 1407, 'Expected 1407 alignments for TSP-JL_KS-ZB');
+        await pollUntil(async () => (await page.$$eval('#t2-chapter-sidebar .ch-btn', (els) => els.length)) === 7);
       },
     },
     {

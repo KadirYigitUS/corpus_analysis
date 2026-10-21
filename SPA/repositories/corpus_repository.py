@@ -61,21 +61,26 @@ class CorpusRepository:
             return list(self._loader.load_indigenous())
         elif scope == "pairs":
             texts: list[LazyCorpusText] = []
+            parts = {scope_dto.pair_code, *(scope_dto.pair_code or "").split("_")}
+            if "TSP-JL" in parts:
+                parts.add("SP-JL")
             for spec, eng, tur in self._loader.load_translation_pairs():
-                if scope_dto.pair_code and scope_dto.pair_code not in (
-                    spec.pair_id, f"{spec.eng.code}_{spec.tur.code}"
+                if scope_dto.pair_code and not (
+                    parts & {spec.pair_id, f"{spec.eng.code}_{spec.tur.code}", spec.eng.code, spec.tur.code}
                 ):
                     continue
                 texts.extend([eng, tur])
             return texts
         elif scope == "single" and scope_dto.text_code:
-            return [self._loader.load_text(scope_dto.text_code)]
+            t = self.get_text_by_code(scope_dto.text_code)
+            return [t] if t else []
         return list(self._loader.load_all())
 
     def get_text_by_code(self, code: str) -> LazyCorpusText | None:
         """Load a single LazyCorpusText by code, returning None if not found."""
+        aliases = {"TSP-JL": "SP-JL", "OBI-SM": "O-SM"}
         try:
-            return self._loader.load_text(code)
+            return self._loader.load_text(aliases.get(code, code))
         except Exception:
             return None
 
