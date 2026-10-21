@@ -1,22 +1,56 @@
 <!-- Tab 8: Lexical Diversity & Richness Laboratory -->
 <div id="tab_08" class="tab-pane">
-  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-    <div style="display:flex; gap:8px; align-items:center;">
-      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Select Text:</span>
-      <select id="t8-select-text" class="form-select">
-        <option value="BR-SM">BR-SM (Selma MİNE - Ben, Robot)</option>
-        <option value="A-ZB">A-ZB (Zühtü BAYAR - Aygır)</option>
-        <option value="OBI-SM">OBI-SM (Selma MİNE - OBI)</option>
-        <option value="SU-ZB">SU-ZB (Zühtü BAYAR - Sahte Ufuklar)</option>
-        <option value="SCS-OK">SCS-OK (Özlem KURDOĞLU - Son Çıkış)</option>
-      </select>
-      <button class="btn btn-sm" id="t8-btn-view-mattr">View MATTR Curve</button>
-    </div>
-    <button class="btn btn-sm btn-primary" id="t8-btn-refresh-diversity">Refresh Diversity Table</button>
+  <!-- Sub-tab Pills -->
+  <div class="viz-subtabs-bar" id="t8-subtabs">
+    <button class="viz-subtab-btn active" data-pane="t8-pane-diversity-grid">LancsBox-X Tablosu (22 Metrik)</button>
+    <button class="viz-subtab-btn" data-pane="t8-pane-sensitivity">Bölüm 9.3: Metin Boyu Duyarlılığı</button>
+    <button class="viz-subtab-btn" data-pane="t8-pane-comparisons">Token ↔ Lemma &amp; Noktalama</button>
+    <button class="viz-subtab-btn" data-pane="t8-pane-radar">Şekil 4A: Radar Grafiği</button>
+    <button class="viz-subtab-btn" data-pane="t8-pane-mattr">Şekil 4B: MATTR Yörüngeleri</button>
+    <button class="viz-subtab-btn" data-pane="t8-pane-zipf">Şekil 4C: Zipf Eğrileri</button>
   </div>
 
-  <div id="t8-mattr-pane" class="kpi-card" style="display:none; margin-bottom:12px;"></div>
+  <!-- Pane 1: LancsBox-X Table -->
+  <div id="t8-pane-diversity-grid" class="viz-pane active">
+    <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">22 LancsBox-X Diversity Metrics Table</span>
+      <button class="btn btn-sm btn-primary" id="t8-btn-refresh-diversity">Refresh Diversity Table</button>
+    </div>
+    <div id="t8-diversity-grid"></div>
+  </div>
 
-  <!-- 22-Column LancsBox-X Diversity Table -->
-  <div id="t8-diversity-grid"></div>
+  <!-- Pane 2: Metin Boyu Duyarlılığı (Bölüm 9.3) -->
+  <div id="t8-pane-sensitivity" class="viz-pane">
+    <div id="t8-sens-chart-container" style="margin-bottom:14px;"></div>
+    <div id="t8-sens-table-container"></div>
+  </div>
+
+  <!-- Pane 3: Token vs Lemma & Noktalama -->
+  <div id="t8-pane-comparisons" class="viz-pane">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">Sözcük (Token) vs Kök (Lemma) Çeşitliliği</div>
+        <div id="t8-tok-lem-table"></div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-teal); margin-bottom:8px;">Noktalama Kiplerinin Çeşitliliğe Etkisi</div>
+        <div id="t8-punct-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pane 4: Şekil 4A Radar Grafiği -->
+  <div id="t8-pane-radar" class="viz-pane">
+    <div id="t8-radar-chart-container"></div>
+  </div>
+
+  <!-- Pane 5: Şekil 4B MATTR Yörüngeleri -->
+  <div id="t8-pane-mattr" class="viz-pane">
+    <div id="t8-mattr-curves-container"></div>
+  </div>
+
+  <!-- Pane 6: Şekil 4C Zipf Eğrileri -->
+  <div id="t8-pane-zipf" class="viz-pane">
+    <div id="t8-zipf-curves-container"></div>
+  </div>
 </div>

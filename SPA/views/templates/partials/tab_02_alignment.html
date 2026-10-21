@@ -2,7 +2,15 @@
 <div id="tab_02" class="tab-pane">
   <div id="t2-tok-tip" class="t2-tok-tip"></div>
 
-  <!-- Top Row: 4 Core SPA KPIs + 8 length_view.py KPI Cards -->
+  <!-- Sub-tab Pills -->
+  <div class="viz-subtabs-bar" id="t2-subtabs">
+    <button class="viz-subtab-btn active" data-pane="t2-pane-pair">Çift Düzeyi Gezgin (Mevcut)</button>
+    <button class="viz-subtab-btn" data-pane="t2-pane-structure">Hizalama Yapı Özeti &amp; Dağılımı (Şekil 1A &amp; 1B)</button>
+  </div>
+
+  {% include "partials/tab_02_structure.html" %}
+
+  <div id="t2-pane-pair" class="viz-pane active">
   <div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(135px,1fr)); gap:8px; margin-bottom:10px;">
     <div class="kpi-card" style="padding:8px 10px;">
       <div class="kpi-label">Toplam Satır (Total)</div>
@@ -101,5 +109,6 @@
     <div style="flex:1; overflow-x:auto;">
       <div id="t2-alignment-grid"></div>
     </div>
+  </div>
   </div>
 </div>

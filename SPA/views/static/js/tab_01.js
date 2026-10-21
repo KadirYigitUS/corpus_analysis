@@ -11,6 +11,9 @@ class Tab01Controller {
     await this.loadSummary();
     await this.loadSourceTables();
     this.attachEvents();
+    if (typeof window.initTab01Viz === 'function') {
+      window.initTab01Viz();
+    }
   }
 
   async loadSummary() {

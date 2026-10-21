@@ -34,6 +34,12 @@ class CorpusRepository:
         """Evict cached Parquet entries."""
         return self._loader.cache.clear()
 
+    def evict_all(self) -> int:
+        """Evict all loaded text tables from memory."""
+        count = sum(1 for t in self._loader._lazy.values() if t.loaded)
+        self._loader.evict_all()
+        return count
+
 
     def get_rss_mb(self) -> float:
         """Return current resident set size (RSS) in megabytes."""

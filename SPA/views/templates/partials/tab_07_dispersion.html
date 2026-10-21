@@ -1,22 +1,63 @@
 <!-- Tab 7: Batch KWIC, Dispersion & Correlation Matrix -->
 <div id="tab_07" class="tab-pane">
   <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-    <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Batch Terms:</span>
-    <input type="text" id="t7-input-terms" class="form-input" value="robot, insan, dünya, uzay" placeholder="Comma-separated terms..." style="width:320px;" />
-    <button class="btn btn-sm btn-primary" id="t7-btn-run-batch">Run Batch & Dispersion</button>
+    <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Batch Terms / Groups:</span>
+    <input type="text" id="t7-input-terms" class="form-input" value="makine alanı: robot, makine | insan alanı: insan, adam" placeholder="Terms or groups (e.g. makine: robot, makine | insan: insan)..." style="width:360px;" />
+    <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+      <input type="checkbox" id="t7-check-content" /> İçerik Görünümü
+    </label>
+    <button class="btn btn-sm btn-primary" id="t7-btn-run-batch" onclick="if(window.initTab07Viz) window.initTab07Viz();">Analiz Et</button>
   </div>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-    <!-- Juilland's D Summary -->
-    <div class="kpi-card">
-      <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">Frequency & Juilland's D Dispersion</div>
-      <div id="t7-summary-grid"></div>
-    </div>
+  <!-- Sub-tab Pills -->
+  <div class="viz-subtabs-bar" id="t7-subtabs">
+    <button class="viz-subtab-btn active" data-pane="t7-pane-summary-grid">Yayılım Özeti (Juilland D)</button>
+    <button class="viz-subtab-btn" data-pane="t7-pane-tables">Sayımlar &amp; Oranlar</button>
+    <button class="viz-subtab-btn" data-pane="t7-pane-rates-heatmap">Şekil 3A: Per10k Isı Haritası</button>
+    <button class="viz-subtab-btn" data-pane="t7-pane-corr-matrix">Şekil 3B: Bağıntı Matrisi</button>
+    <button class="viz-subtab-btn" data-pane="t7-pane-dispersion-curves">Şekil 3C: Anlatı Dağılımı</button>
+  </div>
 
-    <!-- Correlation Matrix -->
-    <div class="kpi-card">
-      <div style="font-weight:700; font-size:12.5px; color:var(--accent-teal); margin-bottom:8px;">Pairwise Correlations & BH-FDR q-values</div>
-      <div id="t7-correlation-grid"></div>
+  <!-- Pane 1: Mevcut Juilland D & İkili Korelasyon -->
+  <div id="t7-pane-summary-grid" class="viz-pane active">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">Frequency &amp; Juilland's D Dispersion</div>
+        <div id="t7-summary-grid"></div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-teal); margin-bottom:8px;">Pairwise Correlations &amp; BH-FDR q-values</div>
+        <div id="t7-correlation-grid"></div>
+      </div>
     </div>
+  </div>
+
+  <!-- Pane 2: Sayımlar & Oranlar Tabloları -->
+  <div id="t7-pane-tables" class="viz-pane">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; margin-bottom:8px;">Ham Bulgu Sayımları</div>
+        <div id="t7-counts-table"></div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; margin-bottom:8px;">10 Bin Sözcük Başına Sıklık (Per10k)</div>
+        <div id="t7-rates-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pane 3: Şekil 3A Per10k Isı Haritası -->
+  <div id="t7-pane-rates-heatmap" class="viz-pane">
+    <div id="t7-rates-heatmap-container"></div>
+  </div>
+
+  <!-- Pane 4: Şekil 3B Bağıntı Matrisi Isı Haritası -->
+  <div id="t7-pane-corr-matrix" class="viz-pane">
+    <div id="t7-corr-heatmap-container"></div>
+  </div>
+
+  <!-- Pane 5: Şekil 3C 10-Dilim Dağılım Çizgileri -->
+  <div id="t7-pane-dispersion-curves" class="viz-pane">
+    <div id="t7-chunk-curves-container"></div>
   </div>
 </div>

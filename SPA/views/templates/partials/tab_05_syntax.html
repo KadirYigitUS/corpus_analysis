@@ -1,26 +1,63 @@
 <!-- Tab 5: Syntactic Dependency (displaCy UD) Studio -->
 <div id="tab_05" class="tab-pane">
-  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-    <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Select Sentence:</span>
-    <input type="text" id="t5-input-text" class="form-input" value="BR-SM" placeholder="Text Code" style="width:90px;" />
-    <input type="number" id="t5-input-ch" class="form-input" value="1" min="1" placeholder="Ch" style="width:60px;" />
-    <input type="number" id="t5-input-p" class="form-input" value="1" min="1" placeholder="P" style="width:60px;" />
-    <input type="number" id="t5-input-s" class="form-input" value="1" min="1" placeholder="S" style="width:60px;" />
-    <button class="btn btn-sm btn-primary" id="t5-btn-render-tree">Render Dependency Tree</button>
-    <button class="btn btn-sm" id="t5-btn-download-svg">Download SVG</button>
+  <!-- Sub-tab Pills -->
+  <div class="viz-subtabs-bar" id="t5-subtabs">
+    <button class="viz-subtab-btn active" data-pane="t5-pane-single">Tek Cümle Bağımlılık Ağacı &amp; CoNLL</button>
+    <button class="viz-subtab-btn" data-pane="t5-pane-aligned">İki Dilli Hizalı Ağaçlar (Şekil 5B)</button>
   </div>
 
-  <!-- Dependency Tree Visualizer Stage -->
-  <div class="kpi-card" style="margin-bottom:16px;">
-    <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">displaCy Universal Dependencies Tree (Function Words Dimmed)</div>
-    <div id="t5-tree-stage" style="overflow-x:auto; min-height:220px; display:flex; align-items:center; justify-content:center; background:#ffffff; border-radius:var(--radius-sm); padding:10px;">
-      <div style="color:#64748b;">Click 'Render Dependency Tree' to display syntax arcs</div>
+  <!-- Pane 1: Single Sentence Tree & CoNLL -->
+  <div id="t5-pane-single" class="viz-pane active">
+    <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Select Sentence:</span>
+      <input type="text" id="t5-input-text" class="form-input" value="BR-SM" placeholder="Text Code" style="width:90px;" />
+      <input type="number" id="t5-input-ch" class="form-input" value="1" min="1" placeholder="Ch" style="width:60px;" />
+      <input type="number" id="t5-input-p" class="form-input" value="1" min="1" placeholder="P" style="width:60px;" />
+      <input type="number" id="t5-input-s" class="form-input" value="1" min="1" placeholder="S" style="width:60px;" />
+      <button class="btn btn-sm btn-primary" id="t5-btn-render-tree">Render Dependency Tree</button>
+      <button class="btn btn-sm" id="t5-btn-download-svg">Download SVG</button>
+    </div>
+
+    <div class="kpi-card" style="margin-bottom:16px;">
+      <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">displaCy Universal Dependencies Tree</div>
+      <div id="t5-tree-stage" style="overflow-x:auto; min-height:220px; display:flex; align-items:center; justify-content:center; background:#ffffff; border-radius:var(--radius-sm); padding:10px;">
+        <div style="color:#64748b;">Click 'Render Dependency Tree' to display syntax arcs</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div style="font-weight:700; font-size:12.5px; color:var(--text-primary); margin-bottom:8px;">Token-by-Token CoNLL Tuples</div>
+      <div id="t5-conll-grid"></div>
     </div>
   </div>
 
-  <!-- Token-by-Token CoNLL Table -->
-  <div class="kpi-card">
-    <div style="font-weight:700; font-size:12.5px; color:var(--text-primary); margin-bottom:8px;">Token-by-Token CoNLL Tuples</div>
-    <div id="t5-conll-grid"></div>
+  <!-- Pane 2: Bilingual Aligned Trees -->
+  <div id="t5-pane-aligned" class="viz-pane">
+    <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Translation Pair:</span>
+      <select id="t5-select-pair" class="form-select">
+        <option value="IR-IA_BR-SM">IR-IA ⇄ BR-SM (Selma MİNE)</option>
+        <option value="TL-PA_A-ZB">TL-PA ⇄ A-ZB (Zühtü BAYAR)</option>
+        <option value="TLP-ML_YG-ZB">TLP-ML ⇄ YG-ZB (Zühtü BAYAR)</option>
+        <option value="TSP-JL_KS-ZB">TSP-JL ⇄ KS-ZB (Zühtü BAYAR)</option>
+        <option value="ASD-PKD_KT-OK">ASD-PKD ⇄ KT-OK (Özlem KURDOĞLU)</option>
+      </select>
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Alignment Group (ai):</span>
+      <input type="number" id="t5-input-ai" class="form-input" value="4" min="1" style="width:70px;" />
+      <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+        <input type="checkbox" id="t5-check-norm" checked /> Normalize UD
+      </label>
+      <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+        <input type="checkbox" id="t5-check-dim" checked /> Dim Function Words
+      </label>
+      <button class="btn btn-sm btn-primary" id="t5-btn-render-aligned">Render Bilingual Trees</button>
+    </div>
+
+    <div class="kpi-card">
+      <div style="font-weight:700; font-size:12.5px; color:var(--accent-teal); margin-bottom:8px;">İki Dilli Hizalanmış Cümle Bağımlılık Ağaçları (EN ⇄ TR)</div>
+      <div id="t5-aligned-tree-stage" style="overflow-x:auto; min-height:260px; background:#ffffff; border-radius:var(--radius-sm); padding:10px;">
+        <div style="color:#64748b;">Click 'Render Bilingual Trees' to view stacked cross-lingual dependency arcs</div>
+      </div>
+    </div>
   </div>
 </div>

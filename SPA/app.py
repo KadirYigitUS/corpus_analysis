@@ -8,12 +8,17 @@ from pathlib import Path
 from flask import Flask, render_template
 
 from SPA.controllers.alignment_controller import create_alignment_blueprint
+from SPA.controllers.alignment_viz_controller import alignment_viz_bp
 from SPA.controllers.concordance_controller import create_concordance_blueprint
+from SPA.controllers.concordance_viz_controller import concordance_viz_bp
 from SPA.controllers.config_controller import create_config_blueprint
 from SPA.controllers.corpus_controller import create_corpus_blueprint
+from SPA.controllers.corpus_viz_controller import corpus_viz_bp
 from SPA.controllers.export_controller import create_export_blueprint
 from SPA.controllers.lexicon_controller import create_lexicon_blueprint
+from SPA.controllers.lexicon_viz_controller import lexicon_viz_bp
 from SPA.controllers.syntax_controller import create_syntax_blueprint
+from SPA.controllers.syntax_viz_controller import syntax_viz_bp
 from SPA.repositories.config_repository import ConfigRepository
 from SPA.repositories.corpus_repository import CorpusRepository
 from SPA.repositories.export_repository import ExportRepository
@@ -79,6 +84,11 @@ def create_app(data_root: str | None = None) -> Flask:
     app.register_blueprint(create_concordance_blueprint(search_svc, disp_svc))
     app.register_blueprint(create_lexicon_blueprint(div_svc, colloc_svc, tfidf_svc))
     app.register_blueprint(create_export_blueprint(bundle_svc, inv_svc))
+    app.register_blueprint(corpus_viz_bp)
+    app.register_blueprint(alignment_viz_bp)
+    app.register_blueprint(syntax_viz_bp)
+    app.register_blueprint(concordance_viz_bp)
+    app.register_blueprint(lexicon_viz_bp)
 
     # 4. Root View Route & Favicon
     @app.route("/")

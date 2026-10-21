@@ -16,6 +16,24 @@ class Tab11Controller {
     if (copyBtn) {
       copyBtn.addEventListener('click', () => this.copyPythonSnippet());
     }
+
+    const evictBtn = document.getElementById('t11-btn-evict-all');
+    if (evictBtn) {
+      evictBtn.addEventListener('click', () => this.evictAllRam());
+    }
+  }
+
+  async evictAllRam() {
+    try {
+      const resp = await fetch('/api/v1/corpus/evict-all', { method: 'POST' });
+      if (resp.ok) {
+        const data = await resp.json();
+        const badge = document.getElementById('t11-ram-badge');
+        if (badge) badge.innerText = `RAM: ${Math.round(data.rss_mb)} MB (Evicted ${data.evicted_count})`;
+      }
+    } catch (e) {
+      console.error('Evict failed:', e);
+    }
   }
 
   async runConsoleQuery() {

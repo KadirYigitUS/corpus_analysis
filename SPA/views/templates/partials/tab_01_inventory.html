@@ -23,22 +23,59 @@
     </div>
   </div>
 
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-    <h3 style="font-size:14px; font-weight:700; color:var(--text-primary);">Corpus Inventory & Source Tables</h3>
-    <button class="btn btn-sm btn-primary" onclick="if(window.corpusInfoModal) window.corpusInfoModal.open();">Open Visual Dossiers</button>
+  <!-- Sub-tab Pills -->
+  <div class="viz-subtabs-bar" id="t1-subtabs">
+    <button class="viz-subtab-btn active" data-pane="t1-pane-inventory">Envanter &amp; Metinler</button>
+    <button class="viz-subtab-btn" data-pane="t1-pane-sizes-chart">Metin Boyutları (Şekil)</button>
+    <button class="viz-subtab-btn" data-pane="t1-pane-verify">Doğrulama Tablosu</button>
+    <button class="viz-subtab-btn" data-pane="t1-pane-summary">Boyut Özeti</button>
+    <button class="viz-subtab-btn" data-pane="t1-pane-memory">Bellek &amp; İçerik Kökleri</button>
   </div>
 
-  <div id="t1-inventory-grid"></div>
-
-  <div id="t1-schema-pane" class="kpi-card" style="margin-top:16px; display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <div>
-        <span style="font-size:13px; font-weight:700; color:var(--accent-blue);">Schema Inspection: </span>
-        <b id="t1-schema-text-code" style="color:var(--text-primary);"></b>
-        <span class="chip" id="t1-schema-tok-count" style="margin-left:8px;"></span>
-      </div>
-      <button class="btn btn-sm" onclick="document.getElementById('t1-schema-pane').style.display='none';">Close Schema</button>
+  <!-- Pane 1: Envanter & Metinler -->
+  <div id="t1-pane-inventory" class="viz-pane active">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <h3 style="font-size:14px; font-weight:700; color:var(--text-primary);">Corpus Inventory &amp; Source Tables</h3>
+      <button class="btn btn-sm btn-primary" onclick="if(window.corpusInfoModal) window.corpusInfoModal.open();">Open Visual Dossiers</button>
     </div>
-    <div id="t1-schema-columns-grid"></div>
+    <div id="t1-inventory-grid"></div>
+    <div id="t1-schema-pane" class="kpi-card" style="margin-top:16px; display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div>
+          <span style="font-size:13px; font-weight:700; color:var(--accent-blue);">Schema Inspection: </span>
+          <b id="t1-schema-text-code" style="color:var(--text-primary);"></b>
+          <span class="chip" id="t1-schema-tok-count" style="margin-left:8px;"></span>
+        </div>
+        <button class="btn btn-sm" onclick="document.getElementById('t1-schema-pane').style.display='none';">Close Schema</button>
+      </div>
+      <div id="t1-schema-columns-grid"></div>
+    </div>
+  </div>
+
+  <!-- Pane 2: Metin Boyutları Dağılımı Bar Chart -->
+  <div id="t1-pane-sizes-chart" class="viz-pane">
+    <div id="t1-sizes-chart-container"></div>
+  </div>
+
+  <!-- Pane 3: Disk Pickle Doğrulama Tablosu -->
+  <div id="t1-pane-verify" class="viz-pane">
+    <div id="t1-verify-grid"></div>
+  </div>
+
+  <!-- Pane 4: Derlem Boyut Özeti -->
+  <div id="t1-pane-summary" class="viz-pane">
+    <div id="t1-summary-grid"></div>
+  </div>
+
+  <!-- Pane 5: Bellek Kullanımı & İçerik Kökleri -->
+  <div id="t1-pane-memory" class="viz-pane">
+    <div style="margin-bottom:14px;">
+      <h4 style="font-size:13px; font-weight:700; margin-bottom:6px;">Bellek Kullanım Raporu</h4>
+      <div id="t1-memory-grid"></div>
+    </div>
+    <div>
+      <h4 style="font-size:13px; font-weight:700; margin-bottom:6px;">Metin Başına İçerik Kök Sayıları (iter_evicting)</h4>
+      <div id="t1-lemmas-grid"></div>
+    </div>
   </div>
 </div>

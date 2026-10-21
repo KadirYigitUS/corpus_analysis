@@ -52,4 +52,9 @@ def create_corpus_blueprint(service: InventoryMemoryService) -> Blueprint:
         evicted = service._repo.evict_cache(keep_latest_n=keep_n)
         return jsonify({"evicted_count": evicted}), 200
 
+    @corpus_bp.route("/evict-all", methods=["POST"])
+    def evict_all():
+        evicted = service._repo.evict_all()
+        return jsonify({"evicted_count": evicted, "rss_mb": service._repo.get_rss_mb()}), 200
+
     return corpus_bp

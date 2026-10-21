@@ -1,9 +1,11 @@
 <!-- Tab 11: Unified Corpus Explorer & Scriptable Console -->
 <div id="tab_11" class="tab-pane">
-  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; gap:10px; align-items:center;">
-    <input type="text" id="t11-input-term" class="form-input" value="bilim-kurgu" placeholder="Explorer search term..." style="flex:1; max-width:300px;" />
+  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <input type="text" id="t11-input-term" class="form-input" value="bilim-kurgu" placeholder="Explorer search term..." style="flex:1; min-width:200px; max-width:300px;" />
     <button class="btn btn-sm btn-primary" id="t11-btn-run-console">Quick Search</button>
+    <button class="btn btn-sm btn-secondary" id="t11-btn-evict-all" title="Evict all loaded text tables from RAM">🗑️ Evict All RAM</button>
     <span class="chip" id="t11-hits-badge" style="margin-left:auto;">0 hits</span>
+    <span class="chip" id="t11-ram-badge" style="background:#1e293b; color:var(--accent-teal);">RAM: - MB</span>
   </div>
 
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">

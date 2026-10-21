@@ -1,28 +1,71 @@
 <!-- Tab 6: Corpus Search & 5-View KWIC Concordancer -->
 <div id="tab_06" class="tab-pane">
-  <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-    <input type="text" id="t6-input-query" class="form-input" value="robot" placeholder="Query term(s)..." style="width:180px;" />
-    <select id="t6-select-match" class="form-select">
-      <option value="exact">Exact Match</option>
-      <option value="glob">Glob Pattern (*)</option>
-      <option value="regex">Regular Expression</option>
-    </select>
-    <span style="font-size:11.5px; color:var(--text-secondary);">Span:</span>
-    <input type="number" id="t6-input-span-l" class="form-input" value="5" min="1" max="20" style="width:50px;" title="Left Span" />
-    <input type="number" id="t6-input-span-r" class="form-input" value="5" min="1" max="20" style="width:50px;" title="Right Span" />
-    <select id="t6-select-sort" class="form-select">
-      <option value="position">Sort: Position</option>
-      <option value="node">Sort: Node</option>
-      <option value="R1">Sort: R1 (First Right)</option>
-      <option value="L1">Sort: L1 (First Left)</option>
-    </select>
-    <button class="btn btn-sm btn-primary" id="t6-btn-search">Search KWIC</button>
-    <button class="btn btn-sm" id="t6-btn-punct-compare">Compare 4 Punctuations</button>
-    <span class="chip" id="t6-hit-count" style="margin-left:auto;">0 hits</span>
+  <!-- Sub-tab Pills -->
+  <div class="viz-subtabs-bar" id="t6-subtabs">
+    <button class="viz-subtab-btn active" data-pane="t6-pane-kwic">KWIC Dizinleyici (Mevcut)</button>
+    <button class="viz-subtab-btn" data-pane="t6-pane-summary">Arama Özeti &amp; Sıklık Çubukları</button>
+    <button class="viz-subtab-btn" data-pane="t6-pane-views">Görünüm Karşılaştırması (Ham vs İçerik)</button>
+    <button class="viz-subtab-btn" data-pane="t6-pane-nltk">NLTK Çapraz Kontrol</button>
   </div>
 
-  <div id="t6-punct-pane" class="kpi-card" style="display:none; margin-bottom:12px;"></div>
+  <!-- Pane 1: KWIC Dizinleyici -->
+  <div id="t6-pane-kwic" class="viz-pane active">
+    <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+      <input type="text" id="t6-input-query" class="form-input" value="robot" placeholder="Query term(s)..." style="width:180px;" />
+      <select id="t6-select-match" class="form-select">
+        <option value="exact">Exact Match</option>
+        <option value="glob">Glob Pattern (*)</option>
+        <option value="regex">Regular Expression</option>
+      </select>
+      <span style="font-size:11.5px; color:var(--text-secondary);">Span:</span>
+      <input type="number" id="t6-input-span-l" class="form-input" value="5" min="1" max="20" style="width:50px;" title="Left Span" />
+      <input type="number" id="t6-input-span-r" class="form-input" value="5" min="1" max="20" style="width:50px;" title="Right Span" />
+      <select id="t6-select-sort" class="form-select">
+        <option value="position">Sort: Position</option>
+        <option value="node">Sort: Node</option>
+        <option value="R1">Sort: R1 (First Right)</option>
+        <option value="L1">Sort: L1 (First Left)</option>
+      </select>
+      <button class="btn btn-sm btn-primary" id="t6-btn-search">Search KWIC</button>
+      <button class="btn btn-sm" id="t6-btn-punct-compare">Compare 4 Punctuations</button>
+      <span class="chip" id="t6-hit-count" style="margin-left:auto;">0 hits</span>
+    </div>
 
-  <!-- KWIC Table -->
-  <div id="t6-kwic-grid"></div>
+    <div id="t6-punct-pane" class="kpi-card" style="display:none; margin-bottom:12px;"></div>
+    <div id="t6-kwic-grid"></div>
+  </div>
+
+  <!-- Pane 2: Arama Özeti & Sıklık Çubukları -->
+  <div id="t6-pane-summary" class="viz-pane">
+    <div id="t6-summary-chart-container" style="margin-bottom:14px;"></div>
+    <div class="kpi-card">
+      <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">Metin Başına Bulgu ve Per10k Sıklık Tablosu</div>
+      <div id="t6-summary-table-container"></div>
+    </div>
+  </div>
+
+  <!-- Pane 3: Görünüm Karşılaştırması -->
+  <div id="t6-pane-views" class="viz-pane">
+    <div class="kpi-card">
+      <div style="font-weight:700; font-size:12.5px; color:var(--accent-teal); margin-bottom:8px;">Ham vs İçerik, Drop vs Mask Karşılaştırması</div>
+      <div id="t6-views-table-container"></div>
+    </div>
+  </div>
+
+  <!-- Pane 4: NLTK Çapraz Kontrol -->
+  <div id="t6-pane-nltk" class="viz-pane">
+    <div class="kpi-card">
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+        <select id="t6-select-nltk-text" class="form-select">
+          <option value="IR-IA">IR-IA (I, Robot)</option>
+          <option value="BR-SM">BR-SM (Ben, Robot)</option>
+          <option value="OBI-SM">OBI-SM (OBİ,J.S.927)</option>
+        </select>
+        <input type="text" id="t6-input-nltk-word" class="form-input" value="robot" style="width:120px;" />
+        <button class="btn btn-sm btn-primary" id="t6-btn-run-nltk">NLTK ile Karşılaştır</button>
+      </div>
+      <div id="t6-nltk-lines-container" style="margin-bottom:12px;"></div>
+      <div id="t6-nltk-similar-container" style="font-size:12px; color:var(--text-secondary);"></div>
+    </div>
+  </div>
 </div>

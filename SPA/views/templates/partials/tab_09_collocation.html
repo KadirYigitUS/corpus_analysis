@@ -2,36 +2,66 @@
 <div id="tab_09" class="tab-pane">
   <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
     <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Node:</span>
-    <input type="text" id="t9-input-node" class="form-input" value="robot" style="width:120px;" />
+    <input type="text" id="t9-input-node" class="form-input" value="robot" style="width:110px;" />
     <select id="t9-select-text" class="form-select">
-      <option value="BR-SM">BR-SM (Selma MİNE)</option>
-      <option value="IR-IA">IR-IA (Isaac Asimov)</option>
-      <option value="OBI-SM">OBI-SM (Selma MİNE)</option>
-      <option value="SU-ZB">SU-ZB (Zühtü BAYAR)</option>
+      <option value="BR-SM">BR-SM (Selma MİNE - Ben, Robot)</option>
+      <option value="IR-IA">IR-IA (Isaac Asimov - I, Robot)</option>
+      <option value="OBI-SM">OBI-SM (Selma MİNE - OBİ,J.S.927)</option>
+      <option value="SU-ZB">SU-ZB (Zühtü BAYAR - Sahte Uygarlık)</option>
     </select>
     <select id="t9-select-metric" class="form-select">
       <option value="LogDice">LogDice</option>
       <option value="MI">MI</option>
       <option value="G2">Signed G2</option>
       <option value="T">T-Score</option>
-      <option value="MI2">MI²</option>
-      <option value="MI3">MI³</option>
     </select>
-    <span style="font-size:11.5px; color:var(--text-secondary);">Min Freq:</span>
-    <input type="number" id="t9-input-min-freq" class="form-input" value="3" min="1" max="20" style="width:50px;" />
-    <button class="btn btn-sm btn-primary" id="t9-btn-run-colloc">Run Collocation</button>
+    <button class="btn btn-sm btn-primary" id="t9-btn-run-colloc" onclick="if(window.initTab09Viz) window.initTab09Viz();">Run Collocation</button>
   </div>
 
-  <div id="t9-stats-header" style="display:flex; gap:8px; margin-bottom:12px;"></div>
+  <!-- Sub-tab Pills -->
+  <div class="viz-subtabs-bar" id="t9-subtabs">
+    <button class="viz-subtab-btn active" data-pane="t9-pane-colloc-grid">Eşdizim Tablosu (6 Metrik)</button>
+    <button class="viz-subtab-btn" data-pane="t9-pane-scatter">Şekil 5: GraphColl Dağılım Grafiği</button>
+    <button class="viz-subtab-btn" data-pane="t9-pane-sensitivity">Ölçüt &amp; Pencere Duyarlılığı</button>
+    <button class="viz-subtab-btn" data-pane="t9-pane-nltk">NLTK Bigram Doğrulama</button>
+  </div>
 
-  <div style="display:grid; grid-template-columns:1fr 380px; gap:16px;">
-    <!-- Collocation Table -->
+  <!-- Pane 1: Collocation Table -->
+  <div id="t9-pane-colloc-grid" class="viz-pane active">
+    <div id="t9-stats-header" style="display:flex; gap:8px; margin-bottom:12px;"></div>
     <div id="t9-collocation-grid"></div>
+  </div>
 
-    <!-- GraphColl Radial Stage -->
-    <div class="kpi-card" style="display:flex; flex-direction:column; align-items:center;">
-      <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">GraphColl Radial Network</div>
-      <div id="t9-graphcoll-stage"></div>
+  <!-- Pane 2: Şekil 5 GraphColl 2D Scatter -->
+  <div id="t9-pane-scatter" class="viz-pane">
+    <div id="t9-scatter-chart-container"></div>
+  </div>
+
+  <!-- Pane 3: Ölçüt & Pencere Duyarlılığı -->
+  <div id="t9-pane-sensitivity" class="viz-pane">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">Ölçüt Karşılaştırması (Top 8)</div>
+        <div id="t9-measures-table"></div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-teal); margin-bottom:8px;">Pencere &amp; Görünüm Duyarlılığı</div>
+        <div id="t9-window-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pane 4: NLTK Bigram Doğrulama -->
+  <div id="t9-pane-nltk" class="viz-pane">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">NLTK Bigram Eşdizimleri</div>
+        <div id="t9-nltk-collocs-table"></div>
+      </div>
+      <div class="kpi-card">
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-teal); margin-bottom:8px;">En Sık Geçen 2-Gramlar</div>
+        <div id="t9-nltk-ngrams-table"></div>
+      </div>
     </div>
   </div>
 </div>
