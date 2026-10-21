@@ -40,19 +40,15 @@ scripts/corpus_analysis/SPA/tests/
 │   ├── test_file_line_counts.py      # Hard <= 200 lines/file gate on all .py, .js, .css, .html
 │   └── test_layer_dependencies.py    # AST inspection of import directions and path literals
 └── e2e/
-    ├── test_e2e_global_bar.py        # Global Control Bar (scopes, 32 TokenViews, live RSS)
-    ├── test_e2e_modals_drawers.py    # Corpus Info Modal, Settings Modal, Help Drawer
-    ├── test_e2e_tab01_inventory.py   # Tab 1: DataGrid, book/author info cards, schema
-    ├── test_e2e_tab02_alignment.py   # Tab 2: Alignment cardinality, length-delta sorting
-    ├── test_e2e_tab03_nda_parallel.py# Tab 3: Tripartite dictionary, 4 disjoint sets, SVG links
-    ├── test_e2e_tab04_pos.py         # Tab 4: UPOS distributions, delta-pp, bootstrap CIs
-    ├── test_e2e_tab05_depviz.py      # Tab 5: CoNLL table, stacked bilingual displaCy trees
-    ├── test_e2e_tab06_search_kwic.py # Tab 6: Multi-term search, 5-view KWIC, sorting
-    ├── test_e2e_tab07_batch_disp.py  # Tab 7: Batch KWIC, Juilland's D barcodes, BH-FDR
-    ├── test_e2e_tab08_diversity.py   # Tab 8: 22-column LancsBox table, MATTR, Zipf
-    ├── test_e2e_tab09_collocation.py # Tab 9: Union-slot collocates, GraphColl scatter
-    ├── test_e2e_tab10_tfidf_rep.py   # Tab 10: Sublinear TF-IDF small multiples, report export
-    └── test_e2e_tab11_explorer.py    # Tab 11: Unified query runner, scriptable Python export
+    ├── test_e2e_playwright.py        # Pytest live_server subprocess + Node Playwright bridge (19 items)
+    └── pw/
+        ├── harness.js                # Chromium launcher, error/network listeners, trace/screenshot capture
+        ├── helpers.js                # Explicit condition polling, API response waiters, grid helpers
+        ├── run_all.js                # Suite orchestrator writing SPA/tests/results/playwright/results.json
+        ├── suite_shell.js            # Global bar, theme, TR/EN i18n, scopes, matrix, RSS, modals & drawer
+        ├── suite_tabs_01_04.js       # Tabs 1-4: Inventory, Alignment, NDA Parallel, POS Profiler
+        ├── suite_tabs_05_08.js       # Tabs 5-8: Dependency SVG, Search/KWIC, Batch Dispersion, Diversity
+        └── suite_tabs_09_11.js       # Tabs 9-11: Collocations, TF-IDF & Bundle ZIP, Explorer & random nav
 ```
 
 ---
@@ -235,46 +231,45 @@ Additional memory test assertions:
 
 ---
 
-## 8. Headless Selenium E2E Test Suites
+## 8. Headless Playwright E2E Test Suites
 
-Automated browser tests execute via headless Chromium (`--headless=new`, window size $1920 \times 1080$) using `selenium_best_practices`.
+Automated browser tests execute via Node Playwright (`/home/ben/miniconda3/lib/node_modules/playwright`, headless Chromium v145.0.7632.6, viewport $1920 \times 1080$) bridged into `pytest` via `SPA/tests/e2e/test_e2e_playwright.py`. Every test enforces zero `pageerror`, zero `console.error`, zero `requestfailed`, and zero HTTP $\ge 500$ responses, capturing Playwright trace ZIPs (`traces/*.zip`), full-page screenshots (`screenshots/*.png`), and DOM HTML snapshots (`screenshots/*.html`) upon any failure.
 
-### 8.1 Global Control Bar, Modals, and Drawers
+### 8.1 Global Control Bar, Modals, and Drawers (`pw/suite_shell.js`)
 
-1. **`test_e2e_global_bar.py`**:
-   - Scope switching across all 8 options (`all`, `english`, `turkish`, `pairs`, `indigenous`, `author_related`, `author_tr`, `text`).
-   - Live update of the 32-combination TokenView controls (Field, Function Words, Mode, Punctuation).
-   - Assertion of live RSS gauge display and color thresholds (Green $< 1{,}000\text{ MB}$, Amber $1{,}000–1{,}350\text{ MB}$, Red $> 1{,}350\text{ MB}$).
-2. **`test_e2e_modals_drawers.py`**:
-   - **Corpus Info Modal**: Clicks header and row buttons; verifies book cover images, author portraits, and metadata tables render without 404 image errors.
-   - **Settings Modal**: Modifies path configurations and metadata; verifies changes persist to YAML via API without page refresh.
-   - **Help & Formulas Drawer**: Opens sliding drawer; verifies MathJax/KaTeX mathematical formulas render cleanly; asserts citation links point to exact canonical references.
+1. **`shell_brand_and_initial_load` & `shell_theme_toggle_persists_across_reload`**:
+   - Verifies initial `source-tables` ($13$ rows) and `telemetry` API load, brand header rendering, and dark/light theme persistence across page reload.
+2. **`shell_language_toggle_loads_i18n_and_updates_labels` & `shell_scope_and_matrix_selectors_update_state`**:
+   - Verifies TR/EN localization toggle via `/api/v1/config/i18n/{lang}`, all 8 scope modes (`all` $\to 13$, `english` $\to 5$, `turkish` $\to 8$, `pairs` $\to 10$, `indigenous` $\to 3$), and the 32-combination `TokenView` matrix selectors (Field, Function Words, Mode, Punctuation).
+3. **`shell_rss_gauge_within_bounds` & `shell_modals_and_help_drawer`**:
+   - Asserts live RSS gauge display ($0 < \text{RSS} < 1{,}500\text{ MB}$) and tests the Corpus Info Modal (books & authors tabs), Settings Modal (`GET`/`PUT` `/api/v1/config/paths`), and Help & Formulas Drawer.
 
 ### 8.2 Feature Tab Workstations (Tabs 1 to 11)
 
-| Suite Name | Target Workstation | Core User Flows Tested | DOM Assertions and Validation Checks |
+| Suite Module | Target Workstation | Core User Flows Tested | DOM Assertions and Measured Facts |
 |---|---|---|---|
-| `test_e2e_tab01_inventory.py` | **Tab 1: Inventory** | • Scope selection<br>• Text search filtering<br>• Column resizing | • DataGrid renders 20 rows with pagination.<br>• Token bar chart (Fig. 1) displays proportional widths.<br>• Schema inspector shows correct CoNLL column types. |
-| `test_e2e_tab02_alignment.py` | **Tab 2: Alignment** | • Translation pair selection<br>• Chapter sidebar navigation<br>• $\Delta s, \Delta w, \Delta c$ delta sorting | • Left chapter sidebar updates row counts.<br>• Stacked horizontal bar chart renders alignment categories.<br>• Color-coded row backgrounds (`row-one`, `row-eng`, `row-tur`). |
-| `test_e2e_tab03_nda_parallel.py` | **Tab 3: NDA Parallel** | • Parallel view overlay toggle<br>• Stepped SVG connector lines<br>• Tripartite dictionary drawer | • 4 disjoint visual sets render with exact hex colors.<br>• SVG path connectors re-calculate on window resize.<br>• Attribution footer reflects current label attributions. |
-| `test_e2e_tab04_pos.py` | **Tab 4: POS Profiler** | • Content-only filter toggle<br>• Pair comparison ($\Delta\text{pp}$)<br>• Bootstrap CI calculation | • 17-tag UPOS profile heatmap renders.<br>• $\Delta\text{pp}$ divergence bars show positive and negative divergence.<br>• 95% bootstrap error bars render on group comparison. |
-| `test_e2e_tab05_depviz.py` | **Tab 5: Dependency** | • Sentence coordinate input<br>• Zoom and pan on SVG canvas<br>• Function word dimming toggle | • CoNLL token table renders head and deprel tags.<br>• `displaCy` SVG tree renders directed syntactic arcs.<br>• Closed-class words receive `opacity: 0.4` when dimmed. |
-| `test_e2e_tab06_search_kwic.py` | **Tab 6: Search & KWIC** | • Multi-term search (exact/regex)<br>• 5 KWIC presentation modes<br>• Multi-key sorting ($R_1, L_1$) | • Search returns normalized per-10k rates.<br>• KWIC view renders node in amber pill with $L/R$ context.<br>• Sorting by $R_1$ updates row order stably without layout shift. |
-| `test_e2e_tab07_batch_disp.py` | **Tab 7: Batch KWIC** | • Multi-word list input<br>• Juilland's $D$ calculation<br>• Pairwise correlation heatmaps | • 10-chunk barcode dispersion charts render.<br>• Juilland's $D$ table updates across-text and within-text values.<br>• BH-FDR $q$-values display significance thresholds ($q < 0.05$). |
-| `test_e2e_tab08_diversity.py` | **Tab 8: Diversity** | • 22-metric DataGrid review<br>• MATTR window slider adjustments<br>• Zipf log-log plot inspection | • 22 columns populate with numeric values and NaN guards.<br>• MATTR line trajectories update dynamically on window slider changes.<br>• Zipf curves plot rank vs frequency on $\log_{10}$ scale. |
-| `test_e2e_tab09_collocation.py` | **Tab 9: Collocation** | • Node lemma search<br>• L/R window span adjustment<br>• GraphColl association scatter | • Contingency table displays $O_{11}, R_1, C_1, E_{11}$.<br>• Metric selector toggles between MI, $T$-score, $G^2$, and Log-Dice.<br>• GraphColl scatter plots strength vs evidence. |
-| `test_e2e_tab10_tfidf_rep.py` | **Tab 10: TF-IDF & Rep** | • Top-$K$ keyness calculation<br>• PROPN exclusion toggle<br>• Research bundle export | • Small-multiple horizontal bar charts render top terms.<br>• PROPN filter removes named entities from keyness lists.<br>• Clicking Export initiates ZIP download (`.md, .tsv, .png, .xlsx`). |
-| `test_e2e_tab11_explorer.py` | **Tab 11: Explorer** | • Query execution across categories<br>• Copy-as-Python-script action<br>• Memory eviction trigger | • Interactive search results display immediately.<br>• Script generator copies valid executable Python to clipboard.<br>• Eviction button drops resident texts and updates RSS gauge. |
+| `pw/suite_tabs_01_04.js` | **Tab 1: Inventory** | • Scope selection<br>• Text search filtering<br>• Column sorting & schema | • DataGrid renders `tab01_row_count = 13` rows.<br>• Search filter narrows rows (`Asimov` $\to 1$).<br>• Schema inspector shows 7 CoNLL columns. |
+| `pw/suite_tabs_01_04.js` | **Tab 2: Alignment** | • Translation pair selection<br>• Chapter sidebar navigation<br>• NER overlay toggle | • KPI cards & chapter sidebar populate.<br>• NER overlay toggle renders `.ner-badge` pills.<br>• Pair switch to `TL-PA_A-ZB` reloads sentences. |
+| `pw/suite_tabs_01_04.js` | **Tab 3: NDA Parallel** | • Parallel view token pills<br>• Stepped SVG connector lines<br>• Tripartite dictionary drawer | • Measured tokens: `IR-IA_BR-SM = 576`, `TL-PA_A-ZB = 485`.<br>• SVG path connectors render valid `M...C...` coordinates.<br>• Dictionary drawer searches `robot` across 3 dictionary tabs. |
+| `pw/suite_tabs_01_04.js` | **Tab 4: POS Profiler** | • Per-text UPOS profiles<br>• Pair comparison ($\Delta\text{pp}$)<br>• Bootstrap CI calculation | • UPOS profile grid and Plotly chart render.<br>• $\Delta\text{pp}$ divergence bars populate for translation pairs.<br>• 95% bootstrap CIs render for translated vs. indigenous groups. |
+| `pw/suite_tabs_05_08.js` | **Tab 5: Dependency** | • Sentence coordinate input<br>• SVG dependency tree<br>• SVG file download | • CoNLL token table renders head and deprel tags.<br>• `displaCy` SVG tree renders directed syntactic arcs.<br>• Download button exports valid `.svg` file. |
+| `pw/suite_tabs_05_08.js` | **Tab 6: Search & KWIC** | • Exact, glob, and regex search<br>• KWIC spans, sort, punct<br>• Invalid regex HTTP 400 guard | • Exact (`robot`), glob (`rob*`), regex (`^robot`), and UPOS filters.<br>• Parallel compare view renders aligned EN/TR counterparts.<br>• Invalid regex `[unclosed` returns HTTP 400 and `#t6-search-error`. |
+| `pw/suite_tabs_05_08.js` | **Tab 7: Batch KWIC** | • Multi-word list input<br>• Juilland's $D$ dispersion<br>• Pairwise correlation grid | • Dispersion summary grid populates per-10k and Juilland's $D$.<br>• Pairwise correlation grid computes Pearson $r$, Spearman $\rho$, and BH-FDR $q$. |
+| `pw/suite_tabs_05_08.js` | **Tab 8: Diversity** | • 7-metric UI DataGrid<br>• Refresh cache memoization<br>• MATTR trajectory plot | • `tab08_row_count = 13` rows across 7 UI columns (`TTR`, `Guiraud_R`, `Yule_K`, `Simpson_D`, `MATTR_500`, `MTLD`, `HD_D`; 5 additional metrics remain backend-only).<br>• MATTR trajectory renders non-empty Plotly curve. |
+| `pw/suite_tabs_09_11.js` | **Tab 9: Collocation** | • 6 association metrics<br>• Min-freq threshold filter<br>• GraphColl scatter plot | • Cycles all 6 UI metrics (`LogDice`, `MI`, `G2`, `T`, `MI2`, `MI3`).<br>• Raising `min_freq` from 2 to 10 narrows collocate count.<br>• GraphColl scatter plots association strength vs. frequency. |
+| `pw/suite_tabs_09_11.js` | **Tab 10: TF-IDF & Rep** | • Top-$K$ keyness calculation<br>• PROPN exclusion toggle<br>• Research bundle ZIP export | • Top keywords grid and chart populate for `BR-SM`.<br>• Toggling `#t10-chk-propn` updates extracted terms.<br>• Bundle download verifies PK ZIP magic header (`295` bytes). |
+| `pw/suite_tabs_09_11.js` | **Tab 11: Explorer** | • Quick search execution<br>• Copy-as-Python-script<br>• Cross-cutting random tab nav | • Explorer quick search renders hits and summary.<br>• Clipboard receives valid Python snippet (`CorpusLoader`).<br>• Random-order 11-tab navigation leaves zero orphan overlays. |
 
 ---
 
 ## 9. Acceptance Gate Checklist
 
-- [x] Comprehensive test architecture established covering Unit, Benchmark, AST, Security, Memory, and E2E layers.
+- [x] Comprehensive test architecture established covering Unit, Benchmark, AST, Security, Memory, and Playwright E2E layers (`28/28` pytest items passing).
 - [x] 32-combination `TokenView` test matrix parameterized across all fields, modes, filters, and punctuation regimes.
 - [x] Mathematical parity tests defined against `corpus_toolkit` for LancsBox-X diversity, Union-Slot collocations, and Juilland's $D$.
 - [x] AST line-budget validator configured to strictly enforce $\le 200$ physical lines on all `.py, .js, .css, .html` files.
 - [x] AST architectural boundary tests configured to block invalid import flows and hardcoded paths.
 - [x] Deserialization isolation tests configured to verify `_NdaSafeUnpickler` and reject RCE exploits.
 - [x] Process memory test configured to assert peak $\text{RSS} < 1{,}500\text{ MB}$ under full corpus iteration.
-- [x] Headless Selenium E2E test plan specified for all 11 tabs, Global Control Bar, Corpus Info Modal, Settings Modal, and Help Drawer.
+- [x] Headless Playwright E2E test suite implemented and verified across 3 consecutive flake-detection runs (`18/18` E2E test cases passing) for all 11 tabs, Global Control Bar, Corpus Info Modal, Settings Modal, and Help Drawer.
+

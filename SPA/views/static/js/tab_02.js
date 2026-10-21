@@ -103,6 +103,17 @@ class Tab02Controller {
   }
 
   attachEvents() {
+    const pairSelect = document.getElementById('t2-select-pair');
+    if (pairSelect) {
+      pairSelect.addEventListener('change', async (e) => {
+        this.currentPair = e.target.value;
+        this.activeChapter = null;
+        await this.loadKpis();
+        await this.loadChapters();
+        await this.loadRows();
+      });
+    }
+
     const sidebar = document.getElementById('t2-chapter-sidebar');
     if (sidebar) {
       sidebar.addEventListener('click', (e) => {

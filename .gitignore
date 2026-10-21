@@ -59,6 +59,9 @@ executed_*.ipynb
 !SPA/**/*.md
 SPA/**/__pycache__/
 SPA/**/*.pyc
+SPA/tests/results/
+SPA/tests/results/playwright/
+
 
 # OS metadata
 .DS_Store

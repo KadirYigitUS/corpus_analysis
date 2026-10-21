@@ -31,14 +31,18 @@ class Tab01Controller {
 
   async loadSourceTables() {
     try {
-      const resp = await fetch('/api/v1/corpus/source-tables');
+      const scope = (window.appState && window.appState.state.scope && window.appState.state.scope.scope) || 'all';
+      const catParam = ['trans_en', 'trans_tr', 'indig_tr'].includes(scope) ? `?category=${scope}` : '';
+      const resp = await fetch(`/api/v1/corpus/source-tables${catParam}`);
       if (resp.ok) {
         const data = await resp.json();
-        const allRows = [
+        let allRows = [
           ...(data.trans_en || []),
           ...(data.trans_tr || []),
           ...(data.indig_tr || [])
         ];
+        if (scope === 'all_en') allRows = data.trans_en || [];
+        else if (scope === 'all_tr') allRows = [...(data.trans_tr || []), ...(data.indig_tr || [])];
 
         this.grid = new TableGrid('t1-inventory-grid', {
           columns: [
@@ -69,6 +73,9 @@ class Tab01Controller {
   }
 
   attachEvents() {
+    if (window.appState) {
+      window.appState.on('scopeChanged', () => this.loadSourceTables());
+    }
     const container = document.getElementById('t1-inventory-grid');
     if (!container) return;
 

@@ -322,13 +322,28 @@ See:
 * [`docs/METRICS.md`](docs/METRICS.md) — every mathematical formula, edge-case rule, and citation.
 * [`docs/QA.md`](docs/QA.md) — quality rubric, hand-checked benchmarks, and acceptance results.
 
-## Development
+## Development & SPA Playwright E2E Test Suite
 ```bash
-python -m pytest -q          # known-answer tests (integration tests auto-skip without the corpus)
-ruff check .                 # lint
-mypy corpus_toolkit          # types (see docs/QA.md for documented overrides)
-python tools/build_notebook.py --execute   # regenerate + run the notebook
+python -m pytest -q                                       # 47 corpus_toolkit known-answer tests
+python -m pytest SPA/tests/ -v                            # 28 SPA tests (unit, benchmarks, AST <=200 lines, and 18 Playwright E2E tests)
+python -m pytest SPA/tests/e2e/test_e2e_playwright.py -v  # Run only the 18-case Playwright E2E suite via pytest bridge
+NODE_PATH=/home/ben/miniconda3/lib/node_modules BASE_URL=http://127.0.0.1:5000 /home/ben/miniconda3/bin/node SPA/tests/e2e/pw/run_all.js  # Standalone Node Playwright runner
+ruff check .                                              # lint
+mypy corpus_toolkit                                       # types (see docs/QA.md for documented overrides)
+python tools/build_notebook.py --execute                  # regenerate + run the notebook
 ```
+
+### SPA Headless Playwright E2E Architecture (`SPA/tests/e2e/`)
+* **Bridge & Harness**: `SPA/tests/e2e/test_e2e_playwright.py` starts a live Flask server subprocess on an ephemeral local port (`CORPUS_CACHE_POLICY=keep`) and invokes the zero-install Node Playwright runner (`SPA/tests/e2e/pw/run_all.js`) backed by `/home/ben/miniconda3/lib/node_modules/playwright` (Chromium headless `1920x1080`).
+* **Suites (all files strictly $\le 200$ lines)**:
+  * `suite_shell.js` (6 tests): Brand & initial load, theme persistence across reload, TR/EN i18n toggle, 8 scope & 32-combination TokenView matrix controls, RSS memory gauge bounds ($0 < \text{RSS} < 1500\text{ MB}$), Corpus Info modal, Settings modal (`GET`/`PUT`), and Help & Formulas drawer.
+  * `suite_tabs_01_04.js` (4 tests): Tab 1 Inventory grid/search/sort/schema, Tab 2 Alignment KPIs/chapters/NER overlay/pair switch, Tab 3 NDA Parallel View tokens/SVG connector paths/tripartite dictionary drawer, and Tab 4 POS comparative profiles/pair $\Delta\text{pp}$/group comparison.
+  * `suite_tabs_05_08.js` (4 tests): Tab 5 Dependency tree SVG/CoNLL/download, Tab 6 KWIC modes/spans/sort/punctuation/parallel compare/invalid regex HTTP 400 handling, Tab 7 Batch dispersion & correlation grids, and Tab 8 Lexical Diversity 7-metric table & MATTR trajectory.
+  * `suite_tabs_09_11.js` (4 tests): Tab 9 Collocation 6 metrics (`LogDice`, `MI`, `G2`, `T`, `MI2`, `MI3`)/min-freq/GraphColl scatter, Tab 10 TF-IDF keywords/PROPN toggle/ZIP research bundle download, Tab 11 Explorer quick search/Python script clipboard copy, and cross-cutting random-order 11-tab navigation.
+* **Measured E2E Facts & Failure Artifacts**:
+  * Recorded in `SPA/tests/results/playwright/results.json`: `tab01_row_count = 13`, `nda_token_counts = {"IR-IA_BR-SM": 576, "TL-PA_A-ZB": 485}`, `tab08_row_count = 13`, `bundle_zip_bytes = 295`.
+  * On any test failure, full Playwright trace archives (`traces/<test>.zip`), full-page screenshots (`screenshots/<test>.png`), and DOM snapshots (`screenshots/<test>.html`) are written automatically under `SPA/tests/results/playwright/`.
+
 The notebook is *generated* from `tools/nb_part_*.py` so that its text is diff-friendly; edit
 those files, not the `.ipynb`.
 

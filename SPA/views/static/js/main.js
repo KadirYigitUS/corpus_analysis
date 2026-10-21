@@ -18,14 +18,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 0b. Language toggle
+  const applyI18n = (cat) => {
+    if (!cat) return;
+    if (cat.brand) document.getElementById('txt-brand-title').innerText = cat.brand;
+    if (cat.tabs) {
+      Object.entries(cat.tabs).forEach(([tid, label]) => {
+        const b = document.querySelector(`#main-tab-nav .tab-btn[data-tab="${tid}"]`);
+        if (b) b.innerText = label;
+      });
+    }
+  };
   const langBtn = document.getElementById('btn-lang-toggle');
   if (langBtn) {
-    langBtn.addEventListener('click', () => {
+    langBtn.addEventListener('click', async () => {
       const cur = window.appState.state.lang || 'tr';
       const next = cur === 'tr' ? 'en' : 'tr';
-      window.appState.state.lang = next;
       langBtn.innerText = next.toUpperCase() + ' / ' + (next === 'tr' ? 'EN' : 'TR');
-      window.appState.emit('langChanged', { lang: next });
+      await window.appState.loadI18n(next);
+      applyI18n(window.appState.i18nCatalog);
     });
   }
 

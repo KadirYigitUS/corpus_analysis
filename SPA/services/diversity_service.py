@@ -20,6 +20,7 @@ class DiversityService:
 
     def __init__(self, corpus_repo: CorpusRepository) -> None:
         self._repo = corpus_repo
+        self._metrics_cache: dict[tuple[Any, ...], dict[str, Any]] = {}
 
     def get_diversity_table(
         self,
@@ -29,17 +30,26 @@ class DiversityService:
         """Calculate the full LancsBox-X diversity metrics for all texts in scope."""
         texts = self._repo.get_texts_by_scope(scope_dto)
         tokens_map = self._repo.get_text_tokens_matrix(texts, view_params)
+        vp_key = (
+            view_params.field,
+            view_params.filter_function_words,
+            view_params.mode,
+            view_params.punct,
+        )
 
         records: list[dict[str, Any]] = []
         for text_code, forms in tokens_map.items():
-            metrics = diversity_metrics(forms)
-            clean_metrics: dict[str, Any] = {"text_code": text_code}
-            for k, val in metrics.items():
-                if val is None or np.isnan(val):
-                    clean_metrics[k] = None
-                else:
-                    clean_metrics[k] = round(float(val), 4)
-            records.append(clean_metrics)
+            cache_key = (text_code, *vp_key, len(forms))
+            if cache_key not in self._metrics_cache:
+                metrics = diversity_metrics(forms)
+                clean_metrics: dict[str, Any] = {"text_code": text_code}
+                for k, val in metrics.items():
+                    if val is None or np.isnan(val):
+                        clean_metrics[k] = None
+                    else:
+                        clean_metrics[k] = round(float(val), 4)
+                self._metrics_cache[cache_key] = clean_metrics
+            records.append(self._metrics_cache[cache_key])
 
         return records
 

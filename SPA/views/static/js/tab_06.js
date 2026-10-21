@@ -45,10 +45,16 @@ class Tab06Controller {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (resp.ok) {
-        const result = await resp.json();
+      const result = await resp.json();
+      if (resp.ok && !result.error) {
         document.getElementById('t6-hit-count').innerText = `${result.total_hits} hits`;
         this.renderKwicTable(result.lines || []);
+      } else {
+        document.getElementById('t6-hit-count').innerText = 'Error';
+        const gridEl = document.getElementById('t6-kwic-grid');
+        if (gridEl) {
+          gridEl.innerHTML = `<div class="kpi-card" id="t6-search-error" style="color:var(--accent-rose); border-color:var(--accent-rose);">${result.error || 'Invalid search expression'}</div>`;
+        }
       }
     } catch (err) {
       console.error('Failed to execute concordance search:', err);

@@ -18,7 +18,7 @@ def create_config_blueprint(service: ConfigMetadataService) -> Blueprint:
         paths = service.get_paths()
         return jsonify({"paths": paths.to_dict()["paths"]}), 200
 
-    @config_bp.route("/config/paths", methods=["POST"])
+    @config_bp.route("/config/paths", methods=["POST", "PUT"])
     def update_paths():
         data = request.get_json() or {}
         new_paths = PathConfigDTO.from_dict(data)

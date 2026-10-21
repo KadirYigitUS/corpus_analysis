@@ -26,13 +26,16 @@ def create_concordance_blueprint(
         scope_dto = CorpusScopeDTO.from_dict(data.get("scope", {}))
         sort_by = str(data.get("sort_by", "position"))
 
-        result = search_service.search_kwic(
-            query_dto=query_dto,
-            view_params=view_params,
-            scope_dto=scope_dto,
-            sort_by=sort_by,
-        )
-        return jsonify(result), 200
+        try:
+            result = search_service.search_kwic(
+                query_dto=query_dto,
+                view_params=view_params,
+                scope_dto=scope_dto,
+                sort_by=sort_by,
+            )
+            return jsonify(result), 200
+        except Exception as exc:
+            return jsonify({"error": f"Invalid search query: {exc}", "total_hits": 0, "lines": []}), 400
 
     @concordance_bp.route("/punct-compare", methods=["POST"])
     def compare_punct():

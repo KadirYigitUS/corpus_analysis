@@ -19,8 +19,16 @@
     </div>
   </div>
 
-  <!-- 8-Group NER Pill Filter Bar -->
+  <!-- Pair Selector & 8-Group NER Pill Filter Bar -->
   <div id="t2-ner-filter-bar" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; align-items:center;">
+    <span style="font-size:11.5px; font-weight:600; color:var(--text-secondary);">Pair:</span>
+    <select id="t2-select-pair" class="form-select" style="margin-right:8px;">
+      <option value="IR-IA_BR-SM">IR-IA ⇄ BR-SM (Selma MİNE)</option>
+      <option value="TL-PA_A-ZB">TL-PA ⇄ A-ZB (Zühtü BAYAR)</option>
+      <option value="TLP-ML_YG-ZB">TLP-ML ⇄ YG-ZB (Zühtü BAYAR)</option>
+      <option value="TSP-JL_KS-ZB">TSP-JL ⇄ KS-ZB (Zühtü BAYAR)</option>
+      <option value="ASD-PKD_KT-OK">ASD-PKD ⇄ KT-OK (Özlem KURDOĞLU)</option>
+    </select>
     <span style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">NER Filter:</span>
     <button class="chip ner-pill-btn chip-active" data-ner="ALL">ALL</button>
     <button class="chip ner-pill-btn" data-ner="PER">PERSON</button>

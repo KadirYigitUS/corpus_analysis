@@ -27,7 +27,20 @@ class NdaParallelService:
         max_rows: int = 20,
     ) -> str:
         """Render self-contained HTML for parallel sentences with NDA pills and links."""
-        ais = alignment_ids if alignment_ids else list(range(1, max_rows + 1))
+        if alignment_ids is not None:
+            ais = alignment_ids
+        else:
+            overlay = self._nda_repo.get_overlay_for_pair(pair_code)
+            linked_ais = sorted(
+                ai for ai, s in overlay.row_summaries.items() if s.linked_pairs and ai > 0
+            )
+            ais = linked_ais[:8]
+            for r in range(1, max_rows * 2):
+                if len(ais) >= max_rows:
+                    break
+                if r not in ais:
+                    ais.append(r)
+            ais.sort()
         try:
             return parallel_html(self._corpus_repo.loader, pair_code, ais=ais)
         except Exception as exc:

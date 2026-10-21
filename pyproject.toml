@@ -24,8 +24,14 @@ corpus-toolkit = "corpus_toolkit.cli:main"
 packages = ["corpus_toolkit"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = ["tests"]
-markers = ["data: needs the thesis corpus on disk (skipped when absent)"]
+markers = [
+  "data: needs the thesis corpus on disk (skipped when absent)",
+  "e2e: mark a test as an End-to-End browser test",
+  "playwright: mark a test as a Playwright End-to-End test",
+  "unit: mark a test as a backend Unit test",
+]
 filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.ruff]
