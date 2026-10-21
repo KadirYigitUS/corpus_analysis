@@ -48,7 +48,20 @@ executed_*.ipynb
 *.html
 *.ipynb.bak
 
+# Allow SPA static assets, templates, configs, and documentation
+!SPA/
+!SPA/**/
+!SPA/**/*.html
+!SPA/**/*.svg
+!SPA/**/*.png
+!SPA/**/*.yaml
+!SPA/**/*.json
+!SPA/**/*.md
+SPA/**/__pycache__/
+SPA/**/*.pyc
+
 # OS metadata
 .DS_Store
 Thumbs.db
+
 
