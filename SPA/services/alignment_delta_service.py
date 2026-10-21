@@ -135,9 +135,13 @@ class AlignmentDeltaService:
         }
 
     def _find_pair(
-        self, pair_code: str
+        self, pair_code: str | None
     ) -> tuple[PairSpec, LazyCorpusText, LazyCorpusText] | None:
         pairs = self._repo.loader.load_translation_pairs().items
+        if not pairs:
+            return None
+        if not pair_code:
+            return pairs[0]
         for spec, eng, tur in pairs:
             if pair_code in (
                 spec.pair_id,
@@ -146,4 +150,5 @@ class AlignmentDeltaService:
                 spec.eng.code,
             ):
                 return spec, eng, tur
-        return pairs[0] if pairs else None
+        return None
+

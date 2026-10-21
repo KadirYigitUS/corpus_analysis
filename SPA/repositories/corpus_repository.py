@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from corpus_toolkit.loader import CorpusLoader, LazyCorpusText
@@ -13,6 +14,7 @@ class CorpusRepository:
     """Encapsulates CorpusLoader access, LRU cache eviction, and text retrieval."""
 
     def __init__(self, data_root: str | None = None) -> None:
+        os.environ.setdefault("CORPUS_CACHE_POLICY", "keep")
         self._loader = CorpusLoader()
 
     @property
@@ -30,7 +32,8 @@ class CorpusRepository:
 
     def evict_cache(self, keep_latest_n: int = 0) -> int:
         """Evict cached Parquet entries."""
-        return self._loader.cache.evict(keep_latest_n=keep_latest_n)
+        return self._loader.cache.clear()
+
 
     def get_rss_mb(self) -> float:
         """Return current resident set size (RSS) in megabytes."""

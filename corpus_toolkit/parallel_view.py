@@ -498,7 +498,14 @@ def _resolve_pair(loader: Any, pair_or_code: Any) -> Any:
     for pid, p in loader.registry.pairs.items():
         if pid.lower() == key.lower():
             return p
+        if f"{p.eng.code}_{p.tur.code}".lower() == key.lower():
+            return p
+    if "_" in key:
+        first = key.split("_")[0]
+        if first in loader.registry.texts:
+            return loader.registry.pair_for(first)
     return loader.registry.pair_for(key)
+
 
 
 def _sentence_cells(text: Any, coord: Coord) -> list[tuple[str, str, str, str]]:

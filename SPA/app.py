@@ -76,10 +76,15 @@ def create_app(data_root: str | None = None) -> Flask:
     app.register_blueprint(create_lexicon_blueprint(div_svc, colloc_svc, tfidf_svc))
     app.register_blueprint(create_export_blueprint(bundle_svc, inv_svc))
 
-    # 4. Root View Route
+    # 4. Root View Route & Favicon
     @app.route("/")
     def index():
         return render_template("index.html")
+
+    @app.route("/favicon.ico")
+    def favicon():
+        return ("", 204)
+
 
     # 5. Security Headers (CSP Middleware)
     @app.after_request

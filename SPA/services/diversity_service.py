@@ -60,11 +60,13 @@ class DiversityService:
             return {"text_code": text_code, "window": window, "points": []}
 
         # Subsample to keep JSON payload lightweight
-        subsampled = series.iloc[::subsample_step]
-        points = [
-            {"window_idx": int(idx), "ttr": round(float(val), 4)}
-            for idx, val in subsampled.items()
-        ]
+        points = []
+        for i in range(0, len(series), subsample_step):
+            val = series[i]
+            points.append({
+                "window_idx": int(i),
+                "ttr": round(float(val), 4) if val is not None and not np.isnan(val) else None,
+            })
 
         return {
             "text_code": text_code,
@@ -72,6 +74,7 @@ class DiversityService:
             "total_windows": len(series),
             "points": points,
         }
+
 
     def get_zipf_rank_frequency(
         self,

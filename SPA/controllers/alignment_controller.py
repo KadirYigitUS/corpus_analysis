@@ -20,7 +20,10 @@ def create_alignment_blueprint(
     @alignment_bp.route("/kpis/<pair_code>", methods=["GET"])
     def get_kpis(pair_code: str):
         kpis = delta_service.get_alignment_kpis(pair_code)
+        if "error" in kpis:
+            return jsonify(kpis), 404
         return jsonify(kpis), 200
+
 
     @alignment_bp.route("/chapters/<pair_code>", methods=["GET"])
     def get_chapters(pair_code: str):

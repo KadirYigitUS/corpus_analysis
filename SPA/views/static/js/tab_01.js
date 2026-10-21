@@ -42,18 +42,18 @@ class Tab01Controller {
 
         this.grid = new TableGrid('t1-inventory-grid', {
           columns: [
-            { key: 'text_code', label: 'Code' },
+            { key: 'code', label: 'Code', render: (_, r) => r.code || r.text_code || '' },
             { key: 'title', label: 'Title' },
-            { key: 'author', label: 'Author / Trans.' },
-            { key: 'lang', label: 'Lang' },
-            { key: 'tokens', label: 'Tokens' },
-            { key: 'sentences', label: 'Sentences' },
+            { key: 'author_translator', label: 'Author / Trans.', render: (_, r) => r.author_translator || r.author || '' },
+            { key: 'language', label: 'Lang', render: (_, r) => r.language || r.lang || '' },
+            { key: 'tokens', label: 'Tokens', render: (v) => v ? Number(v).toLocaleString() : '0' },
+            { key: 'sentences', label: 'Sentences', render: (v) => v ? Number(v).toLocaleString() : '0' },
             {
               key: 'actions',
               label: 'Details',
               render: (_, row) => `
-                <button class="btn btn-sm btn-inspect-schema" data-code="${row.text_code}">Schema</button>
-                <button class="btn btn-sm btn-view-dossier" data-code="${row.text_code}">Dossier</button>
+                <button class="btn btn-sm btn-inspect-schema" data-code="${row.code || row.text_code}">Schema</button>
+                <button class="btn btn-sm btn-view-dossier" data-code="${row.code || row.text_code}">Dossier</button>
               `
             }
           ],
@@ -61,6 +61,7 @@ class Tab01Controller {
           pageSize: 15
         });
         this.grid.render();
+
       }
     } catch (err) {
       console.error('Failed to load source tables:', err);

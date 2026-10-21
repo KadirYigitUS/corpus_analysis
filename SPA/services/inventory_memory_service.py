@@ -16,11 +16,17 @@ class InventoryMemoryService:
     def get_summary_stats(self) -> dict[str, Any]:
         """Aggregate total counts across all texts, authors, and translations."""
         inv = self._repo.get_inventory_table()
+        try:
+            summary_df = self._repo.loader.load_all().summary()
+            sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
+        except Exception:
+            sum_dict = {}
+
         total_texts = len(inv)
-        total_tokens = sum(int(r.get("tokens", 0) or 0) for r in inv)
-        total_sentences = sum(int(r.get("sentences", 0) or 0) for r in inv)
-        categories = set(r.get("category", "") for r in inv)
-        authors = set(r.get("author", "") for r in inv)
+        total_tokens = sum(int(sum_dict.get(r.get("code", ""), {}).get("tokens", 0) or 0) for r in inv)
+        total_sentences = sum(int(sum_dict.get(r.get("code", ""), {}).get("sentences", 0) or 0) for r in inv)
+        categories = set(r.get("type", "") for r in inv if r.get("type"))
+        authors = set(r.get("author_translator", "") for r in inv if r.get("author_translator"))
         return {
             "total_texts": total_texts,
             "total_tokens": total_tokens,
@@ -36,25 +42,37 @@ class InventoryMemoryService:
     ) -> dict[str, list[dict[str, Any]]]:
         """Group texts into Translated EN, Translated TR, and Indigenous TR."""
         inv = self._repo.get_inventory_table()
+        try:
+            summary_df = self._repo.loader.load_all().summary()
+            sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
+        except Exception:
+            sum_dict = {}
+
         trans_en = []
         trans_tr = []
         indig_tr = []
 
         for row in inv:
-            cat = str(row.get("category", "")).lower()
-            lang = str(row.get("lang", "")).lower()
-            if "indigenous" in cat:
-                indig_tr.append(row)
-            elif "translation" in cat or "source" in cat:
-                if lang == "en":
-                    trans_en.append(row)
-                else:
-                    trans_tr.append(row)
+            code = row.get("code", "")
+            meta = sum_dict.get(code, {})
+            merged = dict(row)
+            merged["tokens"] = int(meta.get("tokens", 0) or 0)
+            merged["sentences"] = int(meta.get("sentences", 0) or 0)
+            merged["text_code"] = code
+
+            cat = str(row.get("type", "")).lower()
+            lang = str(row.get("language", "")).lower()
+
+            if "indigenous" in cat or "yerli" in cat:
+                indig_tr.append(merged)
+            elif "source" in cat or (lang == "en" and "translation" not in cat):
+                trans_en.append(merged)
+            elif "translation" in cat or "çeviri" in cat:
+                trans_tr.append(merged)
+            elif lang == "en":
+                trans_en.append(merged)
             else:
-                if lang == "en":
-                    trans_en.append(row)
-                else:
-                    indig_tr.append(row)
+                indig_tr.append(merged)
 
         if category_filter == "trans_en":
             return {"trans_en": trans_en}
@@ -72,12 +90,18 @@ class InventoryMemoryService:
     def get_token_distribution_figure1(self) -> dict[str, Any]:
         """Return data for Figure 1: Content vs. Function Word token sizes."""
         inv = self._repo.get_inventory_table()
+        try:
+            summary_df = self._repo.loader.load_all().summary()
+            sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
+        except Exception:
+            sum_dict = {}
+
         chart_data = []
         for r in inv:
-            t_code = r.get("text_code", "")
-            tok_count = int(r.get("tokens", 0) or 0)
-            # Baseline approximation or cached UPOS content ratio
-            content_ratio = float(r.get("content_ratio", 0.55))
+            t_code = r.get("code", "")
+            meta = sum_dict.get(t_code, {})
+            tok_count = int(meta.get("tokens", 0) or 0)
+            content_ratio = 0.55
             content_toks = int(tok_count * content_ratio)
             func_toks = tok_count - content_toks
             chart_data.append(
@@ -94,8 +118,8 @@ class InventoryMemoryService:
     def get_schema_inspector(self, text_code: str) -> dict[str, Any]:
         """Inspect token and sentence schema for a given text."""
         text = self._repo.loader.load_text(text_code)
-        tokens_df = text.tokens_df
-        sentences_df = text.sentences_df
+        tokens_df = text.tokens
+        sentences_df = text.sentences
 
         tok_schema = [
             {"column": col, "dtype": str(tokens_df[col].dtype), "non_null": int(tokens_df[col].count())}
@@ -112,3 +136,4 @@ class InventoryMemoryService:
             "token_schema": tok_schema,
             "sentence_schema": sent_schema,
         }
+

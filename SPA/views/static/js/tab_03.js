@@ -75,6 +75,15 @@ class Tab03Controller {
   }
 
   attachEvents() {
+    const pairSelect = document.getElementById('t3-select-pair');
+    if (pairSelect) {
+      pairSelect.addEventListener('change', async (e) => {
+        this.currentPair = e.target.value;
+        await this.loadParallelView();
+        await this.loadDictionaryDrawer();
+      });
+    }
+
     const toggleDictBtn = document.getElementById('btn-toggle-nda-dict');
     const dictDrawer = document.getElementById('t3-dict-drawer');
     if (toggleDictBtn && dictDrawer) {
@@ -91,5 +100,6 @@ class Tab03Controller {
     }
   }
 }
+
 
 window.tab03 = new Tab03Controller();

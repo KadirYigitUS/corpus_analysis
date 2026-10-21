@@ -22,13 +22,16 @@ class SvgConnectorEngine {
     svg.setAttribute('width', stage.scrollWidth);
     svg.setAttribute('height', stage.scrollHeight);
 
-    const enAnchors = stage.querySelectorAll('.t-pill[data-link-first][data-lang="en"]');
+    const enAnchors = stage.querySelectorAll('.t[data-link-first][data-lang="en"], .t-pill[data-link-first][data-lang="en"]');
     enAnchors.forEach(enEl => {
       const lid = enEl.getAttribute('data-link-first');
       const ai = enEl.getAttribute('data-ai');
       const color = enEl.getAttribute('data-link-color') || '#38bdf8';
-      const trEl = stage.querySelector(`.t-pill[data-link-first="${lid}"][data-lang="tr"][data-ai="${ai}"]`);
+      const trEl = stage.querySelector(
+        `.t[data-link-first="${lid}"][data-lang="tr"][data-ai="${ai}"], .t-pill[data-link-first="${lid}"][data-lang="tr"][data-ai="${ai}"]`
+      );
       if (!trEl) return;
+
 
       const r1 = enEl.getBoundingClientRect();
       const r2 = trEl.getBoundingClientRect();

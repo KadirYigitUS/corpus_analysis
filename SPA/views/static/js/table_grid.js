@@ -54,43 +54,66 @@ class TableGrid {
     const start = (this.currentPage - 1) * this.pageSize;
     const paged = sorted.slice(start, start + this.pageSize);
 
-    let html = `
-      <div class="datagrid-container">
-        <div class="datagrid-toolbar">
-          <input type="text" class="form-input grid-search" placeholder="Search table..." value="${this.searchTerm}" style="max-width:220px;" />
-          <span class="grid-stats chip">${totalRows} rows</span>
-        </div>
-        <div class="datagrid-table-wrapper">
-          <table class="datagrid-table">
-            <thead><tr>
-              ${this.columns.map(c => `
-                <th data-col="${c.key}">
-                  ${c.label}
-                  ${this.sortCol === c.key ? (this.sortAsc ? ' <span class="sort-icon">▲</span>' : ' <span class="sort-icon">▼</span>') : ''}
-                </th>
-              `).join('')}
-            </tr></thead>
-            <tbody>
-              ${paged.map(row => `
-                <tr>
-                  ${this.columns.map(c => `<td>${c.render ? c.render(row[c.key], row) : (row[c.key] ?? '')}</td>`).join('')}
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="datagrid-pagination">
-          <span>Page ${this.currentPage} of ${totalPages}</span>
-          <div class="pagination-controls">
-            <button class="btn btn-sm prev-page" ${this.currentPage <= 1 ? 'disabled' : ''}>Prev</button>
-            <button class="btn btn-sm next-page" ${this.currentPage >= totalPages ? 'disabled' : ''}>Next</button>
+    const wrapper = this.container.querySelector('.datagrid-container');
+    if (!wrapper) {
+      this.container.innerHTML = `
+        <div class="datagrid-container">
+          <div class="datagrid-toolbar">
+            <input type="text" class="form-input grid-search" placeholder="Search table..." value="${this.searchTerm}" style="max-width:220px;" />
+            <span class="grid-stats chip">${totalRows} rows</span>
+          </div>
+          <div class="datagrid-table-wrapper">
+            <table class="datagrid-table">
+              <thead><tr>
+                ${this.columns.map(c => `
+                  <th data-col="${c.key}">
+                    ${c.label}
+                    <span class="sort-icon">${this.sortCol === c.key ? (this.sortAsc ? '▲' : '▼') : ''}</span>
+                  </th>
+                `).join('')}
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="datagrid-pagination">
+            <span class="page-info">Page ${this.currentPage} of ${totalPages}</span>
+            <div class="pagination-controls">
+              <button class="btn btn-sm prev-page" ${this.currentPage <= 1 ? 'disabled' : ''}>Prev</button>
+              <button class="btn btn-sm next-page" ${this.currentPage >= totalPages ? 'disabled' : ''}>Next</button>
+            </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
+      this.attachEvents();
+    }
 
-    this.container.innerHTML = html;
-    this.attachEvents();
+    const tbody = this.container.querySelector('tbody');
+    if (tbody) {
+      tbody.innerHTML = paged.map(row => `
+        <tr>
+          ${this.columns.map(c => `<td>${c.render ? c.render(row[c.key], row) : (row[c.key] ?? '')}</td>`).join('')}
+        </tr>
+      `).join('');
+    }
+
+    const stats = this.container.querySelector('.grid-stats');
+    if (stats) stats.textContent = `${totalRows} rows`;
+
+    const pageInfo = this.container.querySelector('.page-info');
+    if (pageInfo) pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+
+    const prevBtn = this.container.querySelector('.prev-page');
+    if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
+
+    const nextBtn = this.container.querySelector('.next-page');
+    if (nextBtn) nextBtn.disabled = this.currentPage >= totalPages;
+
+    const ths = this.container.querySelectorAll('th[data-col]');
+    ths.forEach(th => {
+      const col = th.getAttribute('data-col');
+      const icon = th.querySelector('.sort-icon');
+      if (icon) icon.textContent = this.sortCol === col ? (this.sortAsc ? '▲' : '▼') : '';
+    });
   }
 
   attachEvents() {
@@ -138,3 +161,4 @@ class TableGrid {
 }
 
 window.TableGrid = TableGrid;
+

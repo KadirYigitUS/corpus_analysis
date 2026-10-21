@@ -33,22 +33,29 @@ class ReporterBundleService:
         """Execute quick_search and return structured summary and concordance samples."""
         res = quick_search(
             loader=self._corpus_repo.loader,
-            term=term,
+            terms=term,
             field=view_params.field,  # type: ignore[arg-type]
             filter_function_words=view_params.filter_function_words,
             mode=view_params.mode,  # type: ignore[arg-type]
             punct=view_params.punct,  # type: ignore[arg-type]
-            max_concordance=max_concordance,
+            max_lines=max_concordance,
         )
+
+        samples = []
+        for line in getattr(res, "lines", [])[:max_concordance]:
+            samples.append({
+                "text": line.code,
+                "coords": getattr(line, "coordinate", f"tok {line.ti}"),
+                "line": f"{line.left_text()} [{line.node[0]}] {line.right_text()}",
+            })
+
+        presence = list({line.code for line in getattr(res, "lines", [])})
 
         return {
             "term": term,
-            "total_hits": int(res.total_hits),
-            "presence": res.presence,
-            "samples": [
-                {"text": s.text_code, "coords": s.coords, "line": s.line}
-                for s in res.samples
-            ],
+            "total_hits": int(getattr(res, "total_hits", len(samples))),
+            "presence": presence,
+            "samples": samples,
             "python_snippet": (
                 f"from corpus_toolkit.loader import CorpusLoader\n"
                 f"from corpus_toolkit.explorer import quick_search\n\n"
@@ -58,6 +65,7 @@ class ReporterBundleService:
                 f"print(res)\n"
             ),
         }
+
 
     def generate_research_bundle(
         self,

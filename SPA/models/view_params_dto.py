@@ -24,7 +24,9 @@ class TokenViewParamsDTO:
             raise ValueError(f"Invalid punct: {self.punct}")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> TokenViewParamsDTO:
+    def from_dict(cls, data: Any) -> TokenViewParamsDTO:
+        if not isinstance(data, dict):
+            return cls()
         return cls(
             field=str(data.get("field", "tok")),
             filter_function_words=bool(
@@ -68,9 +70,16 @@ class CorpusScopeDTO:
             raise ValueError(f"Invalid scope: {self.scope}")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> CorpusScopeDTO:
+    def from_dict(cls, data: Any) -> CorpusScopeDTO:
+        if isinstance(data, str):
+            return cls(scope=data)
+        if not isinstance(data, dict):
+            return cls(scope="all")
+        scope_val = data.get("scope", "all")
+        if isinstance(scope_val, dict):
+            return cls.from_dict(scope_val)
         return cls(
-            scope=str(data.get("scope", "all")),
+            scope=str(scope_val),
             author_filter=data.get("author_filter"),
             text_code=data.get("text_code"),
             pair_code=data.get("pair_code"),
@@ -78,3 +87,4 @@ class CorpusScopeDTO:
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in self.__dict__.items() if v is not None}
+
