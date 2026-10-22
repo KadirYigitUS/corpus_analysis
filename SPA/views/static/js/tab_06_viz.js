@@ -56,7 +56,7 @@
         const data = await window.VizAPI.postJSON('/api/v1/concordance/nltk', { code, word });
 
         if (linesDiv) {
-          linesDiv.innerHTML = `<pre style="font-family:var(--font-mono);font-size:11px;background:#0f172a;color:#38bdf8;padding:10px;border-radius:4px;overflow-x:auto;">${(data.concordance || []).join('\n') || 'No matches found.'}</pre>`;
+          linesDiv.innerHTML = `<pre style="font-family:var(--font-mono);font-size:11px;background:var(--bg-primary);color:var(--accent-blue);border:1px solid var(--border-subtle);padding:10px;border-radius:4px;overflow-x:auto;">${(data.concordance || []).join('\n') || 'No matches found.'}</pre>`;
           linesDiv.dataset.loaded = 'true';
         }
         if (simDiv) {

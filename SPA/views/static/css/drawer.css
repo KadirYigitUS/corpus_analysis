@@ -31,7 +31,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #182234;
+  background: var(--bg-table-header);
 }
 .drawer-title {
   font-size: 14px;
@@ -68,7 +68,7 @@
   margin-bottom: 6px;
 }
 .formula-math {
-  background: #162032;
+  background: var(--bg-header-bar);
   border: 1px dashed var(--border-subtle);
   padding: 8px 12px;
   border-radius: var(--radius-sm);

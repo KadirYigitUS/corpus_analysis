@@ -30,6 +30,11 @@ module.exports = async function suiteShell(ctx) {
         const flippedTheme = await page.$eval('html', (el) => el.getAttribute('data-theme'));
         assert.notStrictEqual(flippedTheme, initialTheme, 'Theme did not flip on first click');
 
+        if (flippedTheme === 'light') {
+          const thBg = await page.$eval('.datagrid-table th', (el) => getComputedStyle(el).backgroundColor);
+          assert.strictEqual(thBg, 'rgb(226, 232, 240)', `Expected light header bg rgb(226, 232, 240), got ${thBg}`);
+        }
+
         await Promise.all([
           page.waitForResponse((r) => r.url().includes('/api/v1/corpus/source-tables'), { timeout: 90000 }),
           page.reload({ waitUntil: 'domcontentloaded' }),

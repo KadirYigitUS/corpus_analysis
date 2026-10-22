@@ -54,7 +54,7 @@ body {
 
 /* 32-Combination TokenView Matrix Bar */
 .matrix-bar {
-  background-color: #162032;
+  background-color: var(--bg-header-bar);
   border-bottom: 1px solid var(--border-subtle);
   padding: 6px 16px;
   display: flex;

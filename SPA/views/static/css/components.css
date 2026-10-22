@@ -13,7 +13,7 @@
   cursor: pointer;
   transition: all 0.12s ease;
 }
-.btn:hover { background: #475569; border-color: var(--border-focus); }
+.btn:hover { background: var(--border-subtle); border-color: var(--border-focus); }
 .btn-primary { background: #0284c7; border-color: #0369a1; color: #ffffff; }
 .btn-primary:hover { background: #0369a1; }
 .btn-sm { padding: 3px 8px; font-size: 11px; }

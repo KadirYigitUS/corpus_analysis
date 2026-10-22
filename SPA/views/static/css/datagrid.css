@@ -8,7 +8,7 @@
 }
 .datagrid-toolbar {
   padding: 8px 12px;
-  background: #1e293b;
+  background: var(--bg-table-toolbar);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   justify-content: space-between;
@@ -27,8 +27,8 @@
   text-align: left;
 }
 .datagrid-table th {
-  background: #182234;
-  color: var(--text-secondary);
+  background: var(--bg-table-header);
+  color: var(--text-primary);
   font-weight: 600;
   padding: 8px 10px;
   border-bottom: 1px solid var(--border-subtle);
@@ -39,15 +39,15 @@
   user-select: none;
   white-space: nowrap;
 }
-.datagrid-table th:hover { color: var(--text-primary); }
+.datagrid-table th:hover { color: var(--accent-blue); }
 .datagrid-table td {
   padding: 7px 10px;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   white-space: nowrap;
 }
 .datagrid-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-surface-elevated);
 }
 .datagrid-pagination {
   padding: 8px 12px;

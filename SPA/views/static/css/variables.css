@@ -3,6 +3,9 @@
   --bg-primary: #0f172a;
   --bg-surface: #1e293b;
   --bg-surface-elevated: #334155;
+  --bg-header-bar: #162032;
+  --bg-table-toolbar: #1e293b;
+  --bg-table-header: #182234;
   --bg-input: #0f172a;
   
   --text-primary: #f8fafc;
@@ -53,6 +56,9 @@
   --bg-primary: #f8fafc;
   --bg-surface: #ffffff;
   --bg-surface-elevated: #f1f5f9;
+  --bg-header-bar: #f1f5f9;
+  --bg-table-toolbar: #f8fafc;
+  --bg-table-header: #e2e8f0;
   --bg-input: #ffffff;
 
   --text-primary: #0f172a;

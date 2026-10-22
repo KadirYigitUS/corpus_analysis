@@ -104,9 +104,9 @@ class Tab09Controller {
     const center = 180;
 
     let svgHtml = `
-      <svg width="360" height="360" viewBox="0 0 360 360" style="background:#0f172a; border-radius:8px; border:1px solid #334155;">
-        <circle cx="${center}" cy="${center}" r="70" fill="none" stroke="#334155" stroke-dasharray="3,3"/>
-        <circle cx="${center}" cy="${center}" r="130" fill="none" stroke="#334155" stroke-dasharray="3,3"/>
+      <svg width="360" height="360" viewBox="0 0 360 360" style="background:var(--bg-primary); border-radius:8px; border:1px solid var(--border-subtle);">
+        <circle cx="${center}" cy="${center}" r="70" fill="none" stroke="var(--border-subtle)" stroke-dasharray="3,3"/>
+        <circle cx="${center}" cy="${center}" r="130" fill="none" stroke="var(--border-subtle)" stroke-dasharray="3,3"/>
     `;
 
     nodes.forEach(n => {
@@ -114,14 +114,14 @@ class Tab09Controller {
       const cy = center + (n.y || 0) * 0.55;
       if (n.is_center) {
         svgHtml += `
-          <circle cx="${cx}" cy="${cy}" r="14" fill="#38bdf8" />
-          <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="bold">${n.label}</text>
+          <circle cx="${cx}" cy="${cy}" r="14" fill="var(--accent-blue)" />
+          <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold">${n.label}</text>
         `;
       } else {
         svgHtml += `
-          <line x1="${center}" y1="${center}" x2="${cx}" y2="${cy}" stroke="#334155" stroke-width="1" />
-          <circle cx="${cx}" cy="${cy}" r="${Math.max(4, n.size * 0.7)}" fill="#2dd4bf" opacity="0.85" />
-          <text x="${cx + 6}" y="${cy + 3}" fill="#f8fafc" font-size="9">${n.label}</text>
+          <line x1="${center}" y1="${center}" x2="${cx}" y2="${cy}" stroke="var(--border-subtle)" stroke-width="1" />
+          <circle cx="${cx}" cy="${cy}" r="${Math.max(4, n.size * 0.7)}" fill="var(--accent-teal)" opacity="0.85" />
+          <text x="${cx + 6}" y="${cy + 3}" fill="var(--text-primary)" font-size="9">${n.label}</text>
         `;
       }
     });
