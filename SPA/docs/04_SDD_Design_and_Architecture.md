@@ -450,8 +450,19 @@ sequenceDiagram
 - When physical memory usage exceeds $1{,}200\text{ MB}$, the repository automatically triggers `.evict_all()` on the underlying `CorpusLoader` before servicing new analytical queries.
 - Heavy transformations (such as computing LancsBox-X metrics across all 13 texts or scanning 22-column diversity profiles) must utilize `.iter_evicting()` generators to stream texts sequentially into memory and discard their tokens immediately after metrics are accumulated.
 
-### 6.2 Concurrency & WSGI Configuration
-- The application executes on **Flask WSGI** served via **Gunicorn** or **Waitress**:
+### 6.2 Concurrency, Dependency Injection & Payload Cache Keying
+- **Singleton Repository & Blueprint Factory Injection**:
+  - `create_app()` in [`SPA/app.py`](file:///home/ben/Documents/thesis/scripts/corpus_analysis/SPA/app.py) instantiates a single shared `CorpusRepository` (and underlying `CorpusLoader`) and injects it into all 20 analytical and visualization services (`app.extensions["corpus_repo"]` and `app.extensions["services"]`).
+  - All 12 Flask Blueprints (`config`, `corpus`, `corpus_viz`, `alignment`, `alignment_viz`, `syntax`, `syntax_viz`, `concordance`, `concordance_viz`, `lexicon`, `lexicon_viz`, `export`) are constructed via `create_*_blueprint(...)` factories inside `create_app()`, eliminating module-level orphan `CorpusRepository` instances.
+- **Scope- and TokenView-Keyed Payload Cache (`PayloadCache.build_key`)**:
+  - `global_payload_cache` ([`SPA/services/payload_cache.py`](file:///home/ben/Documents/thesis/scripts/corpus_analysis/SPA/services/payload_cache.py)) keys every cached response via `PayloadCache.build_key(namespace, scope, view, **kwargs)` encoding `(namespace, scope.cache_key(), view.cache_key(), kwargs)`.
+  - Invoking `/api/v1/corpus/evict-all` or `/api/v1/corpus/cache/evict` clears both `CorpusRepository` in-memory tables and `global_payload_cache`.
+- **Frontend Component Lifecycle (`TableGrid`, `DataTableRenderer`, `ChartCore`, `ChartHost`, `SubtabController`)**:
+  - `TableGrid` ([`SPA/views/static/js/table_grid.js`](file:///home/ben/Documents/thesis/scripts/corpus_analysis/SPA/views/static/js/table_grid.js)) accepts either a DOM element ID string or an `HTMLElement` reference and supports both 2-argument `(containerOrId, options)` and 3-argument `(containerOrId, columns, options)` constructors, rendering immediately when `options.data` is supplied.
+  - `DataTableRenderer` ([`SPA/views/static/js/data_table.js`](file:///home/ben/Documents/thesis/scripts/corpus_analysis/SPA/views/static/js/data_table.js)) renders interactive `TableGrid` instances with a UTF-8 BOM `.csv` export button (`.btn-export-csv`).
+  - `ChartCore` ([`SPA/views/static/js/chart_core.js`](file:///home/ben/Documents/thesis/scripts/corpus_analysis/SPA/views/static/js/chart_core.js)) maintains a single shared `MutationObserver` on `document.documentElement[data-theme]` across all active chart canvases, and `ChartHost.createChartCard` wires both `.btn-export-png` and `.btn-export-csv`.
+  - `SubtabController` ([`SPA/views/static/js/subtabs.js`](file:///home/ben/Documents/thesis/scripts/corpus_analysis/SPA/views/static/js/subtabs.js)) provides `SubtabController.init(...)` and `SubtabController.invalidateAll(...)`, automatically subscribing to `window.appState` (`scopeChanged` and `viewParamsChanged`) to clear `dataset.loaded` and reload visible subtabs.
+- **WSGI Configuration**:
   - `workers = 1`: Due to the shared in-memory singleton of `CorpusLoader` and Parquet caching structures, multi-process workers would multiply the memory footprint.
   - `threads = 4`: Threaded execution allows concurrent servicing of lightweight metadata, status, and config requests while an analytical computation executes.
   - Computationally intensive endpoints (e.g., bootstrap resamples or batch dispersion) release the Python GIL during NumPy/SciPy vectorized operations.
@@ -460,9 +471,10 @@ sequenceDiagram
 
 ## 7. Acceptance Gate Checklist
 
-- [ ] All 5 architectural tiers (`UI -> Controllers -> Services -> Repositories -> corpus_toolkit`) defined with strict boundary separation.
-- [ ] Rule verified: Zero file I/O operations (`open`, `Path`, `pickle`, `yaml`) in `SPA/services/`.
-- [ ] Complete module line-budget table documented with target $\le 180$ LOC and hard CI gate $\le 200$ LOC.
-- [ ] 4 formal Mermaid diagrams (Component, Class, Sequence, Safe Unpickling) fully specified with valid syntax.
-- [ ] Process memory ceiling of $< 1{,}500\text{ MB}$ RSS and streaming eviction mechanisms formally specified.
-- [ ] Whitelisted unpickling security invariant (`_NdaSafeUnpickler`) integrated into repository specs.
+- [x] All 5 architectural tiers (`UI -> Controllers -> Services -> Repositories -> corpus_toolkit`) defined with strict boundary separation.
+- [x] Rule verified: Zero file I/O operations (`open`, `Path`, `pickle`, `yaml`) in `SPA/services/`.
+- [x] Complete module line-budget table documented with target $\le 180$ LOC and hard CI gate $\le 200$ LOC.
+- [x] 4 formal Mermaid diagrams (Component, Class, Sequence, Safe Unpickling) fully specified with valid syntax.
+- [x] Process memory ceiling of $< 1{,}500\text{ MB}$ RSS and streaming eviction mechanisms formally specified.
+- [x] Whitelisted unpickling security invariant (`_NdaSafeUnpickler`) integrated into repository specs.
+- [x] Phase 1 DI, `PayloadCache.build_key`, `TableGrid`/`DataTableRenderer`, `ChartCore` singleton observer, and `SubtabController` reactive invalidation verified.

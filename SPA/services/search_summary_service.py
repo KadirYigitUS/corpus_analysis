@@ -11,7 +11,8 @@ from SPA.services.payload_utils import df_to_table_payload
 
 class SearchSummaryService:
     def __init__(self, corpus_repo: CorpusRepository | None = None) -> None:
-        self.repo = corpus_repo or CorpusRepository()
+        self._repo = corpus_repo or CorpusRepository()
+        self.repo = self._repo
 
     def get_search_summary_and_bars(self, term: str, field: str = "lem", match: str = "exact") -> dict[str, Any]:
         engine = search.CorpusSearchEngine()

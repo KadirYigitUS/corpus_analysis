@@ -9,8 +9,6 @@ from SPA.services.alignment_delta_service import AlignmentDeltaService
 from SPA.services.alignment_stats_service import AlignmentStatsService
 from SPA.services.nda_parallel_service import NdaParallelService
 
-alignment_bp = Blueprint("alignment", __name__, url_prefix="/api/v1/alignment")
-
 
 def create_alignment_blueprint(
     delta_service: AlignmentDeltaService,
@@ -18,6 +16,7 @@ def create_alignment_blueprint(
     stats_service: AlignmentStatsService | None = None,
 ) -> Blueprint:
     """Factory to create alignment blueprint with injected services."""
+    alignment_bp = Blueprint("alignment", __name__, url_prefix="/api/v1/alignment")
 
     @alignment_bp.route("/kpis/<pair_code>", methods=["GET"])
     def get_kpis(pair_code: str):

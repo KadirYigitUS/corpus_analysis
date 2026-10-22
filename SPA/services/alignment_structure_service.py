@@ -3,6 +3,7 @@
 from typing import Any
 
 from corpus_toolkit import alignment
+from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
 from SPA.repositories.corpus_repository import CorpusRepository
 from SPA.services.payload_cache import global_payload_cache
 from SPA.services.payload_utils import df_to_table_payload
@@ -10,15 +11,20 @@ from SPA.services.payload_utils import df_to_table_payload
 
 class AlignmentStructureService:
     def __init__(self, corpus_repo: CorpusRepository | None = None) -> None:
-        self.repo = corpus_repo or CorpusRepository()
+        self._repo = corpus_repo or CorpusRepository()
+        self.repo = self._repo
 
-    def get_structure_summary(self) -> dict[str, Any]:
-        cache_key = "align:structure_summary"
+    def get_structure_summary(
+        self,
+        scope: CorpusScopeDTO | None = None,
+        view: TokenViewParamsDTO | None = None,
+    ) -> dict[str, Any]:
+        cache_key = global_payload_cache.build_key("align:structure_summary", scope=scope, view=view)
         cached = global_payload_cache.get(cache_key)
         if cached:
             return cached
 
-        loader = self.repo.loader
+        loader = self._repo.loader
         pairs = [p for p, _, _ in loader.load_translation_pairs()]
         ana = alignment.AlignmentStructureAnalyzer(loader.cache)
         summary_df = ana.summary(pairs)

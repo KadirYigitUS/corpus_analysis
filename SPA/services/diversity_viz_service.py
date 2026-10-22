@@ -12,7 +12,8 @@ from SPA.services.payload_utils import df_to_table_payload, downsample_even, dow
 
 class DiversityVizService:
     def __init__(self, corpus_repo: CorpusRepository | None = None) -> None:
-        self.repo = corpus_repo or CorpusRepository()
+        self._repo = corpus_repo or CorpusRepository()
+        self.repo = self._repo
 
     def get_length_sensitivity(self, code: str = "IR-IA") -> dict[str, Any]:
         text = self.repo.loader.load_text(code)

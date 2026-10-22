@@ -2,29 +2,43 @@
  * Reusable Interactive DataGrid Component: Sorting, Pagination, and Search.
  */
 class TableGrid {
-  constructor(containerId, options = {}) {
-    this.container = document.getElementById(containerId);
+  constructor(containerOrId, columnsOrOptions = {}, maybeOptions = {}) {
+    this.container = typeof containerOrId === 'string'
+      ? document.getElementById(containerOrId)
+      : containerOrId;
+    const options = Array.isArray(columnsOrOptions)
+      ? Object.assign({}, maybeOptions, { columns: columnsOrOptions })
+      : (columnsOrOptions || {});
     this.columns = options.columns || [];
     this.data = options.data || [];
+    this.filteredData = [...this.data];
     this.pageSize = options.pageSize || 20;
     this.currentPage = 1;
     this.sortCol = options.initialSortCol || null;
     this.sortAsc = options.initialSortAsc !== undefined ? options.initialSortAsc : true;
     this.searchTerm = '';
+    if (options.data) {
+      this.render();
+    }
   }
 
   setData(data) {
-    this.data = data;
+    this.data = data || [];
+    this.filteredData = [...this.data];
     this.currentPage = 1;
     this.render();
   }
 
   getFilteredData() {
-    if (!this.searchTerm) return this.data;
+    if (!this.searchTerm) {
+      this.filteredData = [...this.data];
+      return this.filteredData;
+    }
     const term = this.searchTerm.toLowerCase();
-    return this.data.filter(row =>
+    this.filteredData = this.data.filter(row =>
       Object.values(row).some(v => String(v).toLowerCase().includes(term))
     );
+    return this.filteredData;
   }
 
   getSortedData() {

@@ -44,6 +44,9 @@ class TokenViewParamsDTO:
             "punct": self.punct,
         }
 
+    def cache_key(self) -> tuple[str, bool, str, str]:
+        return (self.field, self.filter_function_words, self.mode, self.punct)
+
 
 @dataclass(frozen=True)
 class CorpusScopeDTO:
@@ -61,6 +64,8 @@ class CorpusScopeDTO:
         "trans_en",
         "trans_tr",
         "indig_tr",
+        "author_related",
+        "author_turkish",
         "pairs",
         "single",
     )
@@ -69,13 +74,17 @@ class CorpusScopeDTO:
         if self.scope not in self.ALLOWED_SCOPES:
             raise ValueError(f"Invalid scope: {self.scope}")
 
+    @property
+    def category(self) -> str:
+        return self.scope
+
     @classmethod
     def from_dict(cls, data: Any) -> CorpusScopeDTO:
         if isinstance(data, str):
             return cls(scope=data)
         if not isinstance(data, dict):
             return cls(scope="all")
-        scope_val = data.get("scope", "all")
+        scope_val = data.get("scope", data.get("category", "all"))
         if isinstance(scope_val, dict):
             return cls.from_dict(scope_val)
         return cls(
@@ -87,4 +96,8 @@ class CorpusScopeDTO:
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in self.__dict__.items() if v is not None}
+
+    def cache_key(self) -> tuple[str, str | None, str | None, str | None]:
+        return (self.scope, self.author_filter, self.pair_code, self.text_code)
+
 

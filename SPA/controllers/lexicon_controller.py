@@ -10,8 +10,6 @@ from SPA.services.collocation_service import CollocationService
 from SPA.services.diversity_service import DiversityService
 from SPA.services.tfidf_service import TfidfService
 
-lexicon_bp = Blueprint("lexicon", __name__, url_prefix="/api/v1/lexicon")
-
 
 def create_lexicon_blueprint(
     diversity_service: DiversityService,
@@ -19,6 +17,7 @@ def create_lexicon_blueprint(
     tfidf_service: TfidfService,
 ) -> Blueprint:
     """Factory to create lexicon blueprint with injected services."""
+    lexicon_bp = Blueprint("lexicon", __name__, url_prefix="/api/v1/lexicon")
 
     @lexicon_bp.route("/diversity/table", methods=["POST"])
     def get_diversity_table():

@@ -119,3 +119,39 @@ def test_lexicon_viz_endpoints(client):
     r9 = client.get("/api/v1/lexicon/report/preview")
     assert r9.status_code == 200
     assert "markdown" in r9.get_json()
+
+
+def test_single_shared_corpus_loader_and_payload_cache_keying():
+    from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
+    from SPA.services.payload_cache import global_payload_cache
+
+    app = create_app()
+    repo = app.extensions["corpus_repo"]
+    services = app.extensions["services"]
+    assert len(services) >= 15
+
+    loader_id = id(repo._loader)
+    for name, svc in services.items():
+        assert hasattr(svc, "_repo"), f"Service {name} missing _repo attribute"
+        assert id(svc._repo) == id(repo), f"Service {name} uses duplicate CorpusRepository"
+        assert id(svc._repo._loader) == loader_id, f"Service {name} uses duplicate CorpusLoader"
+
+    # Verify PayloadCache.build_key distinguishes scope and view_params
+    s_all = CorpusScopeDTO(scope="all")
+    s_tr = CorpusScopeDTO(scope="all_tr", author_filter="SM")
+    v_tok = TokenViewParamsDTO(field="tok", filter_function_words=False, mode="drop", punct="drop")
+    v_lem = TokenViewParamsDTO(field="lem", filter_function_words=True, mode="mask", punct="split")
+
+    k1 = global_payload_cache.build_key("inv:sizes_chart", scope=s_all, view=v_tok)
+    k2 = global_payload_cache.build_key("inv:sizes_chart", scope=s_tr, view=v_tok)
+    k3 = global_payload_cache.build_key("inv:sizes_chart", scope=s_all, view=v_lem)
+    assert len({k1, k2, k3}) == 3
+
+    # Verify /api/v1/corpus/evict-all clears global_payload_cache
+    global_payload_cache.put(k1, {"dummy": 1})
+    assert global_payload_cache.get(k1) == {"dummy": 1}
+    with app.test_client() as c:
+        resp = c.post("/api/v1/corpus/evict-all")
+        assert resp.status_code == 200
+    assert global_payload_cache.get(k1) is None
+

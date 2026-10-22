@@ -3,21 +3,30 @@
 from typing import Any
 
 from corpus_toolkit import pos
+from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
 from SPA.repositories.corpus_repository import CorpusRepository
 from SPA.services.payload_cache import global_payload_cache
 
 
 class PosMatrixService:
     def __init__(self, corpus_repo: CorpusRepository | None = None) -> None:
-        self.repo = corpus_repo or CorpusRepository()
+        self._repo = corpus_repo or CorpusRepository()
+        self.repo = self._repo
 
-    def get_upos_heatmap_matrix(self, content_only: bool = False) -> dict[str, Any]:
-        cache_key = f"pos:heatmap:{content_only}"
+    def get_upos_heatmap_matrix(
+        self,
+        content_only: bool = False,
+        scope: CorpusScopeDTO | None = None,
+        view: TokenViewParamsDTO | None = None,
+    ) -> dict[str, Any]:
+        cache_key = global_payload_cache.build_key(
+            "pos:heatmap", scope=scope, view=view, content_only=content_only
+        )
         cached = global_payload_cache.get(cache_key)
         if cached:
             return cached
 
-        loader = self.repo.loader
+        loader = self._repo.loader
         P = pos.PosComparativeAnalyzer()
         profile_df = P.profile_table(loader.load_all(), content_only=content_only)
 

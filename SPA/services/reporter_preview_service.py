@@ -11,7 +11,8 @@ from SPA.services.payload_utils import df_to_table_payload
 
 class ReporterPreviewService:
     def __init__(self, corpus_repo: CorpusRepository | None = None) -> None:
-        self.repo = corpus_repo or CorpusRepository()
+        self._repo = corpus_repo or CorpusRepository()
+        self.repo = self._repo
 
     def get_live_markdown_and_summary(self) -> dict[str, Any]:
         loader = self.repo.loader

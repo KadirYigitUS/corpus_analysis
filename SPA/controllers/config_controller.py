@@ -7,11 +7,10 @@ from flask import Blueprint, jsonify, request
 from SPA.models.config_dto import AuthorMetadataDTO, BookMetadataDTO, PathConfigDTO
 from SPA.services.config_metadata_service import ConfigMetadataService
 
-config_bp = Blueprint("config", __name__, url_prefix="/api/v1")
-
 
 def create_config_blueprint(service: ConfigMetadataService) -> Blueprint:
     """Factory to create config blueprint with injected service."""
+    config_bp = Blueprint("config", __name__, url_prefix="/api/v1")
 
     @config_bp.route("/config/paths", methods=["GET"])
     def get_paths():

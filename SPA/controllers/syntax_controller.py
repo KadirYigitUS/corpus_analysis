@@ -8,14 +8,13 @@ from SPA.models.view_params_dto import CorpusScopeDTO
 from SPA.services.depviz_service import DepvizService
 from SPA.services.pos_service import PosService
 
-syntax_bp = Blueprint("syntax", __name__, url_prefix="/api/v1/syntax")
-
 
 def create_syntax_blueprint(
     pos_service: PosService,
     depviz_service: DepvizService,
 ) -> Blueprint:
     """Factory to create syntax blueprint with injected services."""
+    syntax_bp = Blueprint("syntax", __name__, url_prefix="/api/v1/syntax")
 
     @syntax_bp.route("/pos/profiles", methods=["POST"])
     def get_pos_profiles():

@@ -9,14 +9,13 @@ from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
 from SPA.services.batch_dispersion_service import BatchDispersionService
 from SPA.services.search_kwic_service import SearchKwicService
 
-concordance_bp = Blueprint("concordance", __name__, url_prefix="/api/v1/concordance")
-
 
 def create_concordance_blueprint(
     search_service: SearchKwicService,
     dispersion_service: BatchDispersionService,
 ) -> Blueprint:
     """Factory to create concordance blueprint with injected services."""
+    concordance_bp = Blueprint("concordance", __name__, url_prefix="/api/v1/concordance")
 
     @concordance_bp.route("/search", methods=["POST"])
     def search_kwic():

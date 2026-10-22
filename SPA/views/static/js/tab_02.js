@@ -160,7 +160,8 @@ class Tab02Controller {
     if (pairSelect) {
       pairSelect.addEventListener('change', async (e) => {
         this.currentPair = e.target.value; this.activeChapter = null; this.currentPage = 1;
-        await Promise.all([this.loadKpis(), this.loadStatsAndChart(), this.loadChapters(), this.loadRows()]);
+        await Promise.all([this.loadStatsAndChart(), this.loadChapters(), this.loadRows()]);
+        await this.loadKpis();
       });
     }
     const pageSizeSel = document.getElementById('t2-page-size');

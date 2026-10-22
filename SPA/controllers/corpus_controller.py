@@ -5,12 +5,12 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, request
 
 from SPA.services.inventory_memory_service import InventoryMemoryService
-
-corpus_bp = Blueprint("corpus", __name__, url_prefix="/api/v1/corpus")
+from SPA.services.payload_cache import global_payload_cache
 
 
 def create_corpus_blueprint(service: InventoryMemoryService) -> Blueprint:
     """Factory to create corpus blueprint with injected service."""
+    corpus_bp = Blueprint("corpus", __name__, url_prefix="/api/v1/corpus")
 
     @corpus_bp.route("/inventory", methods=["GET"])
     def get_inventory():
@@ -50,11 +50,13 @@ def create_corpus_blueprint(service: InventoryMemoryService) -> Blueprint:
         data = request.get_json() or {}
         keep_n = int(data.get("keep_latest_n", 0))
         evicted = service._repo.evict_cache(keep_latest_n=keep_n)
+        global_payload_cache.clear()
         return jsonify({"evicted_count": evicted}), 200
 
     @corpus_bp.route("/evict-all", methods=["POST"])
     def evict_all():
         evicted = service._repo.evict_all()
+        global_payload_cache.clear()
         return jsonify({"evicted_count": evicted, "rss_mb": service._repo.get_rss_mb()}), 200
 
     return corpus_bp

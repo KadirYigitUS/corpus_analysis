@@ -21,11 +21,24 @@
         <span style="font-weight:700; font-size:13px; color:var(--accent-blue);">
           Per-Author-Translator &amp; Pair Comparison Matrix (Translated TR vs Indigenous TR — SM, ZB, OK)
         </span>
-        <span style="font-size:11px; color:var(--text-muted);">
-          Click any row to inspect per-UPOS stats and update Figure 2C
-        </span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="t4-select-comp-2c" class="form-select">
+            <option value="ALL">All Authors Pooled (5 Trans vs 3 Indig)</option>
+            <option value="SM">SM (Selma MİNE): BR-SM ⇄ O-SM</option>
+            <option value="ZB">ZB (Zühtü BAYAR Pooled): A-ZB+YG-ZB+KS-ZB ⇄ SU-ZB</option>
+            <option value="ZB_A">ZB Pair 1: A-ZB (Aydınlık) ⇄ SU-ZB</option>
+            <option value="ZB_YG">ZB Pair 2: YG-ZB (Yalnız Gezegen) ⇄ SU-ZB</option>
+            <option value="ZB_KS">ZB Pair 3: KS-ZB (Kızıl Veba) ⇄ SU-ZB</option>
+            <option value="OK">OK (Özlem KURDOĞLU): KT-OK ⇄ SCS-OK</option>
+          </select>
+          <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+            <input type="checkbox" id="t4-check-content-only" /> Yalnızca İçerik Sözcükleri
+          </label>
+        </div>
       </div>
       <div id="t4-author-summary-table" style="overflow-x:auto;"></div>
+      <div id="t4-group-comp-stats" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+      <div id="t4-group-comp-list" style="margin-top:8px;"></div>
     </div>
   </div>
 
@@ -61,24 +74,8 @@
         <span style="font-weight:700; font-size:13px; color:var(--accent-teal);">
           Şekil 2C: Grup Karşılaştırması (Bootstrap %95 GA Forest Plot)
         </span>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <select id="t4-select-comp-2c" class="form-select">
-            <option value="ALL">All Authors Pooled (5 Trans vs 3 Indig)</option>
-            <option value="SM">SM (Selma MİNE): BR-SM ⇄ O-SM</option>
-            <option value="ZB">ZB (Zühtü BAYAR Pooled): A-ZB+YG-ZB+KS-ZB ⇄ SU-ZB</option>
-            <option value="ZB_A">ZB Pair 1: A-ZB (Aydınlık) ⇄ SU-ZB</option>
-            <option value="ZB_YG">ZB Pair 2: YG-ZB (Yalnız Gezegen) ⇄ SU-ZB</option>
-            <option value="ZB_KS">ZB Pair 3: KS-ZB (Kızıl Veba) ⇄ SU-ZB</option>
-            <option value="OK">OK (Özlem KURDOĞLU): KT-OK ⇄ SCS-OK</option>
-          </select>
-          <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
-            <input type="checkbox" id="t4-check-content-only" /> Yalnızca İçerik Sözcükleri
-          </label>
-        </div>
       </div>
-      <div id="t4-group-comp-stats" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
       <div id="t4-forest-chart-container"></div>
-      <div id="t4-group-comp-list" style="margin-top:10px;"></div>
     </div>
   </div>
 </div>

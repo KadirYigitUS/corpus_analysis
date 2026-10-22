@@ -11,14 +11,13 @@ from SPA.models.view_params_dto import TokenViewParamsDTO
 from SPA.services.inventory_memory_service import InventoryMemoryService
 from SPA.services.reporter_bundle_service import ReporterBundleService
 
-export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
-
 
 def create_export_blueprint(
     bundle_service: ReporterBundleService,
     inventory_service: InventoryMemoryService,
 ) -> Blueprint:
     """Factory to create export blueprint with injected services."""
+    export_bp = Blueprint("export", __name__, url_prefix="/api/v1/export")
 
     @export_bp.route("/quick-search", methods=["POST"])
     def quick_search_endpoint():

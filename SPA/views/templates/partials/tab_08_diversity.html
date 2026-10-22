@@ -12,10 +12,21 @@
 
   <!-- Pane 1: LancsBox-X Table -->
   <div id="t8-pane-diversity-grid" class="viz-pane active">
-    <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
       <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">22 LancsBox-X Diversity Metrics Table</span>
-      <button class="btn btn-sm btn-primary" id="t8-btn-refresh-diversity">Refresh Diversity Table</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn btn-sm btn-primary" id="t8-btn-refresh-diversity">Refresh Diversity Table</button>
+        <select id="t8-select-text" class="form-select">
+          <option value="BR-SM">BR-SM (Ben, Robot)</option>
+          <option value="IR-IA">IR-IA (I, Robot)</option>
+          <option value="OBI-SM">OBI-SM (OnaBirİsimVer)</option>
+          <option value="SU-ZB">SU-ZB (Sahte Uygarlık)</option>
+          <option value="SCS-OK">SCS-OK (Son Çıkan Işığı Söndürsün)</option>
+        </select>
+        <button class="btn btn-sm" id="t8-btn-view-mattr">View MATTR Curve</button>
+      </div>
     </div>
+    <div id="t8-mattr-pane" class="kpi-card" style="display:none; margin-bottom:12px; padding:10px 12px;"></div>
     <div id="t8-diversity-grid"></div>
   </div>
 

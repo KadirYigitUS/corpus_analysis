@@ -101,12 +101,27 @@
     }
 
     initThemeObserver() {
-      const obs = new MutationObserver(() => {
-        if (typeof this.onRedraw === 'function') this.onRedraw();
-      });
-      obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      ChartCore._instances.add(this);
+      if (!ChartCore._themeObserver) {
+        ChartCore._themeObserver = new MutationObserver(() => {
+          ChartCore._instances.forEach((inst) => {
+            if (!inst.canvas || !inst.canvas.isConnected) {
+              ChartCore._instances.delete(inst);
+              return;
+            }
+            if (typeof inst.onRedraw === 'function') inst.onRedraw();
+          });
+        });
+        ChartCore._themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['data-theme']
+        });
+      }
     }
   }
+
+  ChartCore._instances = new Set();
+  ChartCore._themeObserver = null;
 
   window.ChartCore = ChartCore;
 })(window);

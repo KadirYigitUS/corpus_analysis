@@ -14,7 +14,11 @@
       <option value="MI">MI</option>
       <option value="G2">Signed G2</option>
       <option value="T">T-Score</option>
+      <option value="MI2">MI2</option>
+      <option value="MI3">MI3</option>
     </select>
+    <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Min Freq:</span>
+    <input type="number" id="t9-input-min-freq" class="form-input" value="2" min="1" max="100" style="width:65px;" />
     <button class="btn btn-sm btn-primary" id="t9-btn-run-colloc" onclick="if(window.initTab09Viz) window.initTab09Viz();">Run Collocation</button>
   </div>
 
@@ -29,7 +33,10 @@
   <!-- Pane 1: Collocation Table -->
   <div id="t9-pane-colloc-grid" class="viz-pane active">
     <div id="t9-stats-header" style="display:flex; gap:8px; margin-bottom:12px;"></div>
-    <div id="t9-collocation-grid"></div>
+    <div style="display:grid; grid-template-columns:1fr auto; gap:14px; align-items:start;">
+      <div id="t9-collocation-grid"></div>
+      <div id="t9-graphcoll-stage"></div>
+    </div>
   </div>
 
   <!-- Pane 2: Şekil 5 GraphColl 2D Scatter -->

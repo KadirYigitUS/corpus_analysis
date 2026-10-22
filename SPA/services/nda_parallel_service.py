@@ -28,6 +28,7 @@ class NdaParallelService:
         corpus_repo: CorpusRepository,
         nda_repo: NdaCacheRepository,
     ) -> None:
+        self._repo = corpus_repo
         self._corpus_repo = corpus_repo
         self._nda_repo = nda_repo
 

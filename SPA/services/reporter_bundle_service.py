@@ -21,6 +21,7 @@ class ReporterBundleService:
         corpus_repo: CorpusRepository,
         export_repo: ExportRepository,
     ) -> None:
+        self._repo = corpus_repo
         self._corpus_repo = corpus_repo
         self._export_repo = export_repo
 
