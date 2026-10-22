@@ -67,10 +67,10 @@ class Tab09Controller {
       if (resp.ok) {
         const data = await resp.json();
         document.getElementById('t9-stats-header').innerHTML = `
-          <span class="chip">Node: <b>${data.node}</b> (${data.f_node} hits)</span>
-          <span class="chip">Union Slots (R1): ${data.R1}</span>
-          <span class="chip">Corpus Tokens (N): ${data.N}</span>
-          <span class="chip">Metric: <b>${data.metric}</b></span>
+          <span class="stat-badge-math">Node: <b>${data.node}</b> (f = ${data.f_node} hits)</span>
+          <span class="stat-badge-math">Union Slots (R<sub>1</sub>): <b>${data.R1}</b></span>
+          <span class="stat-badge-math">Corpus Tokens (N): <b>${data.N}</b></span>
+          <span class="stat-badge-math">Metric: <b>${data.metric}</b></span>
         `;
         this.renderTable(data.items || []);
         this.renderGraphColl(data.graphcoll_nodes || []);

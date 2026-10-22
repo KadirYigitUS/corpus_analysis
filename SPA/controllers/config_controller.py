@@ -67,7 +67,7 @@ def create_config_blueprint(service: ConfigMetadataService) -> Blueprint:
 
     @config_bp.route("/help/formulas", methods=["GET"])
     def get_formulas():
-        formulas = service.get_formula_registry()
+        formulas = service.get_formulas_catalog()
         return jsonify(formulas), 200
 
     return config_bp

@@ -1,4 +1,4 @@
-"""Service generating live Markdown report preview and top/bottom evidence summaries."""
+"""Service generating live research report preview, structured cards, and top/bottom evidence summaries."""
 
 from __future__ import annotations
 
@@ -53,10 +53,11 @@ class ReporterPreviewService:
             mean_val, std_val = 0.0, 0.0
 
         summary_sentence = reporter.top_bottom_summary(div_raw.reset_index(), "MTLD", "index")
+        view_label = f"field={vp.field}, fw={vp.filter_function_words}, mode={vp.mode}, punct={vp.punct}"
 
         markdown_text = f"""# 📊 Türk Bilimkurgu Yazar-Çevirmenleri Derlem Raporu
 
-**Tarih:** 2026-10-22 | **Kapsam:** {sc.scope} ({len(texts)} Metin) | **Görünüm:** `{vp.field}`, fw=`{vp.filter_function_words}`, mode=`{vp.mode}`, punct=`{vp.punct}`
+**Tarih:** 2026-10-22 | **Kapsam:** {sc.scope} ({len(texts)} Metin) | **Görünüm:** `{view_label}`
 
 ## 1. Sözcüksel Zenginlik & Çeşitlilik Özeti
 - **En Yüksek MTLD (Zengin Çeşitlilik):** {top_id} ({top_val})
@@ -67,15 +68,45 @@ class ReporterPreviewService:
 ## 2. Metodolojik Çerçeve ve Doğruluk
 Bu rapor, üç düzeyli veri-kanıt sözleşmesi (Data-Evidence Contract) uyarınca doğrudan Parquet tablolarından derlenmiştir.
 """
+        sections = [
+            {
+                "title": "1. Sözcüksel Zenginlik & Çeşitlilik Özeti (MTLD_0.72)",
+                "items": [
+                    f"<b>En Yüksek MTLD (Zengin Çeşitlilik):</b> {top_id} (<code>{top_val}</code>)",
+                    f"<b>En Düşük MTLD (Yoğun Tekrar):</b> {bot_id} (<code>{bot_val}</code>)",
+                    f"<b>Ortalama MTLD (&mu; &pm; &sigma;):</b> <code>{mean_val} &pm; {std_val}</code>",
+                    f"<b>Otomatik Özet:</b> {summary_sentence}",
+                ],
+            },
+            {
+                "title": "2. Metodolojik Çerçeve ve Veri-Kanıt Sözleşmesi",
+                "items": [
+                    f"<b>Aktif Kapsam:</b> <code>{sc.scope}</code> ({len(texts)} metin)",
+                    f"<b>TokenView Matrisi:</b> <code>{view_label}</code>",
+                    "Üç düzeyli veri-kanıt sözleşmesi (Data-Evidence Contract) uyarınca doğrudan Parquet v3 tablolarından derlenmiştir.",
+                ],
+            },
+        ]
         summary_rows = [
             {"Metrik": "MTLD En Yüksek", "Değer": str(top_val), "Metin": str(top_id)},
             {"Metrik": "MTLD En Düşük", "Değer": str(bot_val), "Metin": str(bot_id)},
-            {"Metrik": "MTLD Ortalama", "Değer": str(mean_val), "Metin": f"Kapsam ({sc.scope}: {len(texts)} metin)"},
+            {"Metrik": "MTLD Ortalama (μ ± σ)", "Değer": f"{mean_val} ± {std_val}", "Metin": f"Kapsam ({sc.scope}: {len(texts)} metin)"},
         ]
         payload = {
             "markdown": markdown_text,
+            "kpis": {
+                "scope": sc.scope,
+                "text_count": len(texts),
+                "view_label": view_label,
+                "top_id": top_id,
+                "top_val": top_val,
+                "bot_id": bot_id,
+                "bot_val": bot_val,
+                "mean_val": mean_val,
+                "std_val": std_val,
+            },
+            "sections": sections,
             "summary_table": df_to_table_payload(pd.DataFrame(summary_rows), title="Veri-Kanıt Özeti (Top/Bottom Summary)"),
         }
         global_payload_cache.put(cache_key, payload)
         return payload
-

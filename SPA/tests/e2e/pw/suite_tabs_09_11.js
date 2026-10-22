@@ -83,6 +83,16 @@ module.exports = async function suiteTabs09To11(ctx) {
           'Exclude-PROPN toggle must change TF-IDF keyword results'
         );
 
+        // Verify Tab 10 Report Summary subtab renders structured .report-section-card HTML with zero <pre> dumps
+        await waitApi(page, '/api/v1/lexicon/report/preview', async () => {
+          await page.click('#t10-subtabs button[data-pane="t10-pane-report-preview"]');
+        });
+        const reportCards = await page.$$eval('#t10-report-summary-container .report-section-card', (els) => els.length);
+        assert.ok(reportCards >= 2, `Expected >=2 .report-section-card blocks, got ${reportCards}`);
+        const preCount = await page.$$eval('#t10-report-summary-container pre', (els) => els.length);
+        assert.strictEqual(preCount, 0, 'Expected zero <pre> markdown dumps in #t10-report-summary-container');
+        await page.click('#t10-subtabs button[data-pane="t10-pane-keywords"]');
+
         // Download bundle fires download event with file size > 0
         const downloadPromise = page.waitForEvent('download', { timeout: 90000 });
         await page.click('#t10-btn-download-bundle');

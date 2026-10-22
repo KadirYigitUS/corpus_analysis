@@ -113,7 +113,22 @@ class DiversityService:
             series = mattr_series([str(x) for x in view.analysed()], window=window)
 
         if len(series) == 0:
-            return {"text_code": text_code, "window": window, "points": []}
+            return {
+                "text_code": text_code,
+                "window": window,
+                "total_windows": 0,
+                "mean_ttr": None,
+                "min_ttr": None,
+                "max_ttr": None,
+                "std_ttr": None,
+                "points": [],
+            }
+
+        valid_s = series[~np.isnan(series)]
+        mean_ttr = round(float(valid_s.mean()), 4) if len(valid_s) else None
+        min_ttr = round(float(valid_s.min()), 4) if len(valid_s) else None
+        max_ttr = round(float(valid_s.max()), 4) if len(valid_s) else None
+        std_ttr = round(float(valid_s.std(ddof=0)), 4) if len(valid_s) > 1 else 0.0
 
         points = []
         for i in range(0, len(series), subsample_step):
@@ -127,6 +142,10 @@ class DiversityService:
             "text_code": text_code,
             "window": window,
             "total_windows": len(series),
+            "mean_ttr": mean_ttr,
+            "min_ttr": min_ttr,
+            "max_ttr": max_ttr,
+            "std_ttr": std_ttr,
             "points": points,
         }
 

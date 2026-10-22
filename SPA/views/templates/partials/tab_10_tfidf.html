@@ -19,6 +19,7 @@
     <button class="viz-subtab-btn active" data-pane="t10-pane-keywords">Ayırt Edici Terimler (Çubuklar)</button>
     <button class="viz-subtab-btn" data-pane="t10-pane-heatmap">Şekil 6: TF-IDF Isı Haritası</button>
     <button class="viz-subtab-btn" data-pane="t10-pane-report-preview">Bölüm 12: Canlı Rapor Önizleme</button>
+    <button class="btn btn-sm btn-pane-help" data-help-tab="Tab 10" title="Tab 10 Sublinear TF-IDF &amp; Reporter Help" style="margin-left:auto;">?</button>
   </div>
 
   <!-- Pane 1: Keywords Bar Grid -->
@@ -33,9 +34,9 @@
 
   <!-- Pane 3: Canlı Araştırma Raporu & Veri-Kanıt Özeti -->
   <div id="t10-pane-report-preview" class="viz-pane">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+    <div id="t10-report-summary-container" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
       <div class="kpi-card">
-        <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">Canlı Markdown Raporu (CorpusReporter)</div>
+        <div style="font-weight:700; font-size:12.5px; color:var(--accent-blue); margin-bottom:8px;">Canlı Araştırma Raporu (CorpusReporter)</div>
         <div id="t10-report-markdown-preview"></div>
       </div>
       <div class="kpi-card">

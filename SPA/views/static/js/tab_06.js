@@ -121,10 +121,17 @@ class Tab06Controller {
         const pane = document.getElementById('t6-punct-pane');
         if (pane) {
           pane.style.display = 'block';
+          const counts = data.counts || {};
+          const vals = Object.values(counts).map(Number);
+          const minC = vals.length ? Math.min(...vals) : 0;
+          const maxC = vals.length ? Math.max(...vals) : 0;
           pane.innerHTML = `
-            <div style="font-size:12px; margin-bottom:4px; font-weight:600;">4-Punctuation Regime Comparison for "${query}":</div>
-            <div style="display:flex; gap:8px;">
-              ${Object.entries(data.counts || {}).map(([mode, cnt]) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px; font-size:12px;">
+              <b>4-Punctuation Regime Comparison for "${query}":</b>
+              <span class="stat-badge-math">&Delta;<sub>max&minus;min</sub> = <b>${maxC - minC}</b> (${minC} &hellip; ${maxC} hits)</span>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${Object.entries(counts).map(([mode, cnt]) => `
                 <div class="kpi-card" style="padding:6px 12px; font-size:12px;">
                   <b>${mode.toUpperCase()}</b>: <span class="chip">${cnt} hits</span>
                 </div>

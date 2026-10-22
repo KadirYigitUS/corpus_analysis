@@ -156,7 +156,7 @@ module.exports = async function suiteShell(ctx) {
         await pollUntil(async () => page.$eval('#config-editor-modal', (el) => !el.classList.contains('active')));
         await page.unroute('**/api/v1/config/paths');
 
-        // 3. Help Drawer + Overlay Close
+        // 3. Help Drawer + Overlay Close + Typographic MathML/HTML verification
         const { status: helpStatus } = await waitApi(page, '/api/v1/help/formulas', async () => {
           await page.click('#btn-open-help');
         });
@@ -164,10 +164,20 @@ module.exports = async function suiteShell(ctx) {
         const drawerOpen = await page.$eval('#help-docs-drawer', (el) => el.classList.contains('open'));
         assert.strictEqual(drawerOpen, true);
         const formulaCards = await page.$$eval('#help-drawer-content .formula-card', (els) => els.length);
-        assert.ok(formulaCards > 0, 'Expected formula cards in Help Drawer');
+        assert.ok(formulaCards >= 12, `Expected >=12 formula cards in Help Drawer, got ${formulaCards}`);
+        const helpHtml = await page.$eval('#help-drawer-content', (el) => el.innerHTML);
+        assert.ok(helpHtml.includes('math-frac') && helpHtml.includes('math-sqrt'), 'Expected typographic math spans in Help Drawer');
+        assert.ok(!helpHtml.includes('\\frac') && !helpHtml.includes('\\text') && !helpHtml.includes('\\sqrt'), 'Found raw LaTeX backslashes in Help Drawer');
         await page.click('#drawer-overlay', { position: { x: 20, y: 20 } });
         const drawerClosed = await page.$eval('#help-docs-drawer', (el) => !el.classList.contains('open'));
         assert.strictEqual(drawerClosed, true);
+
+        // 4. Contextual '?' pane popover button opens Help Drawer filtered to target tab
+        await page.click('#t1-subtabs .btn-pane-help');
+        assert.strictEqual(await page.$eval('#help-docs-drawer', (el) => el.classList.contains('open')), true);
+        const filteredTab = await page.$eval('#help-drawer-content .formula-card', (el) => el.getAttribute('data-help-tab'));
+        assert.strictEqual(filteredTab, 'Tab 1');
+        await page.click('#btn-close-help');
       },
     },
   ];

@@ -107,8 +107,17 @@ class Tab08Controller {
         if (pane) {
           pane.style.display = 'block';
           pane.innerHTML = `
-            <div style="font-size:12px; margin-bottom:6px;">
-              <b>MATTR Curve (W=500) for ${res.text_code}:</b> ${res.total_windows} rolling windows calculated.
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+              <div style="font-size:12px;">
+                <b>MATTR Curve (W=${res.window || 500}) for ${res.text_code}:</b> ${res.total_windows} rolling windows calculated.
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <span class="stat-badge-math">W = <b>${res.window || 500}</b></span>
+                <span class="stat-badge-math">&mu; = <b>${res.mean_ttr ?? '-'}</b></span>
+                <span class="stat-badge-math">&sigma; = <b>${res.std_ttr ?? '-'}</b></span>
+                <span class="stat-badge-math">Min = <b>${res.min_ttr ?? '-'}</b></span>
+                <span class="stat-badge-math">Max = <b>${res.max_ttr ?? '-'}</b></span>
+              </div>
             </div>
             <div style="font-size:11px; color:var(--text-muted);">
               Sample Points: ${res.points.slice(0, 10).map(p => `[#${p.window_idx}: ${p.ttr}]`).join(', ')} ...

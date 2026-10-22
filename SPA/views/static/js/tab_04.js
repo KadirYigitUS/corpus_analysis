@@ -141,11 +141,13 @@ class Tab04Controller {
         const statEl = document.getElementById('t4-group-comp-stats');
         if (statEl) {
           statEl.innerHTML = `
-            <span class="chip chip-active">${data.author || this.currentCompKey}</span>
-            <span class="chip">χ² = ${data.chi2}</span>
-            <span class="chip" id="t4-comp-pval">p = ${Number(data.p_value).toFixed(4)}</span>
-            <span class="chip">Cramér's V = ${data.cramers_v}</span>
-            <span class="chip">Chunks: ${data.n_chunks_a || '-'} vs ${data.n_chunks_b || '-'}</span>
+            <span id="t4-comp-2c-stats" style="display:inline-flex; flex-wrap:wrap; gap:6px;">
+              <span class="chip chip-active">${data.author || this.currentCompKey}</span>
+              <span class="stat-badge-math">&chi;<sup>2</sup> = <b>${data.chi2}</b></span>
+              <span class="stat-badge-math" id="t4-comp-pval">p = <b>${Number(data.p_value).toFixed(4)}</b></span>
+              <span class="stat-badge-math">Cramér's V = <b>${data.cramers_v}</b></span>
+              <span class="stat-badge-math">Chunks: <b>${data.n_chunks_a || '-'} vs ${data.n_chunks_b || '-'}</b></span>
+            </span>
           `;
         }
         const listEl = document.getElementById('t4-group-comp-list');

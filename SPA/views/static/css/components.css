@@ -131,3 +131,16 @@
 .t2-tok-tip .tip-lemma { color: #5eead4; }
 .t2-tok-tip .tip-morph { color: #a3e635; font-size: 10px; word-break: break-all; }
 
+/* Typographic MathML/HTML Formula Spans & Contextual Help Popover Button */
+.math-frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; padding: 0 3px; font-size: 0.92em; line-height: 1.15; }
+.math-num { border-bottom: 1px solid var(--accent-teal); padding: 0 2px 1px 2px; }
+.math-den { padding: 1px 2px 0 2px; }
+.math-sqrt { display: inline-flex; align-items: center; vertical-align: middle; }
+.math-radicand { border-top: 1px solid var(--accent-teal); padding: 0 2px; margin-left: 1px; }
+.btn-pane-help { min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; font-weight: 700; color: var(--accent-blue); border-color: var(--accent-blue); background: rgba(56, 189, 248, 0.12); justify-content: center; }
+.btn-pane-help:hover { background: var(--accent-blue); color: #0f172a; }
+.report-section-card { background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 10px; }
+.report-section-card h4 { font-size: 12.5px; font-weight: 700; color: var(--accent-blue); margin-bottom: 6px; }
+.report-section-card ul { padding-left: 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.stat-badge-math { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--radius-sm); background: rgba(56, 189, 248, 0.1); border: 1px solid var(--border-subtle); font-size: 11.5px; color: var(--text-primary); }
+

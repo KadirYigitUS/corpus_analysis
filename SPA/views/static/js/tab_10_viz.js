@@ -1,8 +1,40 @@
 /**
- * tab_10_viz.js - Tab 10 TF-IDF heatmap (Şekil 6) and Chapter 12 live Markdown report preview.
+ * tab_10_viz.js - Tab 10 TF-IDF heatmap (Şekil 6) and Chapter 12 structured HTML report preview.
  */
 (function(window) {
   'use strict';
+
+  function formatReportHtml(data) {
+    const k = data.kpis || {};
+    const sections = Array.isArray(data.sections) ? data.sections : [];
+    let html = `
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+        <span class="stat-badge-math">Scope: <b>${k.scope || 'all'}</b> (${k.text_count ?? '-'} texts)</span>
+        <span class="stat-badge-math">MTLD Max: <b>${k.top_id || '-'} (${k.top_val ?? '-'})</b></span>
+        <span class="stat-badge-math">MTLD Min: <b>${k.bot_id || '-'} (${k.bot_val ?? '-'})</b></span>
+        <span class="stat-badge-math">&mu; &pm; &sigma;: <b>${k.mean_val ?? '-'} &pm; ${k.std_val ?? '-'}</b></span>
+      </div>
+    `;
+    if (sections.length) {
+      for (const sec of sections) {
+        html += `
+          <div class="report-section-card">
+            <h4>${sec.title}</h4>
+            <ul>${(sec.items || []).map(it => `<li>${it}</li>`).join('')}</ul>
+          </div>
+        `;
+      }
+    } else if (data.markdown) {
+      const blocks = String(data.markdown).split(/\n##\s+/);
+      for (const blk of blocks) {
+        const lines = blk.trim().split('\n');
+        const heading = lines[0].replace(/^#\s*/, '');
+        const items = lines.slice(1).filter(l => l.trim()).map(l => l.replace(/^-\s*/, '').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'));
+        html += `<div class="report-section-card"><h4>${heading}</h4><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+      }
+    }
+    return html;
+  }
 
   function initTab10Viz() {
     const subtabs = new window.SubtabController('t10-subtabs');
@@ -45,7 +77,7 @@
       const tableDiv = document.getElementById('t10-report-summary-table');
       if (mdDiv && !mdDiv.dataset.loaded) {
         const data = await window.VizAPI.getJSON('/api/v1/lexicon/report/preview');
-        mdDiv.innerHTML = `<pre style="font-family:var(--font-mono);font-size:11.5px;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:4px;white-space:pre-wrap;">${data.markdown}</pre>`;
+        mdDiv.innerHTML = formatReportHtml(data);
         if (tableDiv && data.summary_table) {
           window.DataTableRenderer.render(tableDiv, data.summary_table, 10);
         }

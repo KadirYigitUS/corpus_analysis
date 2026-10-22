@@ -46,6 +46,8 @@
   function createChartCard(title, canvasId, height = 260, csvRows = null, csvCols = null) {
     const card = document.createElement('div');
     card.className = 'chart-card';
+    const m = String(canvasId || '').match(/^t(\d+)/i);
+    const helpTab = m ? `Tab ${parseInt(m[1], 10)}` : 'Global Matrix';
 
     const header = document.createElement('div');
     header.className = 'chart-header';
@@ -54,6 +56,7 @@
       <div class="chart-actions">
         <button class="btn btn-sm btn-export-png" title="Download PNG">📷 PNG</button>
         <button class="btn btn-sm btn-export-csv" title="Export CSV Data">📄 CSV</button>
+        <button class="btn btn-sm btn-pane-help" data-help-tab="${helpTab}" title="Contextual Formula &amp; Pane Help">?</button>
       </div>
     `;
 

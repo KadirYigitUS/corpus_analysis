@@ -86,10 +86,11 @@ The **Settings Modal** provides live configuration of paths and metadata without
 
 ## 5. Help & Formulas Drawer / Yardım ve Formüller Çekmecesi
 
-Sliding drawer accessible from any tab providing mathematical transparency:
-- **Exact Formulas**: KaTeX/MathJax-rendered equations for all 22 LancsBox-X diversity metrics, 6 collocation association scores, Juilland's $D$, sublinear TF-IDF, and lexical density.
-- **Edge-Case / NaN Rules**: Explicit documentation of boundary conditions ($N < 42$ for HD-D, $N < 1{,}000$ for STTR, division-by-zero guards).
-- **Primary Methodological Citations**: Complete bibliographic entries linking metrics to foundational literature (Biber 1988, Covington & McFall 2010, McCarthy & Jarvis 2010, Rychlý 2008, Juilland 1956).
+Sliding drawer accessible from any tab (`#btn-open-help` or contextual per-pane `?` `.btn-pane-help` buttons) providing mathematical transparency across all 12 catalog sections (`Global Matrix` and `Tab 1` through `Tab 11`):
+- **Typographic Semantic HTML/MathML Formulas**: Renders stacked fractions (`.math-frac` / `.math-num` / `.math-den`), radical spans (`.math-sqrt` / `.math-radicand`), subscripts, and superscripts via `formatFormulaHtml(entry)` (`SPA/services/help_catalog_data.py` & `help_docs_drawer.js`) with zero raw LaTeX backslashes (`\frac`, `\text`, `\sqrt`).
+- **Contextual `?` Pane Routing**: Clicking `?` in the Global Matrix bar, any tab subtab bar, or any `ChartHost` chart card opens `#help-docs-drawer` automatically filtered to that tab's equations and boundary guards.
+- **Edge-Case / NaN Rules**: Explicit documentation of boundary conditions ($N < 42$ for HD-D, $N < 1{,}000$ for STTR, division-by-zero guards, and `mode='drop'` vs `mode='mask'` sliding-window behavior).
+- **Primary Methodological Citations**: Complete bibliographic entries linking metrics to foundational literature (Templin 1957, Guiraud 1954, Covington & McFall 2010, McCarthy & Jarvis 2010, Church & Hanks 1990, Dunning 1993, Rychlý 2008, Juilland & Chang-Rodríguez 1964, Benjamini & Hochberg 1995, Spärck Jones 1972).
 
 ---
 
