@@ -17,6 +17,8 @@ const SUITES = [
   ['suite_tabs_01_04', require('./suite_tabs_01_04')],
   ['suite_tabs_05_08', require('./suite_tabs_05_08')],
   ['suite_tabs_09_11', require('./suite_tabs_09_11')],
+  ['suite_viz_subtabs_01_06', require('./suite_viz_subtabs_01_06')],
+  ['suite_viz_subtabs_07_10', require('./suite_viz_subtabs_07_10')],
 ];
 
 async function runWithTimeout(fn, timeoutMs) {

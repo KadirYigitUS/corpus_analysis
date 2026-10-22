@@ -18,29 +18,20 @@ The test suite resides in `scripts/corpus_analysis/SPA/tests/` and executes unde
 
 ```
 scripts/corpus_analysis/SPA/tests/
-├── conftest.py                       # Global fixtures: Flask test client, mock loaders, Selenium driver
+├── conftest.py                       # Shared session Flask app/client, CorpusRepository, TablePayload & finite-number assertions
 ├── unit/
-│   ├── test_config_repository.py     # YAML configuration and path resolution
-│   ├── test_tokenview_parity.py      # 32-combination TokenView verification
-│   ├── test_clean_lemma.py           # Turkish apostrophe remediation and compound preservation
-│   ├── test_diversity_metrics.py     # 22 LancsBox-X formulas and NaN guards
-│   ├── test_collocation_metrics.py   # Union-slot contingency matrix and 6 association scores
-│   ├── test_dispersion_metrics.py    # Juilland's D (within/across) and Benjamini-Hochberg FDR
-│   ├── test_tfidf_parity.py          # Sublinear TF-IDF manual vs scikit-learn parity
+│   ├── test_scope_and_tokenview_matrix.py # All 8 scopes + 32 TokenView combinations + drop vs mask invariants
+│   ├── test_tabs_01_05_inputs_outputs.py  # Granular input->output API tests for Tabs 1-5 & sub-components
+│   ├── test_tabs_06_11_inputs_outputs.py  # Granular input->output API tests for Tabs 6-11 & sub-components
+│   ├── test_help_and_formulas.py     # 12-section formula catalog, zero raw LaTeX guard, singleton DI & cache
+│   ├── test_tokenview_parity.py      # 32-combination TokenView verification against corpus_toolkit
+│   ├── test_statistical_benchmarks.py# LancsBox-X diversity, Union-Slot collocations, Juilland D, TF-IDF
+│   ├── test_viz_endpoints.py         # Visualization endpoints across corpus, alignment, syntax, concordance, lexicon
 │   └── test_nda_safe_unpickler.py    # Deserialization sandbox and RCE exploit rejection
-├── integration/
-│   ├── test_api_corpus_routes.py     # Endpoints for inventory, loaders, and memory metrics
-│   ├── test_api_alignment_routes.py  # Alignment cardinality, delta metrics, and NDA overlay
-│   ├── test_api_concordance_routes.py# Search queries, 5-view KWIC, and sorting keys
-│   └── test_api_export_routes.py     # Atomic report generation and ZIP bundle creation
-├── benchmarks/
-│   ├── test_toolkit_parity.py        # Numerical parity tests vs corpus_toolkit
-│   └── test_memory_rss_bounds.py     # < 1.5 GB RSS ceiling under sequential 13-book load
 ├── ast_hygiene/
-│   ├── test_file_line_counts.py      # Hard <= 200 lines/file gate on all .py, .js, .css, .html
-│   └── test_layer_dependencies.py    # AST inspection of import directions and path literals
+│   └── test_file_line_counts.py      # Hard <= 200 lines/file gate on all .py, .js, .css, .html
 └── e2e/
-    ├── test_e2e_playwright.py        # Pytest live_server subprocess + Node Playwright bridge (19 items)
+    ├── test_e2e_playwright.py        # Pytest live_server subprocess + Node Playwright bridge (26 items)
     └── pw/
         ├── harness.js                # Chromium launcher, error/network listeners, trace/screenshot capture
         ├── helpers.js                # Explicit condition polling, API response waiters, grid helpers
@@ -48,7 +39,9 @@ scripts/corpus_analysis/SPA/tests/
         ├── suite_shell.js            # Global bar, theme, TR/EN i18n, scopes, matrix, RSS, modals & drawer
         ├── suite_tabs_01_04.js       # Tabs 1-4: Inventory, Alignment, NDA Parallel, POS Profiler
         ├── suite_tabs_05_08.js       # Tabs 5-8: Dependency SVG, Search/KWIC, Batch Dispersion, Diversity
-        └── suite_tabs_09_11.js       # Tabs 9-11: Collocations, TF-IDF & Bundle ZIP, Explorer & random nav
+        ├── suite_tabs_09_11.js       # Tabs 9-11: Collocations, TF-IDF & Bundle ZIP, Explorer & random nav
+        ├── suite_viz_subtabs_01_06.js# Granular subtab E2E click & reactivity tests for Tabs 1-6
+        └── suite_viz_subtabs_07_10.js# Granular subtab E2E click & drop-vs-mask reactivity tests for Tabs 7-10
 ```
 
 ---
@@ -259,17 +252,21 @@ Automated browser tests execute via Node Playwright (`/home/ben/miniconda3/lib/n
 | `pw/suite_tabs_09_11.js` | **Tab 9: Collocation** | • 6 association metrics<br>• Min-freq threshold filter<br>• GraphColl scatter plot | • Cycles all 6 UI metrics (`LogDice`, `MI`, `G2`, `T`, `MI2`, `MI3`).<br>• Raising `min_freq` from 2 to 10 narrows collocate count.<br>• GraphColl scatter plots association strength vs. frequency. |
 | `pw/suite_tabs_09_11.js` | **Tab 10: TF-IDF & Rep** | • Top-$K$ keyness calculation<br>• PROPN exclusion toggle<br>• Research bundle ZIP export | • Top keywords grid and chart populate for `BR-SM`.<br>• Toggling `#t10-chk-propn` updates extracted terms.<br>• Bundle download verifies PK ZIP magic header (`295` bytes). |
 | `pw/suite_tabs_09_11.js` | **Tab 11: Explorer** | • Quick search execution<br>• Copy-as-Python-script<br>• Cross-cutting random tab nav | • Explorer quick search renders hits and summary.<br>• Clipboard receives valid Python snippet (`CorpusLoader`).<br>• Random-order 11-tab navigation leaves zero orphan overlays. |
+| `pw/suite_viz_subtabs_01_06.js` | **Tabs 1–6 Subtabs** | • Tab 1 5 subtabs & scope invalidation<br>• Tab 2 structure & scatter<br>• Tab 4 2A/2B/2C charts<br>• Tab 5 aligned SVGs & Tab 6 subtabs | • Real `.click()` on every `.viz-subtab-btn` in Tabs 1, 2, 4, 5, 6.<br>• Asserts `<canvas>` and DataGrid rendering + scope invalidation on `indig_tr`. |
+| `pw/suite_viz_subtabs_07_10.js` | **Tabs 7–10 Subtabs** | • Tab 7 labeled groups & 3A/3B/3C<br>• Tab 8 `drop` vs `mask` & 5 subtabs<br>• Tab 9 scatter/sensitivity/NLTK<br>• Tab 10 heatmap & live report | • Tests labeled group syntax (`makine alanı: ... \| insan alanı: ...`).<br>• Asserts `MATTR_500` updates between `mode='drop'` and `mode='mask'`.<br>• Verifies all subtabs in Tabs 7–10. |
+
+See [`14_Input_to_Output_Test_Matrix.md`](14_Input_to_Output_Test_Matrix.md) and [`15_Formulas_and_Subcomponent_Specs.md`](15_Formulas_and_Subcomponent_Specs.md) for the complete input-to-output test matrix and mathematical formula specifications.
 
 ---
 
 ## 9. Acceptance Gate Checklist
 
-- [x] Comprehensive test architecture established covering Unit, Benchmark, AST, Security, Memory, and Playwright E2E layers (`28/28` pytest items passing).
-- [x] 32-combination `TokenView` test matrix parameterized across all fields, modes, filters, and punctuation regimes.
+- [x] Comprehensive test architecture established covering Unit, Benchmark, AST, Security, Memory, and Playwright E2E layers (`98/98` pytest items passing: `72` unit + AST hygiene items and `26` Playwright E2E items).
+- [x] 32-combination `TokenView` test matrix parameterized across all fields, modes, filters, and punctuation regimes, including `mode='drop'` vs `mode='mask'` invariants.
 - [x] Mathematical parity tests defined against `corpus_toolkit` for LancsBox-X diversity, Union-Slot collocations, and Juilland's $D$.
 - [x] AST line-budget validator configured to strictly enforce $\le 200$ physical lines on all `.py, .js, .css, .html` files.
 - [x] AST architectural boundary tests configured to block invalid import flows and hardcoded paths.
 - [x] Deserialization isolation tests configured to verify `_NdaSafeUnpickler` and reject RCE exploits.
 - [x] Process memory test configured to assert peak $\text{RSS} < 1{,}500\text{ MB}$ under full corpus iteration.
-- [x] Headless Playwright E2E test suite implemented and verified across 3 consecutive flake-detection runs (`18/18` E2E test cases passing) for all 11 tabs, Global Control Bar, Corpus Info Modal, Settings Modal, and Help Drawer.
+- [x] Headless Playwright E2E test suite implemented and verified (`25/25` E2E test cases passing across 6 suites) for all 11 tabs, all visualization subtabs, Global Control Bar, Corpus Info Modal, Settings Modal, and Help Drawer.
 

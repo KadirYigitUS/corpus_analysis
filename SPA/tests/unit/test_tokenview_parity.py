@@ -17,8 +17,8 @@ from SPA.services.diversity_service import DiversityService
 
 
 @pytest.fixture(scope="module")
-def repo():
-    return CorpusRepository()
+def repo(corpus_repo: CorpusRepository):
+    return corpus_repo
 
 
 def test_all_8_scopes_and_author_filters(repo):
@@ -64,7 +64,7 @@ def test_32_combination_tokenview_parity_and_drop_vs_mask(repo):
     modes = ("drop", "mask")
     puncts = ("drop", "keep", "strip", "split")
 
-    text = repo.loader.load_text("BR-SM")
+    text = repo.loader.load_text("A-ZB")
     combinations = list(itertools.product(fields, filters, modes, puncts))
     assert len(combinations) == 32
 
@@ -87,8 +87,8 @@ def test_32_combination_tokenview_parity_and_drop_vs_mask(repo):
         assert list(repo_view.forms[:50]) == list(direct_view.forms[:50])
 
         # Verify get_text_tokens_matrix include_masked=False vs include_masked=True
-        mat_unmasked = repo.get_text_tokens_matrix([text], dto, include_masked=False)["BR-SM"]
-        mat_masked = repo.get_text_tokens_matrix([text], dto, include_masked=True)["BR-SM"]
+        mat_unmasked = repo.get_text_tokens_matrix([text], dto, include_masked=False)["A-ZB"]
+        mat_masked = repo.get_text_tokens_matrix([text], dto, include_masked=True)["A-ZB"]
         assert all(x is not None for x in mat_unmasked)
         assert len(mat_unmasked) == len(direct_view.analysed())
         if filt and mode == "mask":

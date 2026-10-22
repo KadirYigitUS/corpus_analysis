@@ -17,6 +17,8 @@ This directory (`scripts/corpus_analysis/SPA/docs/`) houses the **12-Document So
 11. [`11_System_Administrator_Guide.md`](11_System_Administrator_Guide.md) — System Administrator & Deployment Guide
 12. [`12_Feature_Comparison_and_Dataflow_Matrix.md`](12_Feature_Comparison_and_Dataflow_Matrix.md) — Exhaustive Input $\to$ Output Flow & Cross-System Feature Matrix
 13. [`13_Corpus_Analysis_SPA_Technical_Blueprint_Plan.md`](13_Corpus_Analysis_SPA_Technical_Blueprint_Plan.md) — Master SPA Technical Implementation Blueprint Plan
+14. [`14_Input_to_Output_Test_Matrix.md`](14_Input_to_Output_Test_Matrix.md) — Granular Input $\to$ Output Test Matrix (All 8 Scopes, 32 TokenView Regimes, 11 Tabs & 25 Playwright E2E Suites)
+15. [`15_Formulas_and_Subcomponent_Specs.md`](15_Formulas_and_Subcomponent_Specs.md) — Complete Mathematical Formulas, Edge-Case Guards & Sub-Component Specifications
 
 ## Headless Playwright E2E & Verification Suite (`SPA/tests/`)
 
@@ -24,10 +26,10 @@ The SPA verification suite uses **Node Playwright** (`/home/ben/miniconda3/lib/n
 
 ```bash
 cd /home/ben/Documents/thesis/scripts/corpus_analysis
-# Run full SPA test suite (unit, benchmarks, AST <=200 line hygiene, and 18 Playwright E2E tests)
+# Run full SPA test suite (72 unit/benchmark/AST <=200 line hygiene items + 26 Playwright E2E items = 98 items)
 /home/ben/miniconda3/bin/pytest SPA/tests/ -v
 
-# Run standalone Node Playwright runner against a running server
+# Run standalone Node Playwright runner against a running server (25 E2E tests across 6 suites)
 NODE_PATH=/home/ben/miniconda3/lib/node_modules BASE_URL=http://127.0.0.1:5000 /home/ben/miniconda3/bin/node SPA/tests/e2e/pw/run_all.js
 ```
 

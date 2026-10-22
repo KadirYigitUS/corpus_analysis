@@ -44,6 +44,13 @@ EXPECTED_TESTS = [
     "suite_tabs_09_11::tab10_tfidf_keywords_propn_toggle_and_bundle_download",
     "suite_tabs_09_11::tab11_explorer_quick_search_and_clipboard_copy",
     "suite_tabs_09_11::crosscutting_random_order_tab_navigation",
+    "suite_viz_subtabs_01_06::tab01_all_subtabs_charts_tables_and_scope_invalidation",
+    "suite_viz_subtabs_01_06::tab02_structure_summary_and_scatter_subtab",
+    "suite_viz_subtabs_01_06::tab04_pos_heatmap_dumbbell_and_forest_subtabs",
+    "suite_viz_subtabs_01_06::tab05_aligned_bilingual_trees_and_tab06_kwic_subtabs",
+    "suite_viz_subtabs_07_10::tab07_labeled_groups_tables_heatmaps_and_dispersion_curves",
+    "suite_viz_subtabs_07_10::tab08_all_diversity_subtabs_and_drop_vs_mask_reactivity",
+    "suite_viz_subtabs_07_10::tab09_collocation_and_tab10_tfidf_all_subtabs",
 ]
 
 
@@ -143,7 +150,7 @@ def playwright_suite_run(live_server: str) -> dict[str, Any]:
         env=env,
         capture_output=True,
         text=True,
-        timeout=300,
+        timeout=600,
     )
 
     if not RESULTS_JSON.exists():

@@ -1,17 +1,5 @@
 """Unit tests verifying all visualization endpoints, help catalog, and payload budgets."""
 
-import pytest
-
-from SPA.app import create_app
-
-
-@pytest.fixture(scope="module")
-def client():
-    app = create_app()
-    app.config["TESTING"] = True
-    with app.test_client() as c:
-        yield c
-
 
 def test_corpus_viz_endpoints(client):
     r1 = client.get("/api/v1/corpus/sizes-chart")
@@ -62,21 +50,21 @@ def test_syntax_viz_endpoints(client):
 
 
 def test_concordance_viz_endpoints(client):
-    r1 = client.post("/api/v1/concordance/summary", json={"term": "robot"})
+    r1 = client.post("/api/v1/concordance/summary", json={"term": "robot", "scope": "indig_tr"})
     assert r1.status_code == 200 and "table" in r1.get_json() and "bars" in r1.get_json()
 
-    r2 = client.post("/api/v1/concordance/views-compare", json={"term": "robot"})
+    r2 = client.post("/api/v1/concordance/views-compare", json={"term": "robot", "scope": "indig_tr"})
     assert r2.status_code == 200 and "rows" in r2.get_json()
 
-    r3 = client.post("/api/v1/concordance/nltk", json={"code": "IR-IA", "word": "robot"})
+    r3 = client.post("/api/v1/concordance/nltk", json={"code": "TL-PA", "word": "light"})
     assert r3.status_code == 200 and "concordance" in r3.get_json()
 
-    r4 = client.post("/api/v1/concordance/batch-matrices", json={"raw_input": "robot, uzay"})
+    r4 = client.post("/api/v1/concordance/batch-matrices", json={"raw_input": "robot, uzay", "scope": "indig_tr"})
     assert r4.status_code == 200 and "rates_matrix" in r4.get_json()
 
     r5 = client.post(
         "/api/v1/concordance/batch-dispersion",
-        json={"terms": ["makine alanı: robot, makine | insan alanı: insan, adam"]},
+        json={"terms": ["makine alanı: robot, makine | insan alanı: insan, adam"], "scope": "indig_tr"},
     )
     assert r5.status_code == 200
     d5 = r5.get_json()
@@ -85,21 +73,21 @@ def test_concordance_viz_endpoints(client):
 
 def test_lexicon_viz_endpoints(client):
     for url, payload, key in (
-        ("/api/v1/lexicon/diversity/sensitivity", {"code": "IR-IA"}, "series"),
-        ("/api/v1/lexicon/diversity/radar", {"codes": ["IR-IA", "BR-SM"]}, "series"),
-        ("/api/v1/lexicon/diversity/mattr-trajectories", {"codes": ["IR-IA"], "window": 200}, "series"),
-        ("/api/v1/lexicon/diversity/zipf-curves", {"codes": ["IR-IA"]}, "series"),
+        ("/api/v1/lexicon/diversity/sensitivity", {"code": "TL-PA"}, "series"),
+        ("/api/v1/lexicon/diversity/radar", {"codes": ["IR-IA", "BR-SM"], "scope": "indig_tr"}, "series"),
+        ("/api/v1/lexicon/diversity/mattr-trajectories", {"codes": ["TL-PA"], "window": 200}, "series"),
+        ("/api/v1/lexicon/diversity/zipf-curves", {"codes": ["TL-PA"]}, "series"),
         ("/api/v1/lexicon/collocation/scatter", {"code": "BR-SM", "node": "robot"}, "series"),
         ("/api/v1/lexicon/collocation/sensitivity", {"code": "BR-SM", "node": "robot"}, "measures_table"),
-        ("/api/v1/lexicon/collocation/nltk", {"code": "BR-SM"}, "collocations"),
+        ("/api/v1/lexicon/collocation/nltk", {"code": "A-ZB"}, "collocations"),
     ):
         resp = client.post(url, json=payload)
         assert resp.status_code == 200 and key in resp.get_json()
 
-    r2 = client.get("/api/v1/lexicon/diversity/compare")
+    r2 = client.get("/api/v1/lexicon/diversity/compare?scope=indig_tr")
     assert r2.status_code == 200 and "token_vs_lemma" in r2.get_json()
 
-    r9 = client.get("/api/v1/lexicon/report/preview")
+    r9 = client.get("/api/v1/lexicon/report/preview?scope=indig_tr")
     assert r9.status_code == 200
     d9 = r9.get_json()
     assert "markdown" in d9 and "sections" in d9 and "kpis" in d9
@@ -115,11 +103,10 @@ def test_lexicon_viz_endpoints(client):
     assert "math-frac" in raw_help and "math-sqrt" in raw_help
 
 
-def test_single_shared_corpus_loader_and_payload_cache_keying():
+def test_single_shared_corpus_loader_and_payload_cache_keying(app, client):
     from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
     from SPA.services.payload_cache import global_payload_cache
 
-    app = create_app()
     repo = app.extensions["corpus_repo"]
     services = app.extensions["services"]
     assert len(services) >= 15
@@ -142,18 +129,16 @@ def test_single_shared_corpus_loader_and_payload_cache_keying():
 
     global_payload_cache.put(k1, {"dummy": 1})
     assert global_payload_cache.get(k1) == {"dummy": 1}
-    with app.test_client() as c:
-        resp = c.post("/api/v1/corpus/evict-all")
-        assert resp.status_code == 200
+    resp = client.post("/api/v1/corpus/evict-all")
+    assert resp.status_code == 200
     assert global_payload_cache.get(k1) is None
 
-    with app.test_client() as c:
-        assert len(c.get("/api/v1/corpus/sizes-chart?scope=all").get_json()["items"]) == 13
-        assert len(c.get("/api/v1/corpus/sizes-chart?scope=indig_tr").get_json()["items"]) == 3
-        assert len(c.get("/api/v1/corpus/sizes-chart?scope=author_related&author_filter=SM").get_json()["items"]) == 3
+    assert len(client.get("/api/v1/corpus/sizes-chart?scope=all").get_json()["items"]) == 13
+    assert len(client.get("/api/v1/corpus/sizes-chart?scope=indig_tr").get_json()["items"]) == 3
+    assert len(client.get("/api/v1/corpus/sizes-chart?scope=author_related&author_filter=SM").get_json()["items"]) == 3
 
-        qs_tr = c.post(
-            "/api/v1/export/quick-search",
-            json={"term": "robot", "scope": {"scope": "author_turkish", "author_filter": "SM"}, "view_params": {"field": "lem", "filter_function_words": True, "mode": "mask", "punct": "strip"}},
-        ).get_json()
-        assert "author='SM'" in qs_tr["python_snippet"] and "mode='mask'" in qs_tr["python_snippet"]
+    qs_tr = client.post(
+        "/api/v1/export/quick-search",
+        json={"term": "robot", "scope": {"scope": "author_turkish", "author_filter": "SM"}, "view_params": {"field": "lem", "filter_function_words": True, "mode": "mask", "punct": "strip"}},
+    ).get_json()
+    assert "author='SM'" in qs_tr["python_snippet"] and "mode='mask'" in qs_tr["python_snippet"]

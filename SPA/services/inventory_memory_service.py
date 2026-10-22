@@ -13,6 +13,16 @@ class InventoryMemoryService:
 
     def __init__(self, corpus_repo: CorpusRepository) -> None:
         self._repo = corpus_repo
+        self._sum_cache: dict[str, dict[str, Any]] | None = None
+
+    def _get_sum_dict(self) -> dict[str, dict[str, Any]]:
+        if self._sum_cache is None:
+            try:
+                df = self._repo.loader.load_all().summary()
+                self._sum_cache = df.set_index("code").to_dict(orient="index") if not df.empty else {}
+            except Exception:
+                self._sum_cache = {}
+        return self._sum_cache
 
     def get_summary_stats(
         self,
@@ -26,11 +36,7 @@ class InventoryMemoryService:
             allowed_codes = {t.record.code for t in texts}
             inv = [r for r in inv if r.get("code") in allowed_codes]
 
-        try:
-            summary_df = self._repo.loader.load_all().summary()
-            sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
-        except Exception:
-            sum_dict = {}
+        sum_dict = self._get_sum_dict()
 
         if view_params and (view_params.filter_function_words or view_params.punct != "drop"):
             total_tokens = 0
@@ -73,11 +79,7 @@ class InventoryMemoryService:
             allowed = {t.record.code for t in texts}
             inv = [r for r in inv if r.get("code") in allowed]
 
-        try:
-            summary_df = self._repo.loader.load_all().summary()
-            sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
-        except Exception:
-            sum_dict = {}
+        sum_dict = self._get_sum_dict()
 
         trans_en = []
         trans_tr = []
@@ -129,11 +131,7 @@ class InventoryMemoryService:
     def get_token_distribution_figure1(self) -> dict[str, Any]:
         """Return data for Figure 1: Content vs. Function Word token sizes."""
         inv = self._repo.get_inventory_table()
-        try:
-            summary_df = self._repo.loader.load_all().summary()
-            sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
-        except Exception:
-            sum_dict = {}
+        sum_dict = self._get_sum_dict()
 
         chart_data = []
         for r in inv:

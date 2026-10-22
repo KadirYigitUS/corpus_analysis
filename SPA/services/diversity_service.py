@@ -64,11 +64,22 @@ class DiversityService:
         texts = self._repo.get_texts_by_scope(scope_dto)
         vp_key = view_params.cache_key()
         is_masked = bool(view_params.filter_function_words and view_params.mode == "mask")
+        disk_cache = getattr(getattr(self._repo, "loader", None), "cache", None)
 
         records: list[dict[str, Any]] = []
         for t in texts:
-            view = self._repo.get_token_view(t, view_params)
             text_code = getattr(t, "code", getattr(getattr(t, "record", None), "code", str(t)))
+            rec = getattr(t, "record", None)
+            d_key = (
+                disk_cache.key("spa_div_v2", text_code, *vp_key)
+                if disk_cache is not None and rec is not None
+                else None
+            )
+            if d_key and (cached_disk := disk_cache.load_json(d_key)):
+                self._metrics_cache[(text_code, *vp_key)] = cached_disk
+                records.append(cached_disk)
+                continue
+            view = self._repo.get_token_view(t, view_params)
             analysed = [str(x) for x in view.analysed()]
             cache_key = (text_code, *vp_key, len(analysed), len(view.forms))
             if cache_key not in self._metrics_cache:
@@ -89,6 +100,8 @@ class DiversityService:
                     else:
                         clean_metrics[k] = round(float(val), 4)
                 self._metrics_cache[cache_key] = clean_metrics
+                if d_key and disk_cache is not None:
+                    disk_cache.save_json(d_key, clean_metrics)
             records.append(self._metrics_cache[cache_key])
 
         return records

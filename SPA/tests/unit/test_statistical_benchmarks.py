@@ -12,8 +12,8 @@ from SPA.services.tfidf_service import TfidfService
 
 
 @pytest.fixture(scope="module")
-def repo():
-    return CorpusRepository()
+def repo(corpus_repo: CorpusRepository):
+    return corpus_repo
 
 
 def test_diversity_service_benchmarks(repo):
