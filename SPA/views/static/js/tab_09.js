@@ -4,20 +4,44 @@
 class Tab09Controller {
   constructor() {
     this.grid = null;
+    this.hasRun = false;
   }
 
   init() {
     this.attachEvents();
+    if (typeof window.initTab09Viz === 'function') window.initTab09Viz();
   }
 
   attachEvents() {
     const runBtn = document.getElementById('t9-btn-run-colloc');
     if (runBtn) {
-      runBtn.addEventListener('click', () => this.runCollocations());
+      runBtn.addEventListener('click', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t9-subtabs');
+        this.runCollocations();
+      });
+    }
+    const textSel = document.getElementById('t9-select-text');
+    if (textSel) {
+      textSel.addEventListener('change', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t9-subtabs');
+        if (this.hasRun) this.runCollocations();
+      });
+    }
+    if (window.appState) {
+      window.appState.on('scopeChanged', (sc) => {
+        if (sc && sc.text_code && textSel && textSel.value !== sc.text_code) {
+          textSel.value = sc.text_code;
+        }
+        if (this.hasRun) this.runCollocations();
+      });
+      window.appState.on('viewParamsChanged', () => {
+        if (this.hasRun) this.runCollocations();
+      });
     }
   }
 
   async runCollocations() {
+    this.hasRun = true;
     const node = document.getElementById('t9-input-node')?.value || 'robot';
     const textCode = document.getElementById('t9-select-text')?.value || 'BR-SM';
     const metric = document.getElementById('t9-select-metric')?.value || 'LogDice';

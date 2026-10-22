@@ -5,26 +5,78 @@ class Tab07Controller {
   constructor() {
     this.summaryGrid = null;
     this.corrGrid = null;
+    this.hasRun = false;
   }
 
   init() {
     this.attachEvents();
+    if (typeof window.initTab07Viz === 'function') window.initTab07Viz();
+  }
+
+  static parseGroupQuery(raw) {
+    const text = (raw || '').trim();
+    const groups = {};
+    const flatTerms = [];
+    if (text.includes(':') || text.includes('|')) {
+      text.split('|').forEach((chunk) => {
+        const part = chunk.trim();
+        if (!part) return;
+        if (part.includes(':')) {
+          const [gName, wordsStr] = part.split(':', 2);
+          const words = wordsStr.split(',').map((w) => w.trim()).filter(Boolean);
+          if (gName.trim() && words.length > 0) groups[gName.trim()] = words;
+          words.forEach((w) => { if (!flatTerms.includes(w)) flatTerms.push(w); });
+        } else {
+          part.split(',').map((w) => w.trim()).filter(Boolean).forEach((w) => {
+            if (!flatTerms.includes(w)) flatTerms.push(w);
+          });
+        }
+      });
+    } else {
+      text.split(',').map((w) => w.trim()).filter(Boolean).forEach((w) => {
+        if (!flatTerms.includes(w)) flatTerms.push(w);
+      });
+    }
+    return { terms: flatTerms, groups: Object.keys(groups).length > 0 ? groups : null, raw_input: text };
   }
 
   attachEvents() {
     const runBtn = document.getElementById('t7-btn-run-batch');
     if (runBtn) {
-      runBtn.addEventListener('click', () => this.runBatchAnalysis());
+      runBtn.addEventListener('click', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t7-subtabs');
+        this.runBatchAnalysis();
+      });
+    }
+    const chk = document.getElementById('t7-check-content');
+    if (chk) {
+      chk.addEventListener('change', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t7-subtabs');
+        if (this.hasRun) this.runBatchAnalysis();
+      });
+    }
+    if (window.appState) {
+      const onRefresh = () => {
+        if (this.hasRun) this.runBatchAnalysis();
+      };
+      window.appState.on('scopeChanged', onRefresh);
+      window.appState.on('viewParamsChanged', onRefresh);
     }
   }
 
   async runBatchAnalysis() {
+    this.hasRun = true;
     const termsRaw = document.getElementById('t7-input-terms')?.value || 'robot, insan, dünya, uzay';
-    const terms = termsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const parsed = Tab07Controller.parseGroupQuery(termsRaw);
+    const isContent = document.getElementById('t7-check-content')?.checked || false;
+    const vp = Object.assign({}, window.appState ? window.appState.state.view_params : {});
+    if (isContent) vp.filter_function_words = true;
 
     const payload = {
-      terms: terms,
-      view_params: window.appState ? window.appState.state.view_params : {},
+      terms: parsed.terms,
+      groups: parsed.groups,
+      raw_input: parsed.raw_input,
+      view_params: vp,
       scope: window.appState ? window.appState.state.scope : { scope: 'all' },
       n_chunks: 10
     };

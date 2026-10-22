@@ -7,19 +7,31 @@ class Tab10Controller {
   }
 
   async init() {
-    await this.loadTfidfKeywords();
     this.attachEvents();
+    if (typeof window.initTab10Viz === 'function') window.initTab10Viz();
+    await this.loadTfidfKeywords();
   }
 
   attachEvents() {
     const runBtn = document.getElementById('t10-btn-run-tfidf');
     if (runBtn) {
-      runBtn.addEventListener('click', () => this.loadTfidfKeywords());
+      runBtn.addEventListener('click', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t10-subtabs');
+        this.loadTfidfKeywords();
+      });
     }
 
     const bundleBtn = document.getElementById('t10-btn-download-bundle');
     if (bundleBtn) {
       bundleBtn.addEventListener('click', () => this.downloadResearchBundle());
+    }
+
+    if (window.appState) {
+      const onRefresh = () => {
+        this.loadTfidfKeywords();
+      };
+      window.appState.on('scopeChanged', onRefresh);
+      window.appState.on('viewParamsChanged', onRefresh);
     }
   }
 

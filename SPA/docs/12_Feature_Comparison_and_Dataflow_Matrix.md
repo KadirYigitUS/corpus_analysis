@@ -205,3 +205,9 @@ flowchart TD
 - [x] Professional workstation scope strictly enforced (Help/Formula Drawer instead of literary/theoretical essays).
 - [x] Full user configurability specified for paths, metadata, book cover images, and author portrait images.
 - [x] Module line-budget table locked at $\le 180$ lines pre-format ($\le 200$ lines hard limit).
+- [x] **Phase 3 Holistic Tab-by-Tab & Sub-Component Wiring (22.10.2026)**:
+  - Wired `initTab02Structure()`, `initTab04Viz()`, `initTab05Aligned()`, `initTab06Viz()`, `initTab07Viz()`, `initTab08Viz()`, `initTab09Viz()`, and `initTab10Viz()` inside `Tab02Controller.init()` through `Tab10Controller.init()`, removing duplicate inline `onclick` attributes on `#t7-btn-run-batch`, `#t9-btn-run-colloc`, and `#t10-btn-run-tfidf`.
+  - Forwarded `normalize_labels` and `dim_function_words` in `/api/v1/syntax/dep/aligned/<pair_code>/<int:ai>` (`syntax_controller.py` & `depviz_service.py`) and rendered dual `eng_svg` + `tur_svg` panes in `tab_05_aligned.js`.
+  - Implemented `Tab07Controller.parseGroupQuery(raw)` in `tab_07.js` and multi-group/labeled-term parsing in `BatchDispersionService.analyze_batch` so labeled semantic groups (`"makine alanı: robot, makine | insan alanı: insan, adam"`) and comma lists both resolve accurately across primary grids and visualization subtabs.
+  - Populated all 13 corpus text codes in `#t8-select-text` and `#t9-select-text`, and bound reactive `scopeChanged` / `viewParamsChanged` and local selector invalidation (`SubtabController.invalidateAll`) across all 11 tabs.
+

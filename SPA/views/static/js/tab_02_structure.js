@@ -35,7 +35,11 @@
         const scatterCard = window.ChartHost.createChartCard('Şekil 1B: 1:1 Hizalamalarda Sözcük Sayısı İlişkisi (OLS Regresyon Eğimi)', 't2-scatter-canvas', 300);
         scatterContainer.appendChild(scatterCard.card);
 
-        const scatterPayload = await window.VizAPI.postJSON('/api/v1/alignment/structure-scatter', { max_points: 1500 });
+        const selPair = document.getElementById('t2-select-pair')?.value;
+        const scatterPayload = await window.VizAPI.postJSON('/api/v1/alignment/structure-scatter', {
+          max_points: 1500,
+          selected_pair: selPair || null
+        });
         const scatterChart = new window.ChartScatter(scatterCard.canvas, { marginLeft: 50, marginBottom: 40 });
         scatterChart.renderScatter(scatterPayload.series, 'English Words', 'Turkish Words', true);
         scatterContainer.dataset.loaded = 'true';

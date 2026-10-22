@@ -12,6 +12,7 @@ class Tab02Controller {
   }
 
   async init() {
+    if (typeof window.initTab02Structure === 'function') window.initTab02Structure();
     await Promise.all([this.loadKpis(), this.loadStatsAndChart(), this.loadChapters(), this.loadRows()]);
     this.attachEvents();
     this.chartHelper.attachTooltip('t2-alignment-grid');
@@ -24,16 +25,11 @@ class Tab02Controller {
       if (resp.ok) {
         const kpi = await resp.json();
         const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-        setTxt('t2-kpi-total', kpi.total_alignments ?? 0);
-        setTxt('t2-kpi-ratio', kpi.sentence_ratio ?? '1.0');
-        setTxt('t2-kpi-one-to-one', `${kpi.one_to_one_pct ?? 0}%`);
-        setTxt('t2-kpi-expansion', kpi.expansion_ratio ?? '1.0');
-        setTxt('t2-kpi-tur-more', kpi.count_tur_more ?? 0);
-        setTxt('t2-kpi-eng-more', kpi.count_eng_more ?? 0);
-        setTxt('t2-kpi-equal-sent', kpi.count_one_one ?? 0);
-        setTxt('t2-kpi-max-min-diff', `${kpi.max_sent_diff ?? 0} / ${kpi.min_sent_diff ?? 0}`);
-        setTxt('t2-kpi-avg-len-eng', kpi.avg_len_eng ?? 0);
-        setTxt('t2-kpi-avg-len-tur', kpi.avg_len_tur ?? 0);
+        setTxt('t2-kpi-total', kpi.total_alignments ?? 0); setTxt('t2-kpi-ratio', kpi.sentence_ratio ?? '1.0');
+        setTxt('t2-kpi-one-to-one', `${kpi.one_to_one_pct ?? 0}%`); setTxt('t2-kpi-expansion', kpi.expansion_ratio ?? '1.0');
+        setTxt('t2-kpi-tur-more', kpi.count_tur_more ?? 0); setTxt('t2-kpi-eng-more', kpi.count_eng_more ?? 0);
+        setTxt('t2-kpi-equal-sent', kpi.count_one_one ?? 0); setTxt('t2-kpi-max-min-diff', `${kpi.max_sent_diff ?? 0} / ${kpi.min_sent_diff ?? 0}`);
+        setTxt('t2-kpi-avg-len-eng', kpi.avg_len_eng ?? 0); setTxt('t2-kpi-avg-len-tur', kpi.avg_len_tur ?? 0);
         setTxt('t2-kpi-avg-len-diff', kpi.avg_len_diff ?? 0);
       }
     } catch (err) { console.error('Failed to load alignment KPIs:', err); }
@@ -76,12 +72,10 @@ class Tab02Controller {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       });
       if (resp.ok) {
-        const result = await resp.json();
-        this.totalRows = result.total || 0;
-        this.totalPages = result.total_pages || Math.max(1, Math.ceil(this.totalRows / this.pageSize));
-        this.currentPage = result.page || 1;
-        this.rows = result.rows || [];
-        this.renderTable();
+        const res = await resp.json();
+        this.totalRows = res.total || 0;
+        this.totalPages = res.total_pages || Math.max(1, Math.ceil(this.totalRows / this.pageSize));
+        this.currentPage = res.page || 1; this.rows = res.rows || []; this.renderTable();
       }
     } catch (err) { console.error('Failed to load alignment rows:', err); }
   }
@@ -133,8 +127,7 @@ class Tab02Controller {
             <button class="btn btn-sm grid-prev-btn" ${this.currentPage <= 1 ? 'disabled' : ''}>Prev</button>
             <button class="btn btn-sm grid-next-btn" ${this.currentPage >= this.totalPages ? 'disabled' : ''}>Next</button>
           </div>
-        </div>
-      </div>`;
+        </div></div>`;
     this.bindGridControls(container);
   }
 
@@ -146,9 +139,8 @@ class Tab02Controller {
     container.querySelectorAll('th.sortable-th').forEach((th) => {
       th.onclick = () => {
         const key = th.getAttribute('data-key');
-        if (this.activeSort === key) this.ascending = !this.ascending;
-        else { this.activeSort = key; this.ascending = true; }
-        this.currentPage = 1; this.loadRows();
+        this.ascending = this.activeSort === key ? !this.ascending : true;
+        this.activeSort = key; this.currentPage = 1; this.loadRows();
       };
     });
     const searchInput = container.querySelector('#t2-grid-search');
@@ -160,8 +152,19 @@ class Tab02Controller {
     if (pairSelect) {
       pairSelect.addEventListener('change', async (e) => {
         this.currentPair = e.target.value; this.activeChapter = null; this.currentPage = 1;
+        if (window.SubtabController) window.SubtabController.invalidateAll('t2-subtabs');
         await Promise.all([this.loadStatsAndChart(), this.loadChapters(), this.loadRows()]);
         await this.loadKpis();
+      });
+    }
+    if (window.appState) {
+      window.appState.on('scopeChanged', async (sc) => {
+        if (sc && sc.pair_code && sc.pair_code !== this.currentPair) {
+          this.currentPair = sc.pair_code; if (pairSelect) pairSelect.value = this.currentPair;
+          this.activeChapter = null; this.currentPage = 1;
+          await Promise.all([this.loadStatsAndChart(), this.loadChapters(), this.loadRows(), this.loadKpis()]);
+        }
+        if (window.SubtabController) window.SubtabController.invalidateAll('t2-subtabs');
       });
     }
     const pageSizeSel = document.getElementById('t2-page-size');
@@ -170,26 +173,24 @@ class Tab02Controller {
     if (sidebar) {
       sidebar.addEventListener('click', (e) => {
         const btn = e.target.closest('.ch-btn');
-        if (btn) {
-          sidebar.querySelectorAll('.ch-btn').forEach((b) => b.classList.remove('active'));
-          btn.classList.add('active');
-          const ch = btn.getAttribute('data-ch');
-          this.activeChapter = ch === 'all' ? null : parseInt(ch, 10);
-          this.currentPage = 1; this.loadKpis(); this.loadStatsAndChart(); this.loadRows();
-        }
+        if (!btn) return;
+        sidebar.querySelectorAll('.ch-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const ch = btn.getAttribute('data-ch');
+        this.activeChapter = ch === 'all' ? null : parseInt(ch, 10);
+        this.currentPage = 1; this.loadKpis(); this.loadStatsAndChart(); this.loadRows();
       });
     }
     const nerBar = document.getElementById('t2-ner-filter-bar');
     if (nerBar) {
       nerBar.addEventListener('click', (e) => {
         const pill = e.target.closest('.ner-pill-btn');
-        if (pill) {
-          nerBar.querySelectorAll('.ner-pill-btn').forEach((p) => p.classList.remove('chip-active'));
-          pill.classList.add('chip-active');
-          const cat = pill.getAttribute('data-ner');
-          this.activeNer = cat === 'ALL' ? null : cat;
-          this.currentPage = 1; this.loadRows();
-        }
+        if (!pill) return;
+        nerBar.querySelectorAll('.ner-pill-btn').forEach((p) => p.classList.remove('chip-active'));
+        pill.classList.add('chip-active');
+        const cat = pill.getAttribute('data-ner');
+        this.activeNer = cat === 'ALL' ? null : cat;
+        this.currentPage = 1; this.loadRows();
       });
     }
   }

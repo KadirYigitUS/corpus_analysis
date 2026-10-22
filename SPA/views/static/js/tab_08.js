@@ -7,8 +7,9 @@ class Tab08Controller {
   }
 
   async init() {
-    await this.loadDiversityTable();
     this.attachEvents();
+    if (typeof window.initTab08Viz === 'function') window.initTab08Viz();
+    await this.loadDiversityTable();
   }
 
   async loadDiversityTable() {
@@ -55,12 +56,34 @@ class Tab08Controller {
   attachEvents() {
     const refreshBtn = document.getElementById('t8-btn-refresh-diversity');
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => this.loadDiversityTable());
+      refreshBtn.addEventListener('click', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t8-subtabs');
+        this.loadDiversityTable();
+      });
     }
 
     const mattrBtn = document.getElementById('t8-btn-view-mattr');
     if (mattrBtn) {
       mattrBtn.addEventListener('click', () => this.loadMattrTrajectory());
+    }
+
+    const textSel = document.getElementById('t8-select-text');
+    if (textSel) {
+      textSel.addEventListener('change', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t8-subtabs');
+        const pane = document.getElementById('t8-mattr-pane');
+        if (pane && pane.style.display !== 'none') this.loadMattrTrajectory();
+      });
+    }
+
+    if (window.appState) {
+      const onRefresh = () => {
+        this.loadDiversityTable();
+        const pane = document.getElementById('t8-mattr-pane');
+        if (pane && pane.style.display !== 'none') this.loadMattrTrajectory();
+      };
+      window.appState.on('scopeChanged', onRefresh);
+      window.appState.on('viewParamsChanged', onRefresh);
     }
   }
 

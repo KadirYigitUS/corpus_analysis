@@ -47,8 +47,10 @@ class Tab01Controller {
           ...(data.trans_tr || []),
           ...(data.indig_tr || [])
         ];
-        if (scope === 'all_en') allRows = data.trans_en || [];
-        else if (scope === 'all_tr') allRows = [...(data.trans_tr || []), ...(data.indig_tr || [])];
+        if (scope === 'all_en' || scope === 'trans_en') allRows = data.trans_en || [];
+        else if (scope === 'trans_tr') allRows = data.trans_tr || [];
+        else if (scope === 'indig_tr') allRows = data.indig_tr || [];
+        else if (scope === 'all_tr' || scope === 'author_turkish') allRows = [...(data.trans_tr || []), ...(data.indig_tr || [])];
 
         this.grid = new TableGrid('t1-inventory-grid', {
           columns: [

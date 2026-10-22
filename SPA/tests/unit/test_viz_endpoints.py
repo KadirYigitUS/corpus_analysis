@@ -64,6 +64,18 @@ def test_syntax_viz_endpoints(client):
     d1 = r1.get_json()
     assert "rows" in d1 and "cols" in d1 and "values" in d1
 
+    r2 = client.get("/api/v1/syntax/dep/aligned/IR-IA_BR-SM/4?normalize_labels=true&dim_function_words=true")
+    assert r2.status_code == 200
+    d2 = r2.get_json()
+    assert "eng_svg" in d2 and "tur_svg" in d2 and "html" in d2
+    assert "<svg" in d2["eng_svg"] and "<svg" in d2["tur_svg"]
+    assert "opacity:0.4" in d2["eng_svg"]
+
+    r3 = client.get("/api/v1/syntax/dep/aligned/IR-IA_BR-SM/4?normalize_labels=false&dim_function_words=false")
+    assert r3.status_code == 200
+    d3 = r3.get_json()
+    assert "opacity:0.4" not in d3["eng_svg"]
+
 
 def test_concordance_viz_endpoints(client):
     r1 = client.post("/api/v1/concordance/summary", json={"term": "robot"})
@@ -81,6 +93,15 @@ def test_concordance_viz_endpoints(client):
     r4 = client.post("/api/v1/concordance/batch-matrices", json={"raw_input": "robot, uzay"})
     assert r4.status_code == 200
     assert "rates_matrix" in r4.get_json()
+
+    r5 = client.post(
+        "/api/v1/concordance/batch-dispersion",
+        json={"terms": ["makine alanı: robot, makine | insan alanı: insan, adam"]},
+    )
+    assert r5.status_code == 200
+    d5 = r5.get_json()
+    assert len(d5["summary"]) == 4
+    assert len(d5["pairwise"]) == 6
 
 
 def test_lexicon_viz_endpoints(client):

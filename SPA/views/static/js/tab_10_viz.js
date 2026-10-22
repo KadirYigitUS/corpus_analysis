@@ -11,12 +11,14 @@
     subtabs.onFirstShow('t10-pane-heatmap', async () => {
       const container = document.getElementById('t10-heatmap-chart-container');
       if (container && !container.dataset.loaded) {
-        const topK = parseInt(document.getElementById('t10-input-topk')?.value || '5');
+        const topK = parseInt(document.getElementById('t10-input-topk')?.value || '5', 10);
         const excludePropn = document.getElementById('t10-check-exclude-propn')?.checked ?? true;
 
         const res = await window.VizAPI.postJSON('/api/v1/lexicon/tfidf/dense', {
-          tfidf_params: { top_k: topK, exclude_propn: excludePropn },
-          view_params: { field: 'lem', filter_function_words: true }
+          top_k: topK,
+          exclude_pos: excludePropn ? ['PROPN'] : [],
+          sublinear_tf: true,
+          smooth_idf: true
         });
 
         const matrix = {

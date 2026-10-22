@@ -67,7 +67,11 @@ class DepvizService:
         )
 
     def get_aligned_tree_pair(
-        self, pair_code: str, alignment_idx: int
+        self,
+        pair_code: str,
+        alignment_idx: int,
+        normalize_labels: bool = True,
+        dim_function_words: bool = True,
     ) -> dict[str, Any]:
         """Retrieve aligned dependency payloads for English source and Turkish target."""
         pairs = self._repo.loader.load_translation_pairs().items
@@ -91,12 +95,33 @@ class DepvizService:
         eng_svg = ""
         if eng_coords:
             eng_sid = self._viz.sid_of(eng_text, tuple(eng_coords[0]))
-            eng_svg = self._viz.svg(eng_text, eng_sid)
+            eng_svg = self._viz.svg(
+                eng_text,
+                eng_sid,
+                dim_function_words=dim_function_words,
+                normalize_labels=normalize_labels,
+            )
 
         tur_svg = ""
         if tur_coords:
             tur_sid = self._viz.sid_of(tur_text, tuple(tur_coords[0]))
-            tur_svg = self._viz.svg(tur_text, tur_sid)
+            tur_svg = self._viz.svg(
+                tur_text,
+                tur_sid,
+                dim_function_words=dim_function_words,
+                normalize_labels=normalize_labels,
+            )
+
+        combined_html = (
+            f'<div class="aligned-trees-card" style="display:flex;flex-direction:column;gap:14px;">'
+            f'<div class="aligned-tree-row"><div style="font-size:12px;font-weight:700;color:#2563eb;margin-bottom:4px;">'
+            f'EN: {eng_text.record.title} ({len(eng_coords)} sent)</div>'
+            f'<div style="overflow-x:auto;">{eng_svg or "<em>No English sentence</em>"}</div></div>'
+            f'<div class="aligned-tree-row"><div style="font-size:12px;font-weight:700;color:#0d9488;margin-bottom:4px;">'
+            f'TR: {tur_text.record.title} ({len(tur_coords)} sent)</div>'
+            f'<div style="overflow-x:auto;">{tur_svg or "<em>No Turkish sentence</em>"}</div></div>'
+            f"</div>"
+        )
 
         return {
             "pair_code": pair_code,
@@ -105,4 +130,5 @@ class DepvizService:
             "tur_title": tur_text.record.title,
             "eng_svg": eng_svg,
             "tur_svg": tur_svg,
+            "html": combined_html,
         }

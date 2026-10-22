@@ -26,7 +26,14 @@ class BatchDispersionService:
         n_chunks: int = 10,
     ) -> dict[str, Any]:
         """Perform batch analysis across texts in scope and return summary, heatmap, and correlations."""
-        clean_terms = [t.strip() for t in terms if t.strip()]
+        clean_terms: list[str] = []
+        for item in terms:
+            for chunk in str(item).split("|"):
+                part = chunk.split(":", 1)[1] if ":" in chunk else chunk
+                for w in part.split(","):
+                    wt = w.strip()
+                    if wt and wt not in clean_terms:
+                        clean_terms.append(wt)
         if not clean_terms:
             return {"error": "No valid terms provided"}
 

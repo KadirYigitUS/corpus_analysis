@@ -13,7 +13,8 @@
       if (container && !container.dataset.loaded) {
         const node = document.getElementById('t9-input-node')?.value || 'robot';
         const code = document.getElementById('t9-select-text')?.value || 'BR-SM';
-        const data = await window.VizAPI.postJSON('/api/v1/lexicon/collocation/scatter', { code, node });
+        const minFreq = parseInt(document.getElementById('t9-input-min-freq')?.value || '2', 10);
+        const data = await window.VizAPI.postJSON('/api/v1/lexicon/collocation/scatter', { code, node, min_freq: minFreq });
 
         const card = window.ChartHost.createChartCard(`Şekil 5: GraphColl Dağılım Grafiği ('${node}' — Güç vs Kanıt)`, 't9-scatter-canvas', 300);
         container.appendChild(card.card);
@@ -31,11 +32,13 @@
       if (measDiv && !measDiv.dataset.loaded) {
         const node = document.getElementById('t9-input-node')?.value || 'robot';
         const code = document.getElementById('t9-select-text')?.value || 'BR-SM';
-        const data = await window.VizAPI.postJSON('/api/v1/lexicon/collocation/sensitivity', { code, node });
+        const minFreq = parseInt(document.getElementById('t9-input-min-freq')?.value || '2', 10);
+        const data = await window.VizAPI.postJSON('/api/v1/lexicon/collocation/sensitivity', { code, node, min_freq: minFreq });
 
         window.DataTableRenderer.render(measDiv, data.measures_table, 10);
         window.DataTableRenderer.render(winDiv, data.window_table, 10);
         measDiv.dataset.loaded = 'true';
+        if (winDiv) winDiv.dataset.loaded = 'true';
       }
     });
 
@@ -50,6 +53,7 @@
         window.DataTableRenderer.render(collDiv, data.collocations, 10);
         window.DataTableRenderer.render(ngramDiv, data.ngrams, 10);
         collDiv.dataset.loaded = 'true';
+        if (ngramDiv) ngramDiv.dataset.loaded = 'true';
       }
     });
   }

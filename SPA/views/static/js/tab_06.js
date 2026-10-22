@@ -4,25 +4,39 @@
 class Tab06Controller {
   constructor() {
     this.grid = null;
+    this.hasSearched = false;
   }
 
   init() {
     this.attachEvents();
+    if (typeof window.initTab06Viz === 'function') window.initTab06Viz();
   }
 
   attachEvents() {
     const searchBtn = document.getElementById('t6-btn-search');
     if (searchBtn) {
-      searchBtn.addEventListener('click', () => this.executeSearch());
+      searchBtn.addEventListener('click', () => {
+        if (window.SubtabController) window.SubtabController.invalidateAll('t6-subtabs');
+        this.executeSearch();
+      });
     }
 
     const punctBtn = document.getElementById('t6-btn-punct-compare');
     if (punctBtn) {
       punctBtn.addEventListener('click', () => this.comparePunctuation());
     }
+
+    if (window.appState) {
+      const onRefresh = () => {
+        if (this.hasSearched) this.executeSearch();
+      };
+      window.appState.on('scopeChanged', onRefresh);
+      window.appState.on('viewParamsChanged', onRefresh);
+    }
   }
 
   async executeSearch() {
+    this.hasSearched = true;
     const query = document.getElementById('t6-input-query')?.value || 'robot';
     const matchMode = document.getElementById('t6-select-match')?.value || 'exact';
     const sortBy = document.getElementById('t6-select-sort')?.value || 'position';

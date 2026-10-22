@@ -2,8 +2,13 @@
  * Tab 11 Controller: Unified Corpus Explorer & Scriptable Console.
  */
 class Tab11Controller {
+  constructor() {
+    this.hasRun = false;
+  }
+
   init() {
     this.attachEvents();
+    this.updateSnippetPreview();
   }
 
   attachEvents() {
@@ -23,8 +28,12 @@ class Tab11Controller {
     }
 
     if (window.appState) {
-      window.appState.on('scopeChanged', () => this.updateSnippetPreview());
-      window.appState.on('viewParamsChanged', () => this.updateSnippetPreview());
+      const onRefresh = () => {
+        this.updateSnippetPreview();
+        if (this.hasRun) this.runConsoleQuery();
+      };
+      window.appState.on('scopeChanged', onRefresh);
+      window.appState.on('viewParamsChanged', onRefresh);
     }
   }
 
@@ -71,6 +80,7 @@ class Tab11Controller {
   }
 
   async runConsoleQuery() {
+    this.hasRun = true;
     const term = document.getElementById('t11-input-term')?.value || 'bilim-kurgu';
     const payload = {
       term: term,

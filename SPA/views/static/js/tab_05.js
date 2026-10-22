@@ -8,6 +8,7 @@ class Tab05Controller {
 
   async init() {
     this.attachEvents();
+    if (typeof window.initTab05Aligned === 'function') window.initTab05Aligned();
     await this.renderTree();
   }
 
@@ -20,6 +21,18 @@ class Tab05Controller {
     const downloadBtn = document.getElementById('t5-btn-download-svg');
     if (downloadBtn) {
       downloadBtn.addEventListener('click', () => this.downloadSvg());
+    }
+
+    if (window.appState) {
+      window.appState.on('scopeChanged', (sc) => {
+        if (sc && sc.text_code) {
+          const inp = document.getElementById('t5-input-text');
+          if (inp && inp.value !== sc.text_code) {
+            inp.value = sc.text_code;
+            this.renderTree();
+          }
+        }
+      });
     }
   }
 

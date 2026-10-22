@@ -15,7 +15,8 @@
       const card = window.ChartHost.createChartCard('Şekil 2A: 13 Metnin UPOS Profil Isı Haritası (%)', 't4-heatmap-canvas', 340);
       container.appendChild(card.card);
 
-      const payload = await window.VizAPI.getJSON('/api/v1/syntax/pos/matrix?content_only=false');
+      const isContentOnly = document.getElementById('t4-check-content-only')?.checked || false;
+      const payload = await window.VizAPI.getJSON(`/api/v1/syntax/pos/matrix?content_only=${isContentOnly}`);
       const chart = new window.ChartHeatmap(card.canvas, { marginLeft: 140, marginBottom: 35 });
       chart.renderHeatmap(payload);
       container.dataset.loaded = 'true';
@@ -30,7 +31,8 @@
       container.appendChild(card.card);
 
       const pairCode = document.getElementById('t4-select-pair-2b')?.value || 'IR-IA_BR-SM';
-      const data = await window.VizAPI.getJSON(`/api/v1/syntax/pos/pair-delta/${pairCode}`);
+      const isContentOnly = document.getElementById('t4-check-content-only')?.checked || false;
+      const data = await window.VizAPI.getJSON(`/api/v1/syntax/pos/pair-delta/${pairCode}?content_only=${isContentOnly}`);
       const chart = new window.ChartDumbbellForest(card.canvas, { marginLeft: 65 });
       chart.renderDumbbell(data.items || [], 'eng_pct', 'tur_pct', 'upos');
       container.dataset.loaded = 'true';

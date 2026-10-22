@@ -91,7 +91,11 @@ def create_syntax_blueprint(
 
     @syntax_bp.route("/dep/aligned/<pair_code>/<int:ai>", methods=["GET"])
     def get_aligned_tree(pair_code: str, ai: int):
-        pair_trees = depviz_service.get_aligned_tree_pair(pair_code, ai)
+        norm = request.args.get("normalize_labels", "true").lower() != "false"
+        dim = request.args.get("dim_function_words", "true").lower() != "false"
+        pair_trees = depviz_service.get_aligned_tree_pair(
+            pair_code, ai, normalize_labels=norm, dim_function_words=dim
+        )
         return jsonify(pair_trees), 200
 
     return syntax_bp

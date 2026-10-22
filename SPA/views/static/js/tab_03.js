@@ -162,6 +162,20 @@ class Tab03Controller {
         this.connector.drawLinks();
       });
     }
+
+    if (window.appState) {
+      window.appState.on('scopeChanged', async (sc) => {
+        const pairMap = { SM: 'IR-IA_BR-SM', ZB: 'TL-PA_A-ZB', OK: 'ASD-PKD_KT-OK', 'IR-IA': 'IR-IA_BR-SM', 'BR-SM': 'IR-IA_BR-SM', 'TL-PA': 'TL-PA_A-ZB', 'A-ZB': 'TL-PA_A-ZB', 'TLP-ML': 'TLP-ML_YG-ZB', 'YG-ZB': 'TLP-ML_YG-ZB', 'TSP-JL': 'TSP-JL_KS-ZB', 'KS-ZB': 'TSP-JL_KS-ZB', 'ASD-PKD': 'ASD-PKD_KT-OK', 'KT-OK': 'ASD-PKD_KT-OK' };
+        const nextPair = (sc && sc.pair_code) || (sc && sc.text_code && pairMap[sc.text_code]) || (sc && sc.author_filter && pairMap[sc.author_filter]);
+        if (nextPair && nextPair !== this.currentPair) {
+          this.currentPair = nextPair;
+          if (pairSelect) pairSelect.value = nextPair;
+          this.page = 1;
+          await this.loadParallelView();
+          await this.loadDictionaryDrawer();
+        }
+      });
+    }
   }
 }
 

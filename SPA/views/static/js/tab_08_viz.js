@@ -12,15 +12,19 @@
       const chartDiv = document.getElementById('t8-sens-chart-container');
       const tableDiv = document.getElementById('t8-sens-table-container');
       if (chartDiv && !chartDiv.dataset.loaded) {
-        const data = await window.VizAPI.postJSON('/api/v1/lexicon/diversity/sensitivity', { code: 'IR-IA' });
-        const card = window.ChartHost.createChartCard('Bölüm 9.3: TTR Metin Boyuyla Çöker, MATTR Dirençlidir (IR-IA)', 't8-sens-canvas', 260);
+        const selCode = document.getElementById('t8-select-text')?.value || 'IR-IA';
+        const data = await window.VizAPI.postJSON('/api/v1/lexicon/diversity/sensitivity', { code: selCode });
+        const card = window.ChartHost.createChartCard(`Bölüm 9.3: TTR Metin Boyuyla Çöker, MATTR Dirençlidir (${selCode})`, 't8-sens-canvas', 260);
         chartDiv.appendChild(card.card);
 
         const chart = new window.ChartLines(card.canvas, { marginLeft: 50, marginBottom: 35 });
         chart.renderLines(data.series);
         chartDiv.dataset.loaded = 'true';
 
-        if (tableDiv) window.DataTableRenderer.render(tableDiv, data.table, 10);
+        if (tableDiv) {
+          window.DataTableRenderer.render(tableDiv, data.table, 10);
+          tableDiv.dataset.loaded = 'true';
+        }
       }
     });
 
