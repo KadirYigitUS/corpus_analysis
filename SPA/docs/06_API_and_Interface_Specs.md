@@ -104,20 +104,32 @@ The interface design adheres to the following principles:
 }
 ```
 
-### 3.3 `TokenViewParamsDTO`
+### 3.3 `CorpusScopeDTO`, `TokenViewParamsDTO` & `parse_scope_and_view`
 ```json
 {
-  "field": "lem",
-  "filter_function_words": false,
-  "mode": "drop",
-  "punct": "strip"
+  "scope": {
+    "scope": "author_related",
+    "author_filter": "SM",
+    "text_code": null,
+    "pair_code": "IR-IA_BR-SM"
+  },
+  "view_params": {
+    "field": "lem",
+    "filter_function_words": false,
+    "mode": "drop",
+    "punct": "strip"
+  }
 }
 ```
-*Validation Rules*:
+*Validation & Propagation Rules (`parse_scope_and_view(args, body)`)*:
+- `scope.scope`: One of `["all", "all_en", "all_tr", "trans_en", "trans_tr", "indig_tr", "author_related", "author_turkish", "pairs", "single"]` (also accepts `category` query alias).
+- `scope.author_filter`: Optional focal/corpus author code (`SM, ZB, OK, NCK, AS, CE, SG`); required when `scope` is `author_related` or `author_turkish`.
+- `scope.text_code`: Required when `scope == "single"`.
 - `field`: Must be `"tok"` or `"lem"`.
-- `filter_function_words`: Boolean.
-- `mode`: Must be `"drop"` or `"mask"`.
+- `filter_function_words`: Boolean (`true`/`false`/`1`/`0`).
+- `mode`: Must be `"drop"` or `"mask"`. Under `mode == "mask"`, bag-of-words metrics (`N, V, TTR, Guiraud_R, Yule_K, Simpson_D, MTLD, HD_D`) use `view.analysed()`, whereas positional window metrics (`MATTR_50/100/500`, `masked_mattr_series`, `CollocationAnalyzer`, `Concordancer`) preserve masked positions (`None` at `eligible == False`).
 - `punct`: Must be one of `["drop", "keep", "strip", "split"]`.
+- Every `GET` and `POST` analytical/visualization endpoint parses `(scope, view)` via `parse_scope_and_view(request.args, request.get_json(silent=True))` and keys `global_payload_cache` by `(scope.cache_key(), view.cache_key(), *endpoint_args)`.
 
 ### 3.4 `SearchQueryDTO`
 ```json

@@ -1,11 +1,15 @@
 """Service computing semantic group counts, dispersion curves, and correlation matrices."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
 
 from corpus_toolkit import batch_kwic
+from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
 from SPA.repositories.corpus_repository import CorpusRepository
+from SPA.services.payload_cache import global_payload_cache
 from SPA.services.payload_utils import df_to_table_payload
 
 
@@ -14,11 +18,34 @@ class DispersionMatrixService:
         self._repo = corpus_repo or CorpusRepository()
         self.repo = self._repo
 
-    def analyze_dispersion(self, raw_input: str, field: str = "lem", is_content: bool = False) -> dict[str, Any]:
-        bk = batch_kwic.BatchKwicAnalyzer()
-        turkish_texts = list(self.repo.loader.load_all_turkish())
+    def analyze_dispersion(
+        self,
+        raw_input: str,
+        field: str = "lem",
+        is_content: bool = False,
+        scope: CorpusScopeDTO | None = None,
+        view_params: TokenViewParamsDTO | None = None,
+    ) -> dict[str, Any]:
+        sc = scope or CorpusScopeDTO(scope="all_tr")
+        vp = view_params or TokenViewParamsDTO(
+            field=field, filter_function_words=is_content, mode="drop", punct="drop"
+        )
+        eff_field = vp.field if view_params else field
+        eff_fw = vp.filter_function_words if view_params else is_content
+        cache_key = global_payload_cache.build_key(
+            "disp:matrices",
+            scope=sc,
+            view=vp,
+            raw_input=raw_input,
+            eff_field=eff_field,
+            eff_fw=eff_fw,
+        )
+        if cached := global_payload_cache.get(cache_key):
+            return cached
 
-        # Parse either named groups ("makine: robot, makine | insan: insan") or comma terms
+        bk = batch_kwic.BatchKwicAnalyzer()
+        texts = self.repo.get_texts_by_scope(sc) or list(self.repo.loader.load_all_turkish())
+
         terms_or_dict: Any
         if ":" in raw_input and "|" in raw_input:
             groups_dict = {}
@@ -33,14 +60,19 @@ class DispersionMatrixService:
         else:
             terms_or_dict = [w.strip() for w in raw_input.split(",") if w.strip()]
 
-        out = bk.analyze(terms_or_dict, turkish_texts, field=field, filter_function_words=is_content)
+        out = bk.analyze(
+            terms_or_dict,
+            texts,
+            field=eff_field,  # type: ignore[arg-type]
+            filter_function_words=eff_fw,
+            mode=vp.mode,  # type: ignore[arg-type]
+            punct=vp.punct,  # type: ignore[arg-type]
+        )
 
-        # 1. Counts and Rates Tables
         counts_table = df_to_table_payload(out.counts, title="Ham Bulgu Sayımları")
         rates_table = df_to_table_payload(out.rates.round(1), title="10 Bin Sözcük Başına Sıklık (Per10k)")
         summary_table = df_to_table_payload(out.summary().round(3), title="Yayılım Özeti (Juilland D)")
 
-        # 2. Şekil 3A: Rates Heatmap Matrix
         rates_matrix = {
             "title": "Şekil 3A: 10 000 Akan Sözcük Başına Sıklık (Per10k)",
             "rows": list(out.rates.index),
@@ -50,7 +82,6 @@ class DispersionMatrixService:
             "scale": "seq",
         }
 
-        # 3. Şekil 3B: Pearson r Correlation Matrix
         corr_df = out.matrix("pearson_r")
         corr_matrix = {
             "title": "Şekil 3B: Sözcük Profilleri Arasında Pearson r Bağıntısı",
@@ -62,7 +93,6 @@ class DispersionMatrixService:
             "center": 0.0,
         }
 
-        # 4. Şekil 3C: 10-Chunk Dispersion Series
         labels = list(out.chunks.keys())
         first_label = labels[0] if labels else ""
         first_chunks = out.chunks[first_label] if first_label else np.zeros((len(out.codes), 10))
@@ -75,7 +105,7 @@ class DispersionMatrixService:
                 "y": [round(float(v), 1) for v in first_chunks[i]],
             })
 
-        return {
+        payload = {
             "counts": counts_table,
             "rates": rates_table,
             "summary": summary_table,
@@ -84,3 +114,6 @@ class DispersionMatrixService:
             "chunk_series": chunk_series,
             "label_name": first_label,
         }
+        global_payload_cache.put(cache_key, payload)
+        return payload
+

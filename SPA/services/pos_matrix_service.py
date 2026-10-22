@@ -19,18 +19,19 @@ class PosMatrixService:
         scope: CorpusScopeDTO | None = None,
         view: TokenViewParamsDTO | None = None,
     ) -> dict[str, Any]:
+        eff_content = content_only or bool(view and view.filter_function_words)
         cache_key = global_payload_cache.build_key(
-            "pos:heatmap", scope=scope, view=view, content_only=content_only
+            "pos:heatmap", scope=scope, view=view, content_only=eff_content
         )
         cached = global_payload_cache.get(cache_key)
         if cached:
             return cached
 
-        loader = self._repo.loader
+        texts = self._repo.get_texts_by_scope(scope) if scope else list(self._repo.loader.load_all())
         P = pos.PosComparativeAnalyzer()
-        profile_df = P.profile_table(loader.load_all(), content_only=content_only)
+        profile_df = P.profile_table(texts, content_only=eff_content)
 
-        rows = [f"{c} · {t[:24]}" for c, t in zip(profile_df["code"], profile_df["title"])]
+        rows = [f"{c} · {t[:24]}" for c, t in zip(profile_df["code"], profile_df["title"])] if not profile_df.empty else []
         cols = list(pos.UPOS_ORDER)
         matrix_vals = []
 
@@ -48,7 +49,8 @@ class PosMatrixService:
             "values": matrix_vals,
             "fmt": ".0f",
             "scale": "seq",
-            "content_only": content_only,
+            "content_only": eff_content,
         }
         global_payload_cache.put(cache_key, payload)
         return payload
+

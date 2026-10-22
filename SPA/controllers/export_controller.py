@@ -7,7 +7,7 @@ import io
 from flask import Blueprint, jsonify, request, send_file
 
 from SPA.models.stats_dto import ExportBundleDTO
-from SPA.models.view_params_dto import TokenViewParamsDTO
+from SPA.models.view_params_dto import parse_scope_and_view
 from SPA.services.inventory_memory_service import InventoryMemoryService
 from SPA.services.reporter_bundle_service import ReporterBundleService
 
@@ -26,12 +26,13 @@ def create_export_blueprint(
         if not term:
             return jsonify({"error": "Missing search term"}), 400
 
-        view_params = TokenViewParamsDTO.from_dict(data.get("view_params", {}))
+        scope_dto, view_params = parse_scope_and_view(request.args, data)
         max_conc = int(data.get("max_concordance", 5))
 
         res = bundle_service.execute_quick_search(
             term=term,
             view_params=view_params,
+            scope_dto=scope_dto,
             max_concordance=max_conc,
         )
         return jsonify(res), 200

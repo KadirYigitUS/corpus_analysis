@@ -34,8 +34,34 @@
     setTimeout(() => { toast.style.display = 'none'; }, 4000);
   }
 
+  function withQueryScope(url) {
+    if (!window.appState || typeof window.appState.buildQueryParams !== 'function') {
+      return url;
+    }
+    const [base, existingQs] = url.split('?');
+    const existing = new URLSearchParams(existingQs || '');
+    const globalParams = window.appState.buildQueryParams();
+    globalParams.forEach((v, k) => {
+      if (!existing.has(k)) existing.set(k, v);
+    });
+    const qs = existing.toString();
+    return qs ? `${base}?${qs}` : base;
+  }
+
+  function withBodyScope(body) {
+    if (!window.appState) return body || {};
+    const payload = Object.assign({}, body || {});
+    if (payload.scope === undefined && window.appState.state.scope) {
+      payload.scope = Object.assign({}, window.appState.state.scope);
+    }
+    if (payload.view_params === undefined && window.appState.state.view_params) {
+      payload.view_params = Object.assign({}, window.appState.state.view_params);
+    }
+    return payload;
+  }
+
   window.VizAPI = {
-    getJSON: (url) => fetchJSON(url, { method: 'GET' }),
-    postJSON: (url, body) => fetchJSON(url, { method: 'POST', body: JSON.stringify(body) })
+    getJSON: (url) => fetchJSON(withQueryScope(url), { method: 'GET' }),
+    postJSON: (url, body) => fetchJSON(url, { method: 'POST', body: JSON.stringify(withBodyScope(body)) })
   };
 })(window);

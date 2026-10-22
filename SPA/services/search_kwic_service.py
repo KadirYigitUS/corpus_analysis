@@ -88,8 +88,10 @@ class SearchKwicService:
         self,
         query_dto: SearchQueryDTO,
         scope_dto: CorpusScopeDTO,
+        view_params: TokenViewParamsDTO | None = None,
     ) -> dict[str, int]:
         """Run search across all 4 punctuation regimes (drop, keep, strip, split) to compare hit counts."""
+        vp = view_params or TokenViewParamsDTO()
         texts = self._repo.get_texts_by_scope(scope_dto)
         terms = [t.strip() for t in query_dto.query.split(",") if t.strip()]
         counts: dict[str, int] = {}
@@ -97,9 +99,11 @@ class SearchKwicService:
         for p_mode in ("drop", "keep", "strip", "split"):
             sq = SearchQuery(
                 terms=terms,
-                field="tok",
+                field=vp.field,  # type: ignore[arg-type]
                 match=query_dto.match_mode,  # type: ignore[arg-type]
                 case_sensitive=query_dto.case_sensitive,
+                filter_function_words=vp.filter_function_words,
+                mode=vp.mode,  # type: ignore[arg-type]
                 punct=p_mode,  # type: ignore[arg-type]
             )
             res = self._engine.search(sq, texts)

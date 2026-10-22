@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
-from SPA.models.view_params_dto import CorpusScopeDTO
+from SPA.models.view_params_dto import parse_scope_and_view
 from SPA.services.depviz_service import DepvizService
 from SPA.services.pos_service import PosService
 
@@ -19,32 +19,43 @@ def create_syntax_blueprint(
     @syntax_bp.route("/pos/profiles", methods=["POST"])
     def get_pos_profiles():
         data = request.get_json() or {}
-        scope_dto = CorpusScopeDTO.from_dict(data)
-        content_only = bool(data.get("content_only", False))
-        table = pos_service.get_pos_profile_table(scope_dto, content_only=content_only)
+        scope_dto, view_params = parse_scope_and_view(request.args, data)
+        content_only = bool(data.get("content_only", False)) or view_params.filter_function_words
+        table = pos_service.get_pos_profile_table(
+            scope_dto, content_only=content_only, view_params=view_params
+        )
         return jsonify({"items": table}), 200
 
     @syntax_bp.route("/pos/pair-delta/<pair_code>", methods=["GET"])
     def get_pair_delta(pair_code: str):
-        content_only = request.args.get("content_only", "false").lower() == "true"
-        delta = pos_service.get_pair_delta_pp(pair_code, content_only=content_only)
+        _, view_params = parse_scope_and_view(request.args)
+        content_only = request.args.get("content_only", "false").lower() == "true" or view_params.filter_function_words
+        delta = pos_service.get_pair_delta_pp(
+            pair_code, content_only=content_only, view_params=view_params
+        )
         return jsonify(delta), 200
 
     @syntax_bp.route("/pos/author-summary", methods=["GET"])
     def get_author_summary():
-        content_only = request.args.get("content_only", "false").lower() == "true"
-        rows = pos_service.get_author_summary_table(content_only=content_only)
+        _, view_params = parse_scope_and_view(request.args)
+        content_only = request.args.get("content_only", "false").lower() == "true" or view_params.filter_function_words
+        rows = pos_service.get_author_summary_table(
+            content_only=content_only, view_params=view_params
+        )
         return jsonify({"items": rows}), 200
 
     @syntax_bp.route("/pos/group-comparison", methods=["POST"])
     def get_group_comparison():
         data = request.get_json() or {}
+        _, view_params = parse_scope_and_view(request.args, data)
+        content_only = bool(data.get("content_only", False)) or view_params.filter_function_words
         comp = pos_service.get_group_comparison_figure2c(
             group_a_scope=str(data.get("group_a", "trans_tr")),
             group_b_scope=str(data.get("group_b", "indig_tr")),
             comparison_key=str(data.get("comparison_key", "ALL")),
-            content_only=bool(data.get("content_only", False)),
+            content_only=content_only,
             n_bootstrap=int(data.get("n_bootstrap", 800)),
+            view_params=view_params,
         )
         return jsonify(comp), 200
 

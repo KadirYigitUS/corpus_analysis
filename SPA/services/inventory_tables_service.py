@@ -28,16 +28,25 @@ class InventoryTablesService:
 
         loader = self._repo.loader
         inv = loader.registry.inventory()
+        texts = self._repo.get_texts_by_scope(scope) if scope else list(loader.load_all())
+        allowed_codes = {t.record.code for t in texts}
         sizes = loader.load_all().summary()
         merged = sizes.merge(inv[["code", "focal_code", "year"]], on="code")
+        merged = merged[merged["code"].isin(allowed_codes)]
 
         items = []
         for _, row in merged.iterrows():
+            code_str = str(row["code"])
             focal = str(row["focal_code"])
+            if view and (view.filter_function_words or view.punct != "drop"):
+                t_obj = self._repo.get_text_by_code(code_str)
+                tok_n = len(self._repo.get_token_view(t_obj, view).analysed()) if t_obj else int(row["tokens"])
+            else:
+                tok_n = int(row["tokens"])
             items.append({
-                "code": str(row["code"]),
+                "code": code_str,
                 "title": str(row["title"]),
-                "tokens": int(row["tokens"]),
+                "tokens": tok_n,
                 "sentences": int(row["sentences"]),
                 "focal_code": focal,
                 "year": int(row["year"]) if pd.notna(row["year"]) else 0,
@@ -60,6 +69,9 @@ class InventoryTablesService:
             return cached
 
         df = self._repo.loader.registry.verify_files()
+        if scope:
+            allowed = {t.record.code for t in self._repo.get_texts_by_scope(scope)}
+            df = df[df["code"].isin(allowed)].reset_index(drop=True)
         payload = df_to_table_payload(df, title="Disk Pickle Doğrulama Tablosu")
         global_payload_cache.put(cache_key, payload)
         return payload
@@ -75,6 +87,17 @@ class InventoryTablesService:
             return cached
 
         df = self._repo.loader.load_all().summary().sort_values(["author_translator", "type"])
+        if scope:
+            allowed = {t.record.code for t in self._repo.get_texts_by_scope(scope)}
+            df = df[df["code"].isin(allowed)].reset_index(drop=True)
+        if view and (view.filter_function_words or view.punct != "drop") and not df.empty:
+            df = df.copy()
+            df["tokens"] = [
+                len(self._repo.get_token_view(t, view).analysed())
+                if (t := self._repo.get_text_by_code(str(c))) is not None
+                else int(orig)
+                for c, orig in zip(df["code"], df["tokens"])
+            ]
         payload = df_to_table_payload(df, title="Derlem Boyut Özeti")
         global_payload_cache.put(cache_key, payload)
         return payload
@@ -93,11 +116,20 @@ class InventoryTablesService:
         if cached:
             return cached
 
+        vp = view or TokenViewParamsDTO(field="lem", filter_function_words=True, mode="drop", punct="drop")
+        texts = self._repo.get_texts_by_scope(scope) if scope else list(self._repo.loader.load_all())
         rows = []
-        for t in self._repo.loader.load_all().iter_evicting():
+        for t in texts:
             try:
                 from corpus_toolkit import TokenView
-                n = len(TokenView(t, "lem", filter_function_words=True))
+                tv = TokenView(
+                    t,
+                    field=vp.field if view else "lem",  # type: ignore[arg-type]
+                    filter_function_words=vp.filter_function_words if view else True,
+                    mode=vp.mode,  # type: ignore[arg-type]
+                    punct=vp.punct,  # type: ignore[arg-type]
+                )
+                n = len(tv.analysed())
                 rows.append({
                     "author_translator": t.record.focal_name,
                     "title": t.record.title,

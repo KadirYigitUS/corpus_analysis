@@ -18,7 +18,8 @@ class Tab01Controller {
 
   async loadSummary() {
     try {
-      const resp = await fetch('/api/v1/corpus/inventory');
+      const qs = window.appState && window.appState.buildQueryParams ? `?${window.appState.buildQueryParams().toString()}` : '';
+      const resp = await fetch(`/api/v1/corpus/inventory${qs}`);
       if (resp.ok) {
         const stats = await resp.json();
         document.getElementById('t1-total-texts').innerText = stats.total_texts;
@@ -35,8 +36,10 @@ class Tab01Controller {
   async loadSourceTables() {
     try {
       const scope = (window.appState && window.appState.state.scope && window.appState.state.scope.scope) || 'all';
-      const catParam = ['trans_en', 'trans_tr', 'indig_tr'].includes(scope) ? `?category=${scope}` : '';
-      const resp = await fetch(`/api/v1/corpus/source-tables${catParam}`);
+      const qs = window.appState && window.appState.buildQueryParams
+        ? `?${window.appState.buildQueryParams({ category: scope }).toString()}`
+        : (['trans_en', 'trans_tr', 'indig_tr'].includes(scope) ? `?category=${scope}` : '');
+      const resp = await fetch(`/api/v1/corpus/source-tables${qs}`);
       if (resp.ok) {
         const data = await resp.json();
         let allRows = [
@@ -77,7 +80,14 @@ class Tab01Controller {
 
   attachEvents() {
     if (window.appState) {
-      window.appState.on('scopeChanged', () => this.loadSourceTables());
+      window.appState.on('scopeChanged', () => {
+        this.loadSummary();
+        this.loadSourceTables();
+      });
+      window.appState.on('viewParamsChanged', () => {
+        this.loadSummary();
+        this.loadSourceTables();
+      });
     }
     const container = document.getElementById('t1-inventory-grid');
     if (!container) return;

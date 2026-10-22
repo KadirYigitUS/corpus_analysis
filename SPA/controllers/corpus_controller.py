@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
+from SPA.models.view_params_dto import parse_scope_and_view
 from SPA.services.inventory_memory_service import InventoryMemoryService
 from SPA.services.payload_cache import global_payload_cache
 
@@ -14,13 +15,17 @@ def create_corpus_blueprint(service: InventoryMemoryService) -> Blueprint:
 
     @corpus_bp.route("/inventory", methods=["GET"])
     def get_inventory():
-        summary = service.get_summary_stats()
+        scope, view = parse_scope_and_view(request.args)
+        summary = service.get_summary_stats(scope_dto=scope, view_params=view)
         return jsonify(summary), 200
 
     @corpus_bp.route("/source-tables", methods=["GET"])
     def get_source_tables():
+        scope, view = parse_scope_and_view(request.args)
         category = request.args.get("category")
-        tables = service.get_source_tables(category_filter=category)
+        tables = service.get_source_tables(
+            category_filter=category, scope_dto=scope, view_params=view
+        )
         return jsonify(tables), 200
 
     @corpus_bp.route("/distribution-figure1", methods=["GET"])

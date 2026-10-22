@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
+from SPA.models.view_params_dto import parse_scope_and_view
 from SPA.services.pos_matrix_service import PosMatrixService
 
 
@@ -14,8 +15,17 @@ def create_syntax_viz_blueprint(matrix_service: PosMatrixService) -> Blueprint:
     @syntax_viz_bp.route("/pos/matrix", methods=["GET"])
     def get_pos_matrix():
         """Return 13x17 UPOS heatmap matrix payload."""
-        content_only = request.args.get("content_only", "false").lower() == "true"
-        return jsonify(matrix_service.get_upos_heatmap_matrix(content_only=content_only))
+        scope, view = parse_scope_and_view(request.args)
+        content_only = (
+            request.args.get("content_only", "false").lower() == "true"
+            or view.filter_function_words
+        )
+        return jsonify(
+            matrix_service.get_upos_heatmap_matrix(
+                content_only=content_only, scope=scope, view=view
+            )
+        )
 
     return syntax_viz_bp
+
 

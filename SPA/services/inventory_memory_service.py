@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
 from SPA.repositories.corpus_repository import CorpusRepository
 
 
@@ -13,17 +14,35 @@ class InventoryMemoryService:
     def __init__(self, corpus_repo: CorpusRepository) -> None:
         self._repo = corpus_repo
 
-    def get_summary_stats(self) -> dict[str, Any]:
-        """Aggregate total counts across all texts, authors, and translations."""
+    def get_summary_stats(
+        self,
+        scope_dto: CorpusScopeDTO | None = None,
+        view_params: TokenViewParamsDTO | None = None,
+    ) -> dict[str, Any]:
+        """Aggregate total counts across texts in scope and view parameters."""
         inv = self._repo.get_inventory_table()
+        if scope_dto and (scope_dto.scope != "all" or scope_dto.author_filter or scope_dto.text_code or scope_dto.pair_code):
+            texts = self._repo.get_texts_by_scope(scope_dto)
+            allowed_codes = {t.record.code for t in texts}
+            inv = [r for r in inv if r.get("code") in allowed_codes]
+
         try:
             summary_df = self._repo.loader.load_all().summary()
             sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
         except Exception:
             sum_dict = {}
 
+        if view_params and (view_params.filter_function_words or view_params.punct != "drop"):
+            total_tokens = 0
+            for r in inv:
+                tc = str(r.get("code", ""))
+                t = self._repo.get_text_by_code(tc)
+                if t is not None:
+                    total_tokens += len(self._repo.get_token_view(t, view_params).analysed())
+        else:
+            total_tokens = sum(int(sum_dict.get(r.get("code", ""), {}).get("tokens", 0) or 0) for r in inv)
+
         total_texts = len(inv)
-        total_tokens = sum(int(sum_dict.get(r.get("code", ""), {}).get("tokens", 0) or 0) for r in inv)
         total_sentences = sum(int(sum_dict.get(r.get("code", ""), {}).get("sentences", 0) or 0) for r in inv)
         categories = set(r.get("type", "") for r in inv if r.get("type"))
         authors = set(r.get("author_translator", "") for r in inv if r.get("author_translator"))
@@ -38,10 +57,22 @@ class InventoryMemoryService:
         }
 
     def get_source_tables(
-        self, category_filter: str | None = None
+        self,
+        category_filter: str | None = None,
+        scope_dto: CorpusScopeDTO | None = None,
+        view_params: TokenViewParamsDTO | None = None,
     ) -> dict[str, list[dict[str, Any]]]:
         """Group texts into Translated EN, Translated TR, and Indigenous TR."""
         inv = self._repo.get_inventory_table()
+        eff_scope = scope_dto
+        if eff_scope is None and category_filter:
+            eff_scope = CorpusScopeDTO.from_dict(category_filter)
+
+        if eff_scope and (eff_scope.scope != "all" or eff_scope.author_filter or eff_scope.text_code or eff_scope.pair_code):
+            texts = self._repo.get_texts_by_scope(eff_scope)
+            allowed = {t.record.code for t in texts}
+            inv = [r for r in inv if r.get("code") in allowed]
+
         try:
             summary_df = self._repo.loader.load_all().summary()
             sum_dict = summary_df.set_index("code").to_dict(orient="index") if not summary_df.empty else {}
@@ -56,7 +87,11 @@ class InventoryMemoryService:
             code = row.get("code", "")
             meta = sum_dict.get(code, {})
             merged = dict(row)
-            merged["tokens"] = int(meta.get("tokens", 0) or 0)
+            if view_params and (view_params.filter_function_words or view_params.punct != "drop"):
+                t = self._repo.get_text_by_code(code)
+                merged["tokens"] = len(self._repo.get_token_view(t, view_params).analysed()) if t else int(meta.get("tokens", 0) or 0)
+            else:
+                merged["tokens"] = int(meta.get("tokens", 0) or 0)
             merged["sentences"] = int(meta.get("sentences", 0) or 0)
             merged["text_code"] = code
 
@@ -74,18 +109,22 @@ class InventoryMemoryService:
             else:
                 indig_tr.append(merged)
 
-        if category_filter == "trans_en":
+        cat_key = eff_scope.scope if eff_scope else category_filter
+        if cat_key in ("trans_en", "all_en"):
             return {"trans_en": trans_en}
-        elif category_filter == "trans_tr":
+        if cat_key == "trans_tr":
             return {"trans_tr": trans_tr}
-        elif category_filter == "indig_tr":
+        if cat_key == "indig_tr":
             return {"indig_tr": indig_tr}
+        if cat_key in ("all_tr", "author_turkish"):
+            return {"trans_tr": trans_tr, "indig_tr": indig_tr}
 
         return {
             "trans_en": trans_en,
             "trans_tr": trans_tr,
             "indig_tr": indig_tr,
         }
+
 
     def get_token_distribution_figure1(self) -> dict[str, Any]:
         """Return data for Figure 1: Content vs. Function Word token sizes."""

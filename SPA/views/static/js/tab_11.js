@@ -21,6 +21,40 @@ class Tab11Controller {
     if (evictBtn) {
       evictBtn.addEventListener('click', () => this.evictAllRam());
     }
+
+    if (window.appState) {
+      window.appState.on('scopeChanged', () => this.updateSnippetPreview());
+      window.appState.on('viewParamsChanged', () => this.updateSnippetPreview());
+    }
+  }
+
+  updateSnippetPreview() {
+    const scriptBox = document.getElementById('t11-python-snippet');
+    if (!scriptBox || !window.appState) return;
+    const term = document.getElementById('t11-input-term')?.value || 'bilim-kurgu';
+    const sc = window.appState.state.scope || { scope: 'all' };
+    const vp = window.appState.state.view_params || { field: 'tok', filter_function_words: false, mode: 'drop', punct: 'drop' };
+    const catMap = {
+      all: 'All texts',
+      all_en: 'All English texts',
+      trans_en: 'All English texts',
+      all_tr: 'All Turkish texts',
+      indig_tr: 'Indigenous Turkish novels',
+      author_related: 'Author-translator related texts',
+      author_turkish: 'Author-translator Turkish texts'
+    };
+    const catLabel = catMap[sc.scope] || 'All texts';
+    const authArg = sc.author_filter ? `, author='${sc.author_filter}'` : '';
+    scriptBox.value =
+      `from corpus_toolkit.loader import CorpusLoader\n` +
+      `from corpus_toolkit.explorer import quick_search\n\n` +
+      `loader = CorpusLoader()\n` +
+      `res = quick_search(\n` +
+      `    loader, '${term}', category='${catLabel}'${authArg},\n` +
+      `    field='${vp.field}', filter_function_words=${vp.filter_function_words ? 'True' : 'False'},\n` +
+      `    mode='${vp.mode}', punct='${vp.punct}'\n` +
+      `)\n` +
+      `print(res)\n`;
   }
 
   async evictAllRam() {
@@ -40,6 +74,7 @@ class Tab11Controller {
     const term = document.getElementById('t11-input-term')?.value || 'bilim-kurgu';
     const payload = {
       term: term,
+      scope: window.appState ? window.appState.state.scope : { scope: 'all' },
       view_params: window.appState ? window.appState.state.view_params : {},
       max_concordance: 5
     };

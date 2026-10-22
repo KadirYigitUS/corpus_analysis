@@ -80,9 +80,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById(id).addEventListener('change', updateMatrix);
   });
 
-  document.getElementById('global-scope-select').addEventListener('change', (e) => {
-    window.appState.setScope({ scope: e.target.value });
-  });
+  const scopeSel = document.getElementById('global-scope-select');
+  const subSel = document.getElementById('global-scope-subselect');
+
+  const AUTHOR_OPTIONS = [
+    { val: 'SM', label: 'Selma MİNE [SM]' },
+    { val: 'ZB', label: 'Zühtü BAYAR [ZB]' },
+    { val: 'OK', label: 'Özlem KURDOĞLU [OK]' },
+    { val: 'NCK', label: 'N. Can KANTARCI [NCK]' },
+    { val: 'AS', label: 'Algan SEZGİNTÜREDİ [AS]' },
+    { val: 'CE', label: 'Çiğdem ERKAL [CE]' },
+    { val: 'SG', label: 'Sabri GÜRSES [SG]' }
+  ];
+  const TEXT_OPTIONS = [
+    { val: 'IR-IA', label: 'IR-IA · I, Robot' },
+    { val: 'BR-SM', label: 'BR-SM · Ben, Robot' },
+    { val: 'OBI-SM', label: 'OBI-SM · OnaBirİsimVer' },
+    { val: 'TL-PA', label: 'TL-PA · The Light' },
+    { val: 'A-ZB', label: 'A-ZB · Aydınlık' },
+    { val: 'TLP-ML', label: 'TLP-ML · The Lonely Planet' },
+    { val: 'YG-ZB', label: 'YG-ZB · Yalnız Gezegen' },
+    { val: 'TSP-JL', label: 'TSP-JL · The Scarlet Plague' },
+    { val: 'KS-ZB', label: 'KS-ZB · Kızıl Veba' },
+    { val: 'SU-ZB', label: 'SU-ZB · Sahte Uygarlık' },
+    { val: 'ASD-PKD', label: 'ASD-PKD · A Scanner Darkly' },
+    { val: 'KT-OK', label: 'KT-OK · Karanlığı Taramak' },
+    { val: 'SCS-OK', label: 'SCS-OK · Son Çıkan Işığı Söndürsün' }
+  ];
+
+  const syncSubSelect = (scopeVal) => {
+    if (!subSel) return;
+    if (scopeVal === 'author_related' || scopeVal === 'author_turkish') {
+      subSel.innerHTML = AUTHOR_OPTIONS.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
+      subSel.style.display = 'inline-block';
+      const curAuth = window.appState.state.scope.author_filter || 'SM';
+      subSel.value = AUTHOR_OPTIONS.some(o => o.val === curAuth) ? curAuth : 'SM';
+      window.appState.setScope({ scope: scopeVal, author_filter: subSel.value, text_code: null });
+    } else if (scopeVal === 'single') {
+      subSel.innerHTML = TEXT_OPTIONS.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
+      subSel.style.display = 'inline-block';
+      const curTxt = window.appState.state.scope.text_code || 'BR-SM';
+      subSel.value = TEXT_OPTIONS.some(o => o.val === curTxt) ? curTxt : 'BR-SM';
+      window.appState.setScope({ scope: scopeVal, author_filter: null, text_code: subSel.value });
+    } else {
+      subSel.style.display = 'none';
+      subSel.innerHTML = '';
+      window.appState.setScope({ scope: scopeVal, author_filter: null, text_code: null });
+    }
+  };
+
+  if (scopeSel) {
+    scopeSel.addEventListener('change', (e) => {
+      syncSubSelect(e.target.value);
+    });
+  }
+  if (subSel) {
+    subSel.addEventListener('change', (e) => {
+      const sc = scopeSel ? scopeSel.value : window.appState.state.scope.scope;
+      if (sc === 'author_related' || sc === 'author_turkish') {
+        window.appState.setScope({ scope: sc, author_filter: e.target.value });
+      } else if (sc === 'single') {
+        window.appState.setScope({ scope: sc, text_code: e.target.value });
+      }
+    });
+  }
 
   // 4. Initial Tab 1 Activation & Telemetry Polling
   if (window.tab01) {

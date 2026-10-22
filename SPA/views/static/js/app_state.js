@@ -53,6 +53,42 @@ class AppStateManager {
     this.emit('viewParamsChanged', this.state.view_params);
   }
 
+  buildQueryParams(extra = {}) {
+    const params = new URLSearchParams();
+    const sc = this.state.scope || {};
+    const vp = this.state.view_params || {};
+
+    if (sc.scope) {
+      params.set('category', sc.scope);
+      params.set('scope', sc.scope);
+    }
+    if (sc.author_filter) params.set('author_filter', sc.author_filter);
+    if (sc.pair_code) params.set('pair_code', sc.pair_code);
+    if (sc.text_code) params.set('text_code', sc.text_code);
+
+    if (vp.field) params.set('field', vp.field);
+    if (vp.filter_function_words !== undefined) {
+      params.set('filter_function_words', String(Boolean(vp.filter_function_words)));
+    }
+    if (vp.mode) params.set('mode', vp.mode);
+    if (vp.punct) params.set('punct', vp.punct);
+
+    Object.entries(extra || {}).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    });
+    return params;
+  }
+
+  buildRequestPayload(extra = {}) {
+    return Object.assign(
+      {
+        scope: Object.assign({}, this.state.scope),
+        view_params: Object.assign({}, this.state.view_params)
+      },
+      extra || {}
+    );
+  }
+
   async loadI18n(lang) {
     try {
       const resp = await fetch(`/static/i18n/${lang}.json`);

@@ -155,3 +155,21 @@ def test_single_shared_corpus_loader_and_payload_cache_keying():
         assert resp.status_code == 200
     assert global_payload_cache.get(k1) is None
 
+    # Verify endpoints return distinct results across scopes and TokenView params
+    with app.test_client() as c:
+        s_all_resp = c.get("/api/v1/corpus/sizes-chart?scope=all").get_json()
+        s_ind_resp = c.get("/api/v1/corpus/sizes-chart?scope=indig_tr").get_json()
+        assert len(s_all_resp["items"]) == 13
+        assert len(s_ind_resp["items"]) == 3
+
+        s_auth_resp = c.get("/api/v1/corpus/sizes-chart?scope=author_related&author_filter=SM").get_json()
+        assert len(s_auth_resp["items"]) == 3
+
+        qs_tr = c.post(
+            "/api/v1/export/quick-search",
+            json={"term": "robot", "scope": {"scope": "author_turkish", "author_filter": "SM"}, "view_params": {"field": "lem", "filter_function_words": True, "mode": "mask", "punct": "strip"}},
+        ).get_json()
+        assert "author='SM'" in qs_tr["python_snippet"]
+        assert "mode='mask'" in qs_tr["python_snippet"]
+
+

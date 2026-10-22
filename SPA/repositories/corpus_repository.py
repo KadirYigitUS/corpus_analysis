@@ -48,39 +48,54 @@ class CorpusRepository:
     def get_texts_by_scope(
         self, scope_dto: CorpusScopeDTO
     ) -> list[LazyCorpusText]:
-        """Retrieve LazyCorpusText objects based on the requested scope."""
+        """Retrieve LazyCorpusText objects based on the requested scope and author_filter."""
         scope = scope_dto.scope
-        if scope == "all":
-            return self._loader.load_all()
-        elif scope == "all_en":
-            return self._loader.load_all_english()
-        elif scope == "all_tr":
-            return self._loader.load_all_turkish()
-        elif scope == "trans_en":
-            return list(self._loader.load_all_english())
-        elif scope == "trans_tr":
-            return [
-                t for t in self._loader.load_all_turkish()
-                if getattr(t.record, "corpus_type", "") == "translation"
-            ]
-        elif scope == "indig_tr":
-            return list(self._loader.load_indigenous())
-        elif scope == "pairs":
+        author = scope_dto.author_filter
+
+        if scope == "author_related":
+            return list(self._loader.load_author_related(author or "SM"))
+        if scope == "author_turkish":
+            return list(self._loader.load_author_turkish(author or "SM"))
+        if scope == "single":
+            tc = scope_dto.text_code or "BR-SM"
+            t = self.get_text_by_code(tc)
+            return [t] if t else []
+        if scope == "pairs":
             texts: list[LazyCorpusText] = []
             parts = {scope_dto.pair_code, *(scope_dto.pair_code or "").split("_")}
             if "TSP-JL" in parts:
                 parts.add("SP-JL")
-            for spec, eng, tur in self._loader.load_translation_pairs():
+            for spec, eng, tur in self._loader.load_translation_pairs(author=author):
                 if scope_dto.pair_code and not (
                     parts & {spec.pair_id, f"{spec.eng.code}_{spec.tur.code}", spec.eng.code, spec.tur.code}
                 ):
                     continue
                 texts.extend([eng, tur])
             return texts
-        elif scope == "single" and scope_dto.text_code:
-            t = self.get_text_by_code(scope_dto.text_code)
-            return [t] if t else []
-        return list(self._loader.load_all())
+
+        if scope == "all":
+            base = list(self._loader.load_all())
+        elif scope in ("all_en", "trans_en"):
+            base = list(self._loader.load_all_english())
+        elif scope == "all_tr":
+            base = list(self._loader.load_all_turkish())
+        elif scope == "trans_tr":
+            base = [
+                t for t in self._loader.load_all_turkish()
+                if getattr(t.record, "corpus_type", "") == "translation"
+            ]
+        elif scope == "indig_tr":
+            base = list(self._loader.load_indigenous())
+        else:
+            base = list(self._loader.load_all())
+
+        if author:
+            try:
+                focal = self._loader.registry.resolve_author(author)
+            except Exception:
+                focal = author.strip().upper()
+            base = [t for t in base if getattr(t.record, "focal_code", "") == focal]
+        return base
 
     def get_text_by_code(self, code: str) -> LazyCorpusText | None:
         """Load a single LazyCorpusText by code, returning None if not found."""
@@ -103,12 +118,32 @@ class CorpusRepository:
         )
 
     def get_text_tokens_matrix(
-        self, texts: list[LazyCorpusText], params: TokenViewParamsDTO
-    ) -> dict[str, list[str]]:
-        """Extract token or lemma sequences for a list of texts under TokenView parameters."""
-        result: dict[str, list[str]] = {}
+        self,
+        texts_or_scope: list[LazyCorpusText] | CorpusScopeDTO,
+        params: TokenViewParamsDTO,
+        include_masked: bool = False,
+    ) -> dict[str, list[str | None]]:
+        """Extract token or lemma sequences for texts under TokenView parameters.
+
+        When ``include_masked=False`` (default), returns ``list(view.analysed())`` so
+        masked function words are excluded from bag-of-words / type-token counts.
+        When ``include_masked=True``, returns positional forms with ``None`` at masked
+        slots so positional sliding-window estimators preserve slot distances.
+        """
+        texts = (
+            self.get_texts_by_scope(texts_or_scope)
+            if isinstance(texts_or_scope, CorpusScopeDTO)
+            else texts_or_scope
+        )
+        result: dict[str, list[str | None]] = {}
         for t in texts:
             view = self.get_token_view(t, params)
             code = getattr(t, "code", getattr(getattr(t, "record", None), "code", str(t)))
-            result[code] = [str(x) for x in view.forms]
+            if include_masked:
+                result[code] = [
+                    str(f) if elig else None
+                    for f, elig in zip(view.forms, view.eligible)
+                ]
+            else:
+                result[code] = [str(x) for x in view.analysed()]
         return result

@@ -28,9 +28,10 @@ This specification details the comprehensive functional (FR-01 through FR-90) an
 ## 2. Functional Requirements (FR-01 to FR-90)
 
 ### 2.1 Global Control Header, TokenView Engine & Process State
-- **FR-01 (Scope Selector)**: The header shall provide an interactive dropdown supporting the 8 canonical lazy loader methods: `load_all`, `load_all_english`, `load_all_turkish`, `load_translation_pairs`, `load_indigenous`, `load_author_related(code)`, `load_author_turkish(code)`, and `load_text(code)`. Changing scope updates global application state (`app_state.js`) without full page reloads.
-- **FR-02 (32-Combination TokenView Engine)**: The header shall expose 4 toggle controls providing complete support for all $2 \times 2 \times 2 \times 4 = 32$ configurations of:
+- **FR-01 (Scope Selector & Secondary Subselector)**: The header shall provide an interactive `#global-scope-select` dropdown supporting the 8 canonical lazy loader methods (`all` $\to$ `load_all`, `all_en` $\to$ `load_all_english`, `all_tr` $\to$ `load_all_turkish`, `trans_tr` $\to$ `load_translation_pairs`, `indig_tr` $\to$ `load_indigenous`, `author_related` $\to$ `load_author_related(code)`, `author_turkish` $\to$ `load_author_turkish(code)`, and `single` $\to$ `load_text(code)`), paired with a contextual secondary `<select id="global-scope-subselect">` that dynamically populates the 7 author codes (`SM, ZB, OK, NCK, AS, CE, SG`) when `author_related` or `author_turkish` is active, or the 13 `text_code` options when `single` is active. Changing scope updates global application state (`app_state.js:buildQueryParams` / `buildRequestPayload`) without full page reloads.
+- **FR-02 (32-Combination TokenView Engine & `parse_scope_and_view`)**: The header shall expose 4 toggle controls providing complete support for all $2 \times 2 \times 2 \times 4 = 32$ configurations of:
   $$\{\text{tok}, \text{lem}\} \times \{\text{False}, \text{True}\} \times \{\text{drop}, \text{mask}\} \times \{\text{drop}, \text{keep}, \text{strip}, \text{split}\}$$
+  Every controller endpoint parses `(CorpusScopeDTO, TokenViewParamsDTO)` deterministically via `parse_scope_and_view(request.args, request.get_json(silent=True))` and keys `global_payload_cache` by `(scope.cache_key(), view.cache_key(), *endpoint_args)`.
 - **FR-03 (Field Selection Switch)**: The engine shall toggle between surface word forms (`field='tok'`) and morphologically parsed base lemmas (`field='lem'`).
 - **FR-04 (Closed-Class Function Word Filter)**:
   - English: Filters closed-class UPOS tags: $\{\text{DET}, \text{PRON}, \text{CCONJ}, \text{ADP}, \text{AUX}, \text{SCONJ}, \text{INTJ}, \text{PART}\}$.
@@ -38,8 +39,8 @@ This specification details the comprehensive functional (FR-01 through FR-90) an
     $$\text{Head} \in \{\text{Postp}, \text{Conj}, \text{Det}, \text{Pron}, \text{Ques}, \text{Interj}, \text{Punc}\}$$
     extracted from `morph.split('+')[1]`.
 - **FR-05 (Drop vs. Mask Token Modes)**:
-  - `mode='drop'`: Removes function words from the sequence so window spans ($\pm L / \pm R$) count consecutive content words.
-  - `mode='mask'`: Preserves original sentence token positions while marking function words ineligible (`elig == False`) as search targets or collocate candidates.
+  - `mode='drop'`: Removes function words from the sequence (`view.analysed()`) so window spans ($\pm L / \pm R$) and sliding windows count consecutive content words.
+  - `mode='mask'`: Preserves original sentence token positions (`[str(f) if elig else None for f, elig in zip(view.forms, view.eligible)]`) while marking function words ineligible (`elig == False`). Bag-of-words / type-token metrics (`N, V, TTR, Guiraud_R, Yule_K, Simpson_D, MTLD, HD_D`) operate on `view.analysed()`, whereas positional window metrics (`MATTR_50, MATTR_100, MATTR_500`, `masked_mattr_series`, `CollocationAnalyzer`, and `Concordancer`) evaluate sliding windows over positional slots ($V_{\text{non-null}} / N_{\text{non-null}}$ per window of $W$ positions).
 - **FR-06 (Four Punctuation Regimes)**:
   - `drop`: Excludes standalone punctuation ($\text{fcl} \ne \text{PUNCT}$) while retaining internal hyphens/apostrophes (`türkiye'nin`, `robot-bilim`).
   - `keep`: Retains standalone punctuation tokens ($\text{fcl} == \text{PUNCT}$) for syntactic and dialogue boundary analysis.

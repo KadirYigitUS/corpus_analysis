@@ -20,13 +20,18 @@
         <span class="brand-badge">SPA v2.1</span>
       </div>
       <div class="header-controls">
-        <select id="global-scope-select" class="form-select">
+        <select id="global-scope-select" name="global_scope" aria-label="Global Corpus Scope" class="form-select">
           <option value="all">All Texts (13 Subcorpus)</option>
           <option value="all_en">All English Sources</option>
           <option value="all_tr">All Turkish Texts</option>
           <option value="trans_en">Translated EN Sources</option>
           <option value="trans_tr">Translated TR Texts</option>
           <option value="indig_tr">Indigenous TR Novels</option>
+          <option value="author_related">Author Related (EN+TR)</option>
+          <option value="author_turkish">Author Turkish (TR)</option>
+          <option value="single">Single Text</option>
+        </select>
+        <select id="global-scope-subselect" name="global_scope_subselect" aria-label="Secondary Scope Filter" class="form-select" style="display:none; padding:2px 6px;">
         </select>
         <button class="btn btn-sm" id="btn-open-corpus-info">📖 Corpus Info & Sources</button>
         <button class="btn btn-sm" id="btn-open-settings">⚙️ Settings</button>

@@ -5,7 +5,7 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, request
 
 from SPA.models.search_dto import SearchQueryDTO
-from SPA.models.view_params_dto import CorpusScopeDTO, TokenViewParamsDTO
+from SPA.models.view_params_dto import parse_scope_and_view
 from SPA.services.batch_dispersion_service import BatchDispersionService
 from SPA.services.search_kwic_service import SearchKwicService
 
@@ -21,8 +21,7 @@ def create_concordance_blueprint(
     def search_kwic():
         data = request.get_json() or {}
         query_dto = SearchQueryDTO.from_dict(data)
-        view_params = TokenViewParamsDTO.from_dict(data.get("view_params", {}))
-        scope_dto = CorpusScopeDTO.from_dict(data.get("scope", {}))
+        scope_dto, view_params = parse_scope_and_view(request.args, data)
         sort_by = str(data.get("sort_by", "position"))
 
         try:
@@ -40,8 +39,10 @@ def create_concordance_blueprint(
     def compare_punct():
         data = request.get_json() or {}
         query_dto = SearchQueryDTO.from_dict(data)
-        scope_dto = CorpusScopeDTO.from_dict(data.get("scope", {}))
-        result = search_service.compare_punctuation_regimes(query_dto, scope_dto)
+        scope_dto, view_params = parse_scope_and_view(request.args, data)
+        result = search_service.compare_punctuation_regimes(
+            query_dto, scope_dto, view_params=view_params
+        )
         return jsonify({"counts": result}), 200
 
     @concordance_bp.route("/batch-dispersion", methods=["POST"])
@@ -51,8 +52,7 @@ def create_concordance_blueprint(
         if not terms and "terms_raw" in data:
             terms = [t.strip() for t in data["terms_raw"].split(",") if t.strip()]
 
-        view_params = TokenViewParamsDTO.from_dict(data.get("view_params", {}))
-        scope_dto = CorpusScopeDTO.from_dict(data.get("scope", {}))
+        scope_dto, view_params = parse_scope_and_view(request.args, data)
         n_chunks = int(data.get("n_chunks", 10))
 
         result = dispersion_service.analyze_batch(
