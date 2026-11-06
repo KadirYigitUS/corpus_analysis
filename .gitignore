@@ -67,4 +67,12 @@ SPA/tests/results/playwright/
 .DS_Store
 Thumbs.db
 
-
+# Secret environment & hidden ntfy telemetry files
+.env
+.env.*
+!.env.example
+*ntfy*
+scripts/mcp/ntfy_notifier.py
+scripts/mcp/test_ntfy_notifier.py
+tests/test_ntfy_notifier.py
+.agents/rules/ntfy_notifications.md
